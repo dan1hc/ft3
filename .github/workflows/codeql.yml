@@ -1,0 +1,62 @@
+name: codeql
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - './.github/**/*'
+      - './src/ft3/__init__.py'
+      - '.gitignore'
+      - '.pre-commit-config.yaml'
+      - '.readthedocs.yaml'
+      - 'CHANGELOG.md'
+      - 'CODE_OF_CONDUCT.md'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE'
+      - 'pyproject.toml'
+      - 'README.md'
+      - 'SECURITY.md'
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - './.github/**/*'
+      - './src/ft3/__init__.py'
+      - '.gitignore'
+      - '.pre-commit-config.yaml'
+      - '.readthedocs.yaml'
+      - 'CHANGELOG.md'
+      - 'CODE_OF_CONDUCT.md'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE'
+      - 'pyproject.toml'
+      - 'README.md'
+      - 'SECURITY.md'
+  schedule:
+    - cron: 0 0 * * 0
+
+jobs:
+  analyze:
+    name: sast
+    runs-on: 'ubuntu-latest'
+    timeout-minutes: 360
+    permissions:
+      id-token: write
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language:
+          - 'python'
+    steps:
+    - name: checkout repository
+      uses: actions/checkout@v4
+    - name: initialize codeqL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+    - name: perform analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{matrix.language}}"

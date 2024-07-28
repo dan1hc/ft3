@@ -1,0 +1,57 @@
+default_install_hook_types: [pre-commit, commit-msg]
+fail_fast: true
+repos:
+
+  # Commit messages + Tests
+  - repo: local
+    hooks:
+      - id: validate-commit-msg
+        stages: [commit-msg]
+        name: validate-commit-msg
+        language: pygrep
+        entry: '^([mM]erge .*)$|(^((build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)!?: .+)((\n\n(.+)\n\n)((BREAKING CHANGE|DEPRECATED)(: )(.+)\n\n(.+)\n\n\n)?(resolve[ds]? \#[A-Z0-9\-]+|fix(ed|es)? \#[A-Z0-9\-]+|close[ds]? \#[A-Z0-9\-]+)((, )(resolve[ds]? \#[A-Z0-9\-]+|fix(ed|es)? \#[A-Z0-9\-]+|close[ds]? \#[A-Z0-9\-]+))?)?$)|(^revert: ((build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)!?: .+)(\n\n(This reverts commit [a-z0-9]{40}\..*)\n\n)(fix(ed|es)? \#[A-Z0-9\-]+)((, )(fix(ed|es)? \#[A-Z0-9\-]+))?$)'
+        args: [--negate]
+      - id: pytest
+        stages: [pre-commit]
+        name: pytest
+        entry: pytest
+        language: system
+        pass_filenames: false
+        always_run: true
+
+  # Auto-format
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: end-of-file-fixer
+        pass_filenames: false
+        stages: [pre-commit]
+      - id: trailing-whitespace
+        pass_filenames: false
+        stages: [pre-commit]
+
+  # Lint
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.5.1
+    hooks:
+      - id: ruff
+        stages: [pre-commit]
+        name: ruff (lint)
+        pass_filenames: false
+
+  # Type
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: "v1.11.0"
+    hooks:
+      - id: mypy
+        pass_filenames: false
+        stages: [pre-commit]
+
+  # CI Lint
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: "0.28.6"
+    hooks:
+      - id: check-github-workflows
+        stages: [pre-commit]
+      - id: check-dependabot
+        stages: [pre-commit]

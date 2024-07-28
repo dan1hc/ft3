@@ -1,0 +1,25 @@
+# Build
+/build
+*.egg*
+
+# Docs
+/docs
+
+# Test
+/htmlcov
+*coverage*
+.ipynb_checkpoints/*
+
+# IDE
+*.DS_store
+*env*
+.vscode/
+.vs/
+
+# Local Caching
+.mypy_cache
+.pytest_cache
+.ruff_cache
+*__pycache__*
+*.py[cod]
+*$py.class

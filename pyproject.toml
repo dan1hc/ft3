@@ -1,0 +1,179 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ft3"
+dependencies = [
+    "typing_extensions ; python_version < '3.11'",
+    ]
+requires-python = ">=3.10"
+authors = [
+    {name = "Dan", email = "dan@1howardcapital.com"},
+    ]
+maintainers = [
+    {name = "Dan", email = "dan@1howardcapital.com"},
+    ]
+description = "Zero-dependency Python framework for object oriented development."
+keywords = [
+    "dataclasses",
+    "ft3",
+    "framework",
+    "openapi",
+    "rest",
+    "swagger",
+    ]
+readme = "README.md"
+version = "0.0.0"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Typing :: Typed",
+    ]
+
+[project.urls]
+Documentation = "https://ft3.readthedocs.io/en/stable/ft3.html"
+Homepage = "https://ft3.readthedocs.io/en/stable/"
+Repository = "https://github.com/dan1hc/ft3.git"
+Issues = "https://github.com/dan1hc/ft3/issues"
+Changelog = "https://github.com/dan1hc/ft3/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+develop = [
+    "mypy==1.11.*",
+    "pre-commit==3.7.*",
+    "coverage==7.6.*",
+    "pytest==8.3.*",
+    "pytest-cov==5.0.*",
+    "ruff==0.5.*",
+    "commonmark==0.9.*",
+    "sphinx==7.*"
+    ]
+docs = [
+    "commonmark==0.9.*",
+    "sphinx==7.*"
+    ]
+
+[project.scripts]
+ft3 = "ft3.cli:main"
+
+[tool.setuptools.package-data]
+"*" = [
+    "**/static/*.ico",
+    "**/static/*.png",
+    "**/static/*.tpl",
+    ]
+
+[tool.coverage.report]
+fail_under = 100
+exclude_lines = [
+    "pragma: no cover",
+    "if typing.TYPE_CHECKING:",
+    ]
+omit = [
+    "**/ft3/docs/utl.py",
+    ]
+
+[tool.pytest.ini_options]
+addopts = "--cov=ft3 --cov-report=term-missing -p no:warnings -x"
+testpaths = ["src/tests"]
+
+[tool.mypy]
+exclude = [
+    "tests",
+    ]
+files = ["./src/ft3"]
+pretty = true
+python_version = "3.12"
+disable_error_code = [
+    "assignment",
+    ]
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_untyped_decorators = true
+warn_return_any = true
+warn_unreachable = true
+
+[tool.ruff]
+exclude = [
+    ".eggs",
+    ".git",
+    ".github",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".pyenv",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".vscode",
+    "build",
+    "docs",
+    "htmlcov"
+    ]
+target-version = "py312"
+
+# Standard Py
+line-length = 79
+indent-width = 4
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "tab"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint]
+ignore = [
+    "F403",  # we are using a * import pattern
+    "F405",  # we are using a * import pattern
+    "F811",  # ruff thinks overloads are redefinitions
+    ]
+
+[tool.semantic_release]
+commit_parser = "angular"
+commit_author = "github-actions <action@github.com>"
+commit_message = "docs: __v{version}__"
+build_command = "python -m pip install --upgrade build && python -m build"
+major_on_zero = false
+version_variables = [
+    "src/ft3/__init__.py:__version__",
+    ]
+version_toml = [
+    "pyproject.toml:project.version",
+    ]
+
+[tool.semantic_release.branches.main]
+match = "(main)"
+prerelease = false
+
+[tool.semantic_release.branches.not_main]
+match = "(^(?!main)(.)*$)"
+prerelease = true
+prerelease_token = "rc"
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = [
+    "build",
+    "chore",
+    "ci",
+    "docs",
+    "feat",
+    "fix",
+    "perf",
+    "refactor",
+    "style",
+    "test",
+    ]
+minor_tags = [
+    "feat",
+    "refactor",
+    ]
+patch_tags = [
+    "build",
+    "fix",
+    "perf",
+    "test",
+    ]
