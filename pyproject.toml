@@ -51,11 +51,11 @@ develop = [
     "pytest-cov==5.0.*",
     "ruff==0.5.*",
     "commonmark==0.9.*",
-    "sphinx==7.*"
+    "sphinx>=7,<9"
     ]
 docs = [
     "commonmark==0.9.*",
-    "sphinx==7.*"
+    "sphinx>=7,<9"
     ]
 
 [project.scripts]
