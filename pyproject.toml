@@ -146,11 +146,11 @@ version_toml = [
     ]
 
 [tool.semantic_release.branches.main]
-match = "main"
+match = "(main)"
 prerelease = false
 
 [tool.semantic_release.branches.not_main]
-match = "!main"
+match = "(^(?!main)(.)*$)"
 prerelease = true
 prerelease_token = "rc"
 

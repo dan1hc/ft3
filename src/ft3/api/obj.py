@@ -2,6 +2,13 @@
 
 __all__ = (
     'Component',
+    'Content',
+    'Operation',
+    'Parameter',
+    'Path',
+    'RequestBody',
+    'ResponseObject',
+    'Responses',
     'Schema',
     )
 
@@ -29,7 +36,7 @@ class Component(Object):
 
 class Schema(Component):
     """
-    [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schema-object) Schema Object.
+    [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#schema-object) Schema Object.
 
     """
 
@@ -234,3 +241,121 @@ class Schema(Component):
                 )
         else:
             return cls(**kwargs)
+
+
+class Parameter(Component):
+    """
+    [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#parameter-object) Parameter Object.
+
+    """
+
+    name: Field[str]
+
+    in_: Field[str] = Field(
+        default=enm.ParameterLocation.query.name,
+        enum=enm.ParameterLocation
+        )
+
+    description: Field[lib.t.Optional[str]] = None
+
+    required: Field[bool] = False
+    deprecated: Field[lib.t.Optional[bool]] = None
+
+    schema: Field[lib.t.Optional[Schema]] = None
+
+
+class Content(Component):
+    """
+    Sub component for common content types.
+
+    ---
+
+    Pass content type as title.
+
+    Example: `Content(_title_='application/json')`
+
+    """
+
+    schema: Field[lib.t.Optional[Schema]] = None
+
+
+class RequestBody(Component):
+    """
+    [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#request-body-object) Request Body Object.
+
+    """
+
+    name: Field[str]
+    content: Field[Content] = Content(_title_=enm.ContentType.json.value)
+
+
+class ResponseObject(Component):
+    """
+    [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#response-object) Request Body Object.
+
+    ---
+
+    Pass HTTP Status Code as title (as a `str`).
+
+    Example: `ResponseObject(_title_='200', description='Success.')`
+
+    """
+
+    description: Field[str]
+
+    headers: Field[lib.t.Optional[list[Parameter]]] = None
+    content: Field[Content] = Content(_title_=enm.ContentType.json.value)
+
+
+class Responses(Component):
+    """Possible Responses."""
+
+    _200_: Field[lib.t.Optional[ResponseObject]] = None
+    _201_: Field[lib.t.Optional[ResponseObject]] = None
+    _204_: Field[lib.t.Optional[ResponseObject]] = None
+    _301_: Field[lib.t.Optional[ResponseObject]] = None
+    _400_: Field[lib.t.Optional[ResponseObject]] = None
+    _401_: Field[lib.t.Optional[ResponseObject]] = None
+    _403_: Field[lib.t.Optional[ResponseObject]] = None
+    _404_: Field[lib.t.Optional[ResponseObject]] = None
+    _405_: Field[lib.t.Optional[ResponseObject]] = None
+    _409_: Field[lib.t.Optional[ResponseObject]] = None
+    _423_: Field[lib.t.Optional[ResponseObject]] = None
+    _429_: Field[lib.t.Optional[ResponseObject]] = None
+    _500_: Field[lib.t.Optional[ResponseObject]] = None
+    _502_: Field[lib.t.Optional[ResponseObject]] = None
+    _504_: Field[lib.t.Optional[ResponseObject]] = None
+
+
+class Operation(Component):
+    """
+    [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#operation-object) Operation Object.
+
+    """
+
+    description: Field[lib.t.Optional[str]] = None
+    summary: Field[lib.t.Optional[str]] = None
+
+    tags: Field[lib.t.Optional[list[str]]] = None
+
+    parameters: Field[lib.t.Optional[list[Parameter]]] = None
+    request_body: Field[lib.t.Optional[RequestBody]] = None
+
+    responses: Field[lib.t.Optional[Responses]] = None
+
+
+class Path(Component):
+    """
+    [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#path-item-object) Path Item Object.
+
+    """
+
+    description: Field[lib.t.Optional[str]] = None
+    summary: Field[lib.t.Optional[str]] = None
+
+    delete: Field[lib.t.Optional[Operation]] = None
+    get_: Field[lib.t.Optional[Operation]] = None
+    options: Field[lib.t.Optional[Operation]] = None
+    patch: Field[lib.t.Optional[Operation]] = None
+    post: Field[lib.t.Optional[Operation]] = None
+    put: Field[lib.t.Optional[Operation]] = None

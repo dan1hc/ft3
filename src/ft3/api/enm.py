@@ -4,7 +4,9 @@ from .. import core
 
 __all__ = (
     'Component',
+    'ContentType',
     'Format',
+    'ParameterLocation',
     'Type',
     *core.enm.__all__
     )
@@ -109,3 +111,35 @@ class Type(lib.enum.Enum):
     number  = float
     object  = dict
     string  = str
+
+
+class ParameterLocation(lib.enum.Enum):
+    """
+    [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#parameter-object) Paramater In Enumeration.
+
+    ---
+
+    There are four possible parameter locations specified by the in field:
+
+    1. `path` Used together with Path Templating, where the parameter value is actually part of the operation's URL. This does not include the host or base path of the API. For example, in /items/{itemId}, the path parameter is itemId.
+    2. `query` Parameters that are appended to the URL. For example, in /items?id=###, the query parameter is id.
+    3. `header` Custom headers that are expected as part of the request. Note that RFC7230 states header names are case insensitive.
+    4. `cookie` Used to pass a specific cookie value to the API.
+
+    """
+
+    path   = 'path'
+    query  = 'query'
+    header = 'header'
+    cookie = 'cookie'
+
+
+class ContentType(lib.enum.Enum):
+    """Common content types."""
+
+    any_ = '*/*'
+    html = 'text/html'
+    icon = 'image/x-icon'
+    json = 'application/json'
+    png  = 'image/png'
+    text = 'text/plain'
