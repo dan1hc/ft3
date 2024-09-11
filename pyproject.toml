@@ -135,7 +135,7 @@ ignore = [
 [tool.semantic_release]
 commit_parser = "angular"
 commit_author = "github-actions <action@github.com>"
-commit_message = "docs: __v{version}__"
+commit_message = "docs: __v{version}__ [skip ci]"
 build_command = "python -m pip install --upgrade build && python -m build"
 major_on_zero = false
 version_variables = [
@@ -146,11 +146,11 @@ version_toml = [
     ]
 
 [tool.semantic_release.branches.main]
-match = "(main)"
+match = "main"
 prerelease = false
 
 [tool.semantic_release.branches.not_main]
-match = "(^(?!main)(.)*$)"
+match = "!main"
 prerelease = true
 prerelease_token = "rc"
 

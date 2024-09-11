@@ -18,6 +18,7 @@ __all__ = (
     'is_none_type',
     'is_number_type',
     'is_object',
+    'is_object_type',
     'is_params_type',
     'is_primitive',
     'is_serialized_mapping',
@@ -33,6 +34,7 @@ from .. import lib
 from .. import obj
 
 if lib.t.TYPE_CHECKING:  # pragma: no cover
+    from .... import objects
     from .. import typ
 
 
@@ -267,7 +269,7 @@ def is_number_type(
     otps = get_checkable_types(tp)
 
     if otps:
-        return issubclass(tp, get_checkable_types(lib.numbers.Number))
+        return issubclass(otps[0], get_checkable_types(lib.numbers.Number))
     else:
         return False
 
@@ -405,7 +407,7 @@ def is_array(
 
     return (
         isinstance(obj, lib.t.Collection)
-        and not isinstance(obj, (str, lib.t.Mapping))
+        and not isinstance(obj, (str, lib.t.Mapping, lib.enum.EnumMeta))
         )
 
 
@@ -418,6 +420,21 @@ def is_object(
         otp = lib.t.get_origin(obj_) or obj_
     else:
         otp = type(obj_)
+
+    from .... import objects
+
+    return issubclass(otp, objects.Object)
+
+
+def is_object_type(
+    tp: lib.t.Any
+    ) -> lib.t.TypeGuard[type['objects.Object']]:
+    """Return `True` if `tp` is an `Object`."""
+
+    if isinstance(tp, type):
+        otp = lib.t.get_origin(tp) or tp
+    else:
+        otp = type(tp)
 
     from .... import objects
 

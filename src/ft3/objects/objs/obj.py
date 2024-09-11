@@ -2,6 +2,7 @@
 
 __all__ = (
     'Object',
+    'ObjectBase',
     )
 
 from ... import core
@@ -577,7 +578,7 @@ class ObjectBase(metaclass=metas.Meta):
             }
         as_dict: typ.SnakeDict = {}
         for key, value in d.items():
-            if isinstance(value, Object):
+            if isinstance(value, ObjectBase):
                 as_dict[key] = value.to_dict(camel_case, include_null)
             elif typ.utl.check.is_array(value):
                 as_dict[key] = value.__class__(

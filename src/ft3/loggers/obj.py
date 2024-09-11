@@ -95,51 +95,51 @@ Usage Examples
 --------------
 
 ```py
-import fgr
+import ft3
 
-fgr.log.debug('example')
+ft3.log.debug('example')
 # >>>
 # {
 #   "level": DEBUG,
 #   "time": 2024-02-25 15:30:01.061 UTC,
-#   "log": fgr.core.log,
-#   "data":   {
+#   "log": ft3.core.log,
+#   "data": {
 #     "message": "example"
 #   }
 # }
 
-fgr.log.info({'str': 'example', 'a': 2})
+ft3.log.info({'str': 'example', 'a': 2})
 # >>>
 # {
 #   "level": INFO,
 #   "time": 2024-02-25 15:31:11.118 UTC,
-#   "log": fgr.core.log,
-#   "data":   {
+#   "log": ft3.core.log,
+#   "data": {
 #     "a": 2,
 #     "str": "example"
 #   }
 # }
 
 
-class Pet(fgr.Object):
+class Pet(ft3.Object):
     \"""A pet.\"""
 
-    id_: fgr.Field[str]
-    _alternate_id: fgr.Field[str]
+    id_: ft3.Field[str]
+    _alternate_id: ft3.Field[str]
 
-    name: fgr.Field[str]
-    type: fgr.Field[str]
-    in_: fgr.Field[str]
-    is_tail_wagging: fgr.Field[bool] = True
+    name: ft3.Field[str]
+    type: ft3.Field[str]
+    in_: ft3.Field[str]
+    is_tail_wagging: ft3.Field[bool] = True
 
 
-fgr.log.debug(Pet)
+ft3.log.debug(Pet)
 # >>>
 # {
 #   "level": DEBUG,
 #   "time": 2024-02-25 15:30:01.339 UTC,
-#   "log": fgr.core.log,
-#   "data":   {
+#   "log": ft3.core.log,
+#   "data": {
 #     "Pet": {
 #       "_alternate_id": "Field[str]",
 #       "id": "Field[str]",
@@ -151,7 +151,7 @@ fgr.log.debug(Pet)
 #   }
 # }
 
-fgr.log.debug(
+ft3.log.debug(
     Pet(
         id_='abc1234',
         name='Fido',
@@ -162,8 +162,8 @@ fgr.log.debug(
 # {
 #   "level": DEBUG,
 #   "time": 2024-02-25 15:30:01.450 UTC,
-#   "log": fgr.core.log,
-#   "data":   {
+#   "log": ft3.core.log,
+#   "data": {
 #     "Pet": {
 #       "_alternate_id": null,
 #       "id": "abc1234",

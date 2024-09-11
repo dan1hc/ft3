@@ -73,7 +73,7 @@ Additionally, commit messages must adhere to [angular commit guidelines](https:/
 import re
 
 pattern = re.compile(
-    r'^([mM]erge .*)$|(^((build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)!?: .+)((\n\n(.+)\n\n)((BREAKING CHANGE|DEPRECATED)(: )(.+)\n\n(.+)\n\n\n)?(resolve[ds]? \#[A-Z0-9\-]+|fix(ed|es)? \#[A-Z0-9\-]+|close[ds]? \#[A-Z0-9\-]+)((, )(resolve[ds]? \#[A-Z0-9\-]+|fix(ed|es)? \#[A-Z0-9\-]+|close[ds]? \#[A-Z0-9\-]+))?)?$)|(^revert: ((build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)!?: .+)(\n\n(This reverts commit [a-z0-9]{40}\..*)\n\n)(fix(ed|es)? \#[A-Z0-9\-]+)((, )(fix(ed|es)? \#[A-Z0-9\-]+))?$)'
+    r'((^[mM]erge .*$)|(^((build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.+\))?!?: .+)((\n\n(.+)\n\n)((BREAKING CHANGE|DEPRECATED)(: )(.+)\n\n(.+)\n\n\n)?(resolve[ds]? \#[A-Z0-9\-]+|fix(ed|es)? \#[A-Z0-9\-]+|close[ds]? \#[A-Z0-9\-]+)((, )(resolve[ds]? \#[A-Z0-9\-]+|fix(ed|es)? \#[A-Z0-9\-]+|close[ds]? \#[A-Z0-9\-]+))?)?$)|(^revert: ((build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.+\))?!?: .+)(\n\n(This reverts commit [a-z0-9]{40}\..*)\n\n)(fix(ed|es)? \#[A-Z0-9\-]+)((, )(fix(ed|es)? \#[A-Z0-9\-]+))?$))'
     )
 
 assert bool(pattern.match('feat: __valid_example__\n\noptional body text\n\ncloses #1, resolve #2')) is True

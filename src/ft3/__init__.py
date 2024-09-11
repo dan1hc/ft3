@@ -34,6 +34,7 @@ Install from command line, with pip:
 """
 
 __all__ = (
+    'api',
     'cli',
     'core',
     'docs',
@@ -46,11 +47,12 @@ __all__ = (
 
 __version__ = '0.0.1'
 
+from . loggers import log
+from . objects import Field, Object
+
+from . import api
 from . import cli
 from . import core
 from . import docs
 from . import loggers
 from . import objects
-
-from . loggers import log
-from . objects import Field, Object

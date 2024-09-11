@@ -151,7 +151,7 @@ def _collect_annotations(
     annotations: 'typ.AnyDict' = {}
     for _base in reversed(__bases):
         for __base in reversed(_base.__mro__):
-            annotations |= getattr(__base, '__annotations__', {})
+            annotations |= getattr(__base, Constants.__ANNOTATIONS__, {})
     annotations |= __annotations
     # Ensure any annotations hinted for TYPE_CHECKING removed.
     annotations.pop(Constants.__ANNOTATIONS__, None)
@@ -184,6 +184,6 @@ def collect_annotations(
 
     return _collect_annotations(
         obj_tp.__name__,
-        getattr(obj_tp, '__annotations__', {}),
+        getattr(obj_tp, Constants.__ANNOTATIONS__, {}),
         obj_tp.__bases__
         )
