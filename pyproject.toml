@@ -75,7 +75,9 @@ exclude_lines = [
     "if typing.TYPE_CHECKING:",
     ]
 omit = [
+    "**/ft3/api/**",
     "**/ft3/docs/utl.py",
+    "**/ft3/template/**"
     ]
 
 [tool.pytest.ini_options]
@@ -83,9 +85,7 @@ addopts = "--cov=ft3 --cov-report=term-missing -p no:warnings -x"
 testpaths = ["src/tests"]
 
 [tool.mypy]
-exclude = [
-    "tests",
-    ]
+exclude = ["tests"]
 files = ["./src/ft3"]
 pretty = true
 python_version = "3.12"

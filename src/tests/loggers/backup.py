@@ -195,8 +195,6 @@ class TestDeployedLogger(unittest.TestCase):
     def test_01_print(self):
         """Test first print + warning interception."""
 
-        # lib.sys.__dict__['modules'][ft3.loggers.obj.__name__].__dict__.pop('__warningregistry__')
-
         msg = self.msg
         warn_msg = '\n'.join(
             (
@@ -209,15 +207,6 @@ class TestDeployedLogger(unittest.TestCase):
         level = lib.logging.WARNING
         parsed = ft3.loggers.utl.parse_incoming_log_message(warn_msg, level)
         with self.assertLogs(self.log, level) as logger:
-            # expected_output = lib.textwrap.indent(
-            #     lib.json.dumps(
-            #         parsed,
-            #         default=ft3.core.strings.utl.convert_for_repr,
-            #         indent=Constants.INDENT,
-            #         sort_keys=True
-            #         ),
-            #     Constants.INDENT * ' '
-            #     )
             expected_output = lib.json.dumps(
                 parsed,
                 default=ft3.core.strings.utl.convert_for_repr,

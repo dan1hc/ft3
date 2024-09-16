@@ -23,7 +23,7 @@ class Constants(cfg.Constants):
         type[lib.t.Any],
         lib.t.Callable[[lib.t.Any], typ.Serial]
         ] = {
-            bytes: lambda o: getattr(o, 'decode')(),
+            bytes: str,
             lib.datetime.date: _isoformat_encoder,
             lib.datetime.datetime: _isoformat_encoder,
             lib.datetime.time: _isoformat_encoder,

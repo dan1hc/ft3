@@ -156,8 +156,8 @@ def _collect_annotations(
     # Ensure any annotations hinted for TYPE_CHECKING removed.
     annotations.pop(Constants.__ANNOTATIONS__, None)
     annotations.pop(Constants.__DATACLASS_FIELDS__, None)
-    annotations.pop(Constants.__DICT__, None)
     annotations.pop(Constants.__HERITAGE__, None)
+    annotations.pop(Constants.__OPERATIONS__, None)
     annotations.pop(Constants.FIELDS, None)
     annotations.pop(Constants.ENUMERATIONS, None)
     annotations.pop(Constants.HASH_FIELDS, None)

@@ -17,6 +17,7 @@ from . import cfg
 from . import lib
 
 if lib.t.TYPE_CHECKING:  # pragma: no cover
+    from ... import api
     from . import typ  # noqa: F401
 
 
@@ -124,6 +125,17 @@ class ObjectLike(lib.t.Protocol):
     __annotations__: 'typ.SnakeDict'
     __bases__: tuple[type, ...]
     __dataclass_fields__: 'lib.t.ClassVar[typ.DataClassFields]'
+    __operations__: lib.t.ClassVar[
+        dict[
+            'typ.string[typ.snake_case]',
+            lib.t.Callable[
+                ['api.events.obj.Request', ],
+                lib.t.Optional['typ.Object']
+                | lib.t.Optional[list['typ.Object']]
+                | str
+                ]
+            ]
+        ]
 
     def __contains__(self, __key: lib.t.Any, /) -> bool: ...
 

@@ -64,13 +64,11 @@ class Pet(ft3.Object):
     type_: ft3.Field[str] = {
         'default': 'dog',
         'enum': ['cat', 'dog'],
-        'nullable': False,
         'required': True,
         }
     is_tail_wagging: ft3.Field[bool] = ft3.Field(
         default=True,
         enum=[True, False],
-        nullable=False,
         required=True,
         )
 
@@ -134,7 +132,6 @@ class Pet(ft3.Object):
     type_: ft3.Field[str] = {
         'default': 'dog',
         'enum': ['cat', 'dog'],
-        'nullable': False,
         'required': True,
         }
 
@@ -142,7 +139,6 @@ class Pet(ft3.Object):
     is_tail_wagging: ft3.Field[bool] = ft3.Field(
         default=True,
         enum=[True, False],
-        nullable=False,
         required=True,
         )
 

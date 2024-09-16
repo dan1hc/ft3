@@ -183,8 +183,11 @@ class TestUtils(unittest.TestCase):
                 ),
             [
                 Constants.M_LINE_TOKEN,
-                *ft3.core.strings.obj.StringWrapper.wrap(
-                    Constants.BIG_STR_DICT['regular']
-                    )
+                *''.join(
+                    ft3.core.strings.obj.StringWrapper.wrap(
+                        Constants.BIG_STR_DICT['regular']
+                        )[:Constants.CUTOFF_LEN]
+                    ).split('\n'),
+                '[[...]]'
                 ]
             )

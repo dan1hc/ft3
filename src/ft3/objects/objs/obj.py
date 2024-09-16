@@ -15,6 +15,7 @@ from .. import typ
 from .. import utl
 
 if lib.t.TYPE_CHECKING:  # pragma: no cover
+    from ... import api
     from .. import queries
 
 
@@ -29,13 +30,77 @@ class ObjectBase(metaclass=metas.Meta):
     """Base for Objects, used for typing purposes."""
 
     __annotations__: typ.SnakeDict
-    __dict__: dict[typ.AnyString, lib.t.Any]
     __dataclass_fields__: lib.t.ClassVar[typ.DataClassFields]
     __heritage__: lib.t.ClassVar[tuple['metas.Meta', ...]]
+    __operations__: lib.t.ClassVar[
+        dict[
+            typ.string[typ.snake_case],
+            lib.t.Callable[
+                ['api.events.obj.Request', ],
+                lib.t.Optional[typ.Object]
+                | lib.t.Optional[list[typ.Object]]
+                | str
+                ]
+            ]
+        ]
 
     enumerations: lib.t.ClassVar[dict[str, tuple[typ.Primitive, ...]]]
     fields: lib.t.ClassVar[typ.FieldsTuple]
     hash_fields: lib.t.ClassVar[typ.FieldsTuple]
+
+    @classmethod
+    def DELETE(
+        cls,
+        fn: lib.t.Callable[['api.events.obj.Request'], None]
+        ) -> lib.t.Callable[['api.events.obj.Request'], None]:  # pragma: no cover
+        cls.__operations__[Constants.DELETE] = fn
+        return fn
+
+    @classmethod
+    def GET(
+        cls,
+        fn: lib.t.Callable[
+            ['api.events.obj.Request'],
+            list[lib.t.Self] | lib.t.Self | str
+            ]
+        ) -> lib.t.Callable[
+            ['api.events.obj.Request'],
+            list[lib.t.Self] | lib.t.Self | str
+            ]:  # pragma: no cover
+        cls.__operations__[Constants.GET] = fn
+        return fn
+
+    @classmethod
+    def OPTIONS(
+        cls,
+        fn: lib.t.Callable[['api.events.obj.Request'], None]
+        ) -> lib.t.Callable[['api.events.obj.Request'], None]:  # pragma: no cover
+        cls.__operations__[Constants.OPTIONS] = fn
+        return fn
+
+    @classmethod
+    def PATCH(
+        cls,
+        fn: 'lib.t.Callable[[api.events.obj.Request], lib.t.Self]'
+        ) -> 'lib.t.Callable[[api.events.obj.Request], lib.t.Self]':  # pragma: no cover
+        cls.__operations__[Constants.PATCH] = fn
+        return fn
+
+    @classmethod
+    def POST(
+        cls,
+        fn: 'lib.t.Callable[[api.events.obj.Request], lib.t.Self]'
+        ) -> 'lib.t.Callable[[api.events.obj.Request], lib.t.Self]':  # pragma: no cover
+        cls.__operations__[Constants.POST] = fn
+        return fn
+
+    @classmethod
+    def PUT(
+        cls,
+        fn: 'lib.t.Callable[[api.events.obj.Request], lib.t.Self]'
+        ) -> 'lib.t.Callable[[api.events.obj.Request], lib.t.Self]':  # pragma: no cover
+        cls.__operations__[Constants.PUT] = fn
+        return fn
 
     def __repr__(self) -> str:
         """
@@ -404,9 +469,28 @@ class ObjectBase(metaclass=metas.Meta):
         self.update(other)
         return None
 
-    def __ior__(self, other: typ.obj.ObjectLike, /) -> lib.Self:
+    def __ior__(self, other: typ.obj.ObjectLike | typ.AnyDict, /) -> lib.Self:
         self.update(other)
         return self
+
+    @property
+    def as_response(self) -> typ.CamelDict:
+        """
+        Return self as a `camelCase` dictionary.
+
+        ---
+
+        Includes `null` values as well as all `read_only` fields.
+
+        """
+
+        return self.to_dict(  # pragma: no cover
+            camel_case=True,
+            include_null=True,
+            include_private=False,
+            include_write_only=False,
+            include_read_only=True
+            )
 
     def get(
         self,
@@ -514,7 +598,7 @@ class ObjectBase(metaclass=metas.Meta):
 
         return None
 
-    def update(self, other: typ.obj.ObjectLike, /) -> None:
+    def update(self, other: typ.obj.ObjectLike | typ.AnyDict, /) -> None:
         """Update values like a `dict`."""
 
         for k, v in other.items():
@@ -532,24 +616,36 @@ class ObjectBase(metaclass=metas.Meta):
     def to_dict(
         self,
         camel_case: lib.t.Literal[False] = False,
-        include_null: bool = True
+        include_null: bool = True,
+        include_private: bool = True,
+        include_write_only: bool = True,
+        include_read_only: bool = False
         ) -> typ.SnakeDict: ...
     @lib.t.overload
     def to_dict(
         self,
         camel_case: lib.t.Literal[True],
-        include_null: bool
+        include_null: bool,
+        include_private: bool,
+        include_write_only: bool,
+        include_read_only: bool
         ) -> typ.CamelDict: ...
     @lib.t.overload
     def to_dict(
         self,
         camel_case: bool,
-        include_null: bool
+        include_null: bool,
+        include_private: bool,
+        include_write_only: bool,
+        include_read_only: bool
         ) -> 'typ.SnakeDict | typ.CamelDict': ...
     def to_dict(
         self,
         camel_case: bool = False,
-        include_null: bool = True
+        include_null: bool = True,
+        include_private: bool = True,
+        include_write_only: bool = True,
+        include_read_only: bool = False
         ) -> 'typ.SnakeDict | typ.CamelDict':
         """
         Same as `dict(Object)`, but gives fine-grained control over \
@@ -571,44 +667,65 @@ class ObjectBase(metaclass=metas.Meta):
 
         d = {
             k: v
-            for k
-            in self.fields
-            if (v := self[k]) is not None
-            or (include_null and v is None)
+            for k, field
+            in self.__dataclass_fields__.items()
+            if (
+                (v := self[k]) is not None
+                or (include_null and v is None)
+                )
+            and (include_private or utl.is_public_field(k))
+            and (include_write_only or not field.get('write_only'))
+            and (include_read_only or not field.get('read_only'))
             }
         as_dict: typ.SnakeDict = {}
         for key, value in d.items():
             if isinstance(value, ObjectBase):
-                as_dict[key] = value.to_dict(camel_case, include_null)
+                as_dict[key] = value.to_dict(
+                    camel_case,
+                    include_null,
+                    include_private,
+                    include_write_only,
+                    include_read_only
+                    )
             elif typ.utl.check.is_array(value):
                 as_dict[key] = value.__class__(
                     (
-                        v.to_dict(camel_case, include_null)
+                        v.to_dict(
+                            camel_case,
+                            include_null,
+                            include_private,
+                            include_write_only,
+                            include_read_only
+                            )
                         if isinstance(v, Object)
                         else v
                         for v
                         in value
-                        if v is not None
-                        or include_null
+                        if (v is not None or include_null)
                         )
                     )
             elif typ.utl.check.is_mapping(value):
                 as_dict[key] = value.__class__(
                     **{
                         (
-                            core.strings.utl.snake_case_to_camel_case(k.strip('_'))
+                            core.strings.utl.snake_case_to_camel_case(k)
                             if (camel_case and isinstance(k, str))
                             else k
                             ): (
-                                v.to_dict(camel_case, include_null)
+                                v.to_dict(
+                                    camel_case,
+                                    include_null,
+                                    include_private,
+                                    include_write_only,
+                                    include_read_only
+                                    )
                                 if isinstance(v, Object)
                                 else v
                                 )
                         for k, v
                         in value.items()
-                        if utl.is_public_field(k)
-                        and v is not None
-                        or include_null
+                        if (include_private or utl.is_public_field(k))
+                        and (v is not None or include_null)
                         }
                     )
             else:
@@ -616,7 +733,7 @@ class ObjectBase(metaclass=metas.Meta):
 
         if camel_case:
             return {
-                core.strings.utl.snake_case_to_camel_case(k.strip('_')): v
+                core.strings.utl.snake_case_to_camel_case(k): v
                 for k, v
                 in as_dict.items()
                 }

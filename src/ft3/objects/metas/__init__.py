@@ -3,7 +3,7 @@
 __all__ = (
     'obj',
     'utl',
-    'Meta',
+    'Meta'
     )
 
 from . import obj

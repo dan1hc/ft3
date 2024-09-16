@@ -13,6 +13,7 @@ class Constants(core.cfg.Constants):
     BASE_ATTRS = (
         '__heritage__',
         '__dataclass_fields__',
+        '__operations__',
         'enumerations',
         'fields',
         'hash_fields',
@@ -76,4 +77,10 @@ class Constants(core.cfg.Constants):
         'setdefault',
         'update',
         'values',
+        'DELETE',
+        'GET',
+        'OPTIONS',
+        'PATCH',
+        'POST',
+        'PUT'
         )

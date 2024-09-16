@@ -4,9 +4,9 @@ __all__ = (
     'config_template',
     )
 
-import os
+from .. import lib
 
-_root = __file__.removesuffix('__init__.py')
+ROOT = lib.os.path.dirname(__file__)
 
-with open(os.path.join(_root, 'conf.tpl'), 'r') as f:
+with open(lib.os.path.join(ROOT, 'conf.tpl'), 'r') as f:
     config_template = f.read()

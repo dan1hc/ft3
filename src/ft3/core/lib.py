@@ -16,6 +16,7 @@ __all__ = (
     'textwrap',
     'types',
     'urllib',
+    'uuid',
     'LiteralString',
     'Never',
     'Self',
@@ -38,6 +39,7 @@ import typing as t
 import textwrap
 import types
 import urllib.parse
+import uuid
 
 if sys.version_info < (3, 11):  # pragma: no cover
     from typing_extensions import (  # noqa  # type: ignore

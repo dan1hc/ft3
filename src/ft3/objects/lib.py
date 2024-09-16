@@ -3,12 +3,14 @@
 from .. import core
 
 __all__ = (
+    'ast',
     'copy',
     'dataclass_transform',
     'inspect',
     *core.lib.__all__
     )
 
+import ast
 import copy
 import inspect
 

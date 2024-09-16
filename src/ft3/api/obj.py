@@ -1,18 +1,31 @@
-"""Objects module."""
+"""Api objects module."""
 
 __all__ = (
     'Component',
     'Content',
+    'File',
+    'Header',
+    'Healthz',
+    'Info',
     'Operation',
+    'Api',
     'Parameter',
     'Path',
     'RequestBody',
     'ResponseObject',
-    'Responses',
     'Schema',
+    'SecurityScheme',
+    'ServerVariable',
+    'ServerObject',
+    'Tag',
+    'FILES',
+    'OBJECTS',
+    'RESPONSE_HEADERS'
     )
 
+from .. import cli
 from .. import core
+
 from .. import Field, Object
 
 from . import cfg
@@ -25,13 +38,20 @@ class Constants(cfg.Constants):
     """Constant values specific to this file."""
 
 
+FILES: dict[str, 'File'] = {}
+"""All `Files` served by the API."""
+
+OBJECTS: dict[str, 'type[typ.Object]'] = {}
+"""All `Objects` served by the API."""
+
+
 class Component(Object):
     """
     [OpenAPI](https://swagger.io/docs/specification/components/) Component.
 
     """
 
-    _title_: Field[str]
+    _ref_: Field[lib.t.Optional[typ.AnyString]] = None
 
 
 class Schema(Component):
@@ -41,7 +61,7 @@ class Schema(Component):
     """
 
     type_: Field[list[typ.ApiType]] = Field(
-        default=[enm.Type.string.name],
+        default=[enm.Type.string.value],
         enum=enm.Type
         )
     format_: Field[lib.t.Optional[typ.ApiFormat]] = Field(
@@ -49,9 +69,12 @@ class Schema(Component):
         enum=enm.Format
         )
 
+    description: Field[lib.t.Optional[str]] = None
+
     default: Field[lib.t.Optional[typ.ApiTypeValue]] = None
-    required: Field[lib.t.Optional[bool]] = None
     enum: Field[lib.t.Optional[typ.Enum]] = None
+
+    required: Field[lib.t.Optional[list[typ.string[typ.camelCase]]]] = None
 
     min_length: Field[lib.t.Optional[int]] = None
     max_length: Field[lib.t.Optional[int]] = None
@@ -80,7 +103,8 @@ class Schema(Component):
     one_of: Field[lib.t.Optional[list['Schema']]] = None
 
     def __post_init__(self) -> None:
-        self.type_.append(enm.Type.null.name)
+        if isinstance(self.enum, lib.enum.EnumMeta):
+            self.enum = sorted(self.enum._value2member_map_)
         return super().__post_init__()
 
     @classmethod
@@ -92,35 +116,46 @@ class Schema(Component):
         ) -> 'Schema':
         """Parse Schema definition from `Object`."""
 
-        title_: typ.string[lib.t.Any] = kwargs.pop('name', obj.__name__)
-        kwargs['title'] = title_
+        oname: typ.string[typ.PascalCase] = kwargs.pop('name', obj.__name__)
+        kwargs.setdefault('ref', oname)
 
         properties = {
             (
-                name_ := (
+                fname := (
                     core
                     .strings
                     .utl
-                    .snake_case_to_camel_case(field_name.strip('_'))
+                    .snake_case_to_camel_case(field_name)
                     )
-                ): (
-                    cls.from_type(
-                        name=title_ + name_[0].upper() + name_[1:],
-                        **{
-                            k: v
-                            for k, v
-                            in field.items()
-                            if k != 'name'
-                            }
-                        )
+                ): cls.from_type(
+                    ref=fname + oname,
+                    **{
+                        k: v
+                        for k, v
+                        in field.items()
+                        if k not in Constants.SKIP_FIELDS
+                        }
                     )
             for field_name, field
             in obj.__dataclass_fields__.items()
             }
 
+        requirements = [
+            (
+                core
+                .strings
+                .utl
+                .snake_case_to_camel_case(field_name)
+                )
+            for field_name, field
+            in obj.__dataclass_fields__.items()
+            if field.required
+            ]
+
         return cls(
             properties=properties,
-            type_=[enm.Type.object.name],
+            required=requirements or None,
+            type_=[enm.Type.object.value],
             **kwargs
             )
 
@@ -135,13 +170,7 @@ class Schema(Component):
         """Parse Schema definition from python `type`."""
 
         typ_ = kwargs.pop('type', type_)
-        title_: typ.string[lib.t.Any] = kwargs.pop(
-            'name',
-            getattr(typ_, '__name__', typ_.__class__.__name__)
-            )
-        kwargs['title'] = core.strings.utl.snake_case_to_camel_case(
-            title_.strip('_')
-            )
+        types_: list[typ.ApiType] = []
 
         if (
             typ.utl.check.is_union(typ_)
@@ -173,7 +202,19 @@ class Schema(Component):
             return cls.from_type(type_=literal_tp, **kwargs)
         elif typ.utl.check.is_object_type(typ_):
             return cls.from_obj(typ_, **kwargs)
+        elif typ.utl.check.is_uuid_type(typ_):
+            types_.append(enm.Type.string.value)
+            if typ.utl.check.is_nullable(typ_):
+                types_.append(enm.Type.null.value)
+            return cls(
+                type_=types_,
+                format_=enm.Format.uuid.value,
+                **kwargs
+                )
         elif typ.utl.check.is_typed(typ_):
+            types_.append(enm.Type.object.value)
+            if typ.utl.check.is_nullable(typ_):
+                types_.append(enm.Type.null.value)
             return cls(
                 properties={
                     core.strings.utl.snake_case_to_camel_case(annotation): (
@@ -182,61 +223,89 @@ class Schema(Component):
                     for annotation, tp
                     in typ_.__annotations__.items()
                     },
-                type_=[enm.Type.object.name],
+                type_=types_,
                 **kwargs
                 )
         elif typ.utl.check.is_array_type(typ_):
+            types_.append(enm.Type.array.value)
+            if typ.utl.check.is_nullable(typ_):
+                types_.append(enm.Type.null.value)
             if (tps := typ.utl.check.get_args(typ_)):
                 tp = tps[0]
             else:
                 tp = str
             return cls(
-                type_=[enm.Type.array.name],
+                type_=types_,
                 items_=cls.from_type(type_=tp),
                 **kwargs
                 )
         elif typ.utl.check.is_mapping_type(typ_):
-            return cls(type_=[enm.Type.object.name], **kwargs)
+            types_.append(enm.Type.object.value)
+            if typ.utl.check.is_nullable(typ_):
+                types_.append(enm.Type.null.value)
+            return cls(type_=types_, **kwargs)
         elif typ.utl.check.is_bool_type(typ_):
+            types_.append(enm.Type.boolean.value)
+            if typ.utl.check.is_nullable(typ_):
+                types_.append(enm.Type.null.value)
             return cls(
-                type_=[enm.Type.boolean.name],
-                format_=enm.Format.boolean.name,
+                type_=types_,
+                format_=enm.Format.boolean.value,
                 **kwargs
                 )
         elif typ.utl.check.is_none_type(typ_):
-            return cls(type_=[], **kwargs)
+            types_.append(enm.Type.null.value)
+            return cls(type_=types_, **kwargs)
         elif typ.utl.check.is_number_type(typ_):
             otp = lib.t.get_origin(typ_) or typ_
             if issubclass(otp, lib.decimal.Decimal):
+                types_.append(enm.Type.number.value)
+                if typ.utl.check.is_nullable(typ_):
+                    types_.append(enm.Type.null.value)
                 return cls(
-                    type_=[enm.Type.number.name],
-                    format_=enm.Format.double.name,
+                    type_=types_,
+                    format_=enm.Format.double.value,
                     **kwargs
                     )
             elif issubclass(otp, int):
+                types_.append(enm.Type.integer.value)
+                if typ.utl.check.is_nullable(typ_):
+                    types_.append(enm.Type.null.value)
                 return cls(
-                    type_=[enm.Type.integer.name],
-                    format_=enm.Format.int32.name,
+                    type_=types_,
+                    format_=enm.Format.int32.value,
                     **kwargs
                     )
             elif issubclass(otp, float):
+                types_.append(enm.Type.number.value)
+                if typ.utl.check.is_nullable(typ_):
+                    types_.append(enm.Type.null.value)
                 return cls(
-                    type_=[enm.Type.number.name],
-                    format_=enm.Format.float.name,
+                    type_=types_,
+                    format_=enm.Format.float.value,
                     **kwargs
                     )
             else:  # pragma: no cover
-                return cls(type_=[enm.Type.number.name], **kwargs)
+                types_.append(enm.Type.number.value)
+                if typ.utl.check.is_nullable(typ_):
+                    types_.append(enm.Type.null.value)
+                return cls(type_=types_, **kwargs)
         elif typ.utl.check.is_datetime_type(typ_):
+            types_.append(enm.Type.string.value)
+            if typ.utl.check.is_nullable(typ_):
+                types_.append(enm.Type.null.value)
             return cls(
-                type_=[enm.Type.string.name],
-                format_=enm.Format.datetime.name,
+                type_=types_,
+                format_=enm.Format.datetime.value,
                 **kwargs
                 )
         elif typ.utl.check.is_date_type(typ_):
+            types_.append(enm.Type.string.value)
+            if typ.utl.check.is_nullable(typ_):
+                types_.append(enm.Type.null.value)
             return cls(
-                type_=[enm.Type.string.name],
-                format_=enm.Format.date.name,
+                type_=types_,
+                format_=enm.Format.date.value,
                 **kwargs
                 )
         else:
@@ -249,10 +318,10 @@ class Parameter(Component):
 
     """
 
-    name: Field[str]
+    name: Field[typ.string[typ.camelCase]]
 
     in_: Field[str] = Field(
-        default=enm.ParameterLocation.query.name,
+        default=enm.ParameterLocation.query.value,
         enum=enm.ParameterLocation
         )
 
@@ -264,17 +333,18 @@ class Parameter(Component):
     schema: Field[lib.t.Optional[Schema]] = None
 
 
+class Header(Component):
+    """
+    [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#header-object) Header Object.
+
+    """
+
+    description: Field[lib.t.Optional[str]] = None
+    schema: Field[lib.t.Optional[Schema]] = None
+
+
 class Content(Component):
-    """
-    Sub component for common content types.
-
-    ---
-
-    Pass content type as title.
-
-    Example: `Content(_title_='application/json')`
-
-    """
+    """OpenAPI content for ContentType."""
 
     schema: Field[lib.t.Optional[Schema]] = None
 
@@ -285,46 +355,34 @@ class RequestBody(Component):
 
     """
 
-    name: Field[str]
-    content: Field[Content] = Content(_title_=enm.ContentType.json.value)
+    description: Field[lib.t.Optional[str]] = None
+    content: Field[dict[typ.ContentType, Content]] = {
+        enm.ContentType.json.value: Content()
+        }
 
 
 class ResponseObject(Component):
     """
     [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#response-object) Request Body Object.
 
-    ---
-
-    Pass HTTP Status Code as title (as a `str`).
-
-    Example: `ResponseObject(_title_='200', description='Success.')`
-
     """
 
     description: Field[str]
 
-    headers: Field[lib.t.Optional[list[Parameter]]] = None
-    content: Field[Content] = Content(_title_=enm.ContentType.json.value)
+    headers: Field[lib.t.Optional[dict[str, Header]]] = None
+    content: Field[dict[typ.ContentType, lib.t.Optional[Content]]] = {
+        enm.ContentType.text.value: None
+        }
 
 
-class Responses(Component):
-    """Possible Responses."""
+class Tag(Component):
+    """
+    [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#tag-object) Tag Object.
 
-    _200_: Field[lib.t.Optional[ResponseObject]] = None
-    _201_: Field[lib.t.Optional[ResponseObject]] = None
-    _204_: Field[lib.t.Optional[ResponseObject]] = None
-    _301_: Field[lib.t.Optional[ResponseObject]] = None
-    _400_: Field[lib.t.Optional[ResponseObject]] = None
-    _401_: Field[lib.t.Optional[ResponseObject]] = None
-    _403_: Field[lib.t.Optional[ResponseObject]] = None
-    _404_: Field[lib.t.Optional[ResponseObject]] = None
-    _405_: Field[lib.t.Optional[ResponseObject]] = None
-    _409_: Field[lib.t.Optional[ResponseObject]] = None
-    _423_: Field[lib.t.Optional[ResponseObject]] = None
-    _429_: Field[lib.t.Optional[ResponseObject]] = None
-    _500_: Field[lib.t.Optional[ResponseObject]] = None
-    _502_: Field[lib.t.Optional[ResponseObject]] = None
-    _504_: Field[lib.t.Optional[ResponseObject]] = None
+    """
+
+    name: Field[str]
+    description: Field[lib.t.Optional[str]] = None
 
 
 class Operation(Component):
@@ -341,7 +399,28 @@ class Operation(Component):
     parameters: Field[lib.t.Optional[list[Parameter]]] = None
     request_body: Field[lib.t.Optional[RequestBody]] = None
 
-    responses: Field[lib.t.Optional[Responses]] = None
+    responses: Field[lib.t.Optional[dict[str, ResponseObject]]] = None
+
+    @property
+    def path_uri(self) -> str:
+        """Path URI."""
+
+        path_params = [
+            param._ref_
+            for param
+            in (self.parameters or ())
+            if param.in_ == enm.ParameterLocation.path.value
+            ]
+
+        uri = ''
+        for tag_ in (self.tags or ()):
+            for tag in tag_.split(':'):
+                name = tag[0].lower() + tag[1:]
+                uri += ('/' + core.strings.utl.pluralize(name))
+                if tag in path_params:
+                    uri += ('/{' + name + 'Id}')
+
+        return uri
 
 
 class Path(Component):
@@ -350,8 +429,11 @@ class Path(Component):
 
     """
 
+    _resource_: Field[type[Object]]
+
+    summary: Field[str]
+
     description: Field[lib.t.Optional[str]] = None
-    summary: Field[lib.t.Optional[str]] = None
 
     delete: Field[lib.t.Optional[Operation]] = None
     get_: Field[lib.t.Optional[Operation]] = None
@@ -359,3 +441,196 @@ class Path(Component):
     patch: Field[lib.t.Optional[Operation]] = None
     post: Field[lib.t.Optional[Operation]] = None
     put: Field[lib.t.Optional[Operation]] = None
+
+    def update_options(self) -> None:
+        """Update options operation for the endpoint."""
+
+        tags: list[str] = []
+        path_params: dict[str, Parameter] = {}
+        for method in Constants.METHODS:
+            operation: lib.t.Optional[Operation] = self[method]
+            if operation is not None:
+                path_params |= {
+                    param._ref_: param
+                    for param
+                    in (operation.parameters or ())
+                    if param.in_ == enm.ParameterLocation.path.value
+                    and param._ref_ is not None
+                    }
+                for tag in (operation.tags or ()):
+                    if tag not in tags:
+                        tags.append(tag)
+
+        response_obj = ResponseObject(
+            description='Empty response.',
+            headers=RESPONSE_HEADERS
+            )
+
+        self.options = Operation(
+            summary='Options for the endpoint.',
+            tags=tags,
+            parameters=list(path_params.values()) or None,
+            responses={'200': response_obj}
+            )
+
+        return None
+
+
+class ServerVariable(Component):
+    """
+    [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#server-variable-object) Server Variable Object.
+
+    """
+
+    default: Field[str]
+    description: Field[lib.t.Optional[str]] = None
+
+
+class ServerObject(Component):
+    """
+    [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#server-object) Server Object.
+
+    """
+
+    url: Field[str]
+    description: Field[lib.t.Optional[str]] = None
+    variables: Field[lib.t.Optional[dict[str, ServerVariable]]] = None
+
+
+class Info(Component):
+    """
+    [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#info-object) Info Object.
+
+    """
+
+    title: Field[str]
+    version: Field[str]
+
+    summary: Field[lib.t.Optional[str]] = None
+    description: Field[lib.t.Optional[str]] = None
+    terms_of_service: Field[lib.t.Optional[str]] = None
+
+
+class File(Object):
+    """A file object, useful for serving static files."""
+
+    path: Field[str]
+    """The path at which to serve the file."""
+
+    content: Field[bytes | str]
+    """File content."""
+
+    content_type: Field[str] = enm.ContentType.text.value
+
+    def __post_init__(self) -> None:
+        FILES[self.path] = self
+        return super().__post_init__()
+
+
+class Api(Component):
+    """
+    [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#openapi-object) OpenAPI Object.
+
+    """
+
+    info: Field[Info]
+    openapi: Field[str] = Constants.VERSION
+
+    paths: Field[dict[str, Path]] = {}
+    tags: Field[list[Tag]] = []
+
+    servers: Field[lib.t.Optional[list[ServerObject]]] = None
+
+    @classmethod
+    def register(cls, obj_: type[typ.ObjectType]) -> type[typ.ObjectType]:
+        """Register an `Object` to be served from the API."""
+
+        OBJECTS[obj_.__name__] = obj_
+
+        return obj_
+
+
+class SecurityScheme(Component):
+    """
+    [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#security-scheme-object) Security Scheme Object.
+
+    """
+
+    type_: Field[str] = Field(
+        default=enm.SecuritySchemeType.apiKey.value,
+        enum=enm.SecuritySchemeType
+        )
+
+    name_: Field[lib.t.Optional[str]] = None
+    in_: Field[lib.t.Optional[str]] = Field(
+        default=None,
+        enum=enm.ApiKeyLocation
+        )
+
+    scheme: Field[lib.t.Optional[str]] = Field(
+        default=None,
+        enum=enm.SecurityHTTPScheme
+        )
+
+    description: Field[lib.t.Optional[str]] = None
+    content: Field[dict[typ.ContentType, Content]] = {
+        enm.ContentType.json.value: Content()
+        }
+
+
+class Healthz(Object):
+    """Default application heartbeat."""
+
+    status: Field[str] = 'OK'
+    """Application status."""
+
+
+RESPONSE_HEADERS = {
+    header.value: Header(
+        description=(
+            '\\' + value
+            if (value := str(enm.HeaderValue[header.name].value)) == '*'
+            else value
+            ),
+        schema=Schema.from_type(type_=dict[str, str])
+        )
+    for header
+    in enm.Header
+    }
+"""Default response headers."""
+
+
+api_parser = cli.obj.parsers.add_parser(  # type: ignore[has-type]
+    'api',
+    formatter_class=lib.argparse.ArgumentDefaultsHelpFormatter,
+    )
+api_parser.add_argument(
+    'package',
+    help='the name or path to the package to be served',
+    )
+api_parser.add_argument(
+    '--port',
+    '-p',
+    default=Constants.DEFAULT_PORT,
+    help='the port to serve on',
+    dest='port',
+    )
+api_parser.add_argument(
+    '--version',
+    '-v',
+    default=Constants.DEFAULT_VERSION,
+    help='the version of the api',
+    dest='version',
+    )
+api_parser.add_argument(
+    '--api-path',
+    default=Constants.API_PATH,
+    help='the base path from which to serve the API',
+    dest='api_path',
+    )
+api_parser.add_argument(
+    '--no-heartbeat',
+    action='store_false',
+    help='set to disinclude /healthz endpoint',
+    dest='include_heartbeat',
+    )

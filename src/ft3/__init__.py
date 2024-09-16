@@ -41,7 +41,9 @@ __all__ = (
     'log',
     'loggers',
     'objects',
+    'Api',
     'Field',
+    'File',
     'Object'
     )
 
@@ -56,3 +58,5 @@ from . import core
 from . import docs
 from . import loggers
 from . import objects
+
+from . api import Api, File

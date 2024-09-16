@@ -1,12 +1,17 @@
-"""API enumerations."""
+"""Api enumerations."""
 
 from .. import core
 
 __all__ = (
+    'ApiKeyLocation',
     'Component',
     'ContentType',
     'Format',
+    'Header',
+    'HeaderValue',
     'ParameterLocation',
+    'SecurityHTTPScheme',
+    'SecuritySchemeType',
     'Type',
     *core.enm.__all__
     )
@@ -15,11 +20,10 @@ from .. core . enm import *
 
 from . import cfg
 from . import lib
-from . import typ
 
 
 class Constants(cfg.Constants):
-    """Modules specific to REST Enums."""
+    """Modules specific to Api Enums."""
 
 
 class Component(lib.enum.Enum):
@@ -85,13 +89,14 @@ class Format(lib.enum.Enum):
 
     """
 
-    boolean  = bool
-    byte     = bytes
-    date     = lib.datetime.date
-    datetime = lib.datetime.datetime
-    double   = lib.decimal.Decimal
-    float    = float
-    int32    = int
+    boolean  = 'boolean'
+    byte     = 'byte'
+    date     = 'date'
+    datetime = 'datetime'
+    double   = 'double'
+    float    = 'float'
+    int32    = 'int32'
+    uuid     = 'uuid'
 
 
 class Type(lib.enum.Enum):
@@ -104,13 +109,54 @@ class Type(lib.enum.Enum):
 
     """
 
-    array   = list
-    boolean = bool
-    integer = int
-    null    = typ.NoneType  # type: ignore[valid-type]
-    number  = float
-    object  = dict
-    string  = str
+    array   = 'array'
+    boolean = 'boolean'
+    integer = 'integer'
+    null    = 'null'
+    number  = 'number'
+    object  = 'object'
+    string  = 'string'
+
+
+class SecurityHTTPScheme(lib.enum.Enum):
+    """
+    [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#security-scheme-object) Security HTTP Scheme Enumeration.
+
+    """
+
+    basic  = 'basic'
+    bearer = 'bearer'
+
+
+class SecuritySchemeType(lib.enum.Enum):
+    """
+    [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#security-scheme-object) Security Types Enumeration.
+
+    """
+
+    http          = 'http'
+    apiKey        = 'apiKey'
+    oauth2        = 'oauth2'
+    openIdConnect = 'openIdConnect'
+
+
+class ApiKeyLocation(lib.enum.Enum):
+    """
+    ApiKey In Enumeration.
+
+    ---
+
+    There are three possible locations specified by the in field:
+
+    1. `header`
+    2. `query`
+    3. `cookie`
+
+    """
+
+    header = 'header'
+    query  = 'query'
+    cookie = 'cookie'
 
 
 class ParameterLocation(lib.enum.Enum):
@@ -143,3 +189,31 @@ class ContentType(lib.enum.Enum):
     json = 'application/json'
     png  = 'image/png'
     text = 'text/plain'
+
+
+class Header(lib.enum.Enum):
+    """Default headers."""
+
+    accessControlAllowCredentials = 'Access-Control-Allow-Credentials'
+    accessControlAllowHeaders     = 'Access-Control-Allow-Headers'
+    accessControlMaxAge           = 'Access-Control-Max-Age'
+    accessControlAllowMethods     = 'Access-Control-Allow-Methods'
+    accessControlAllowOrigin      = 'Access-Control-Allow-Origin'
+    connection                    = 'Connection'
+    contentLength                 = 'Content-Length'
+    contentType                   = 'Content-Type'
+    date                          = 'Date'
+
+
+class HeaderValue(lib.enum.Enum):
+    """Default headers."""
+
+    accessControlAllowCredentials = True
+    accessControlAllowHeaders     = '*'
+    accessControlMaxAge           = 86400
+    accessControlAllowMethods     = '*'
+    accessControlAllowOrigin      = '*'
+    connection                    = 'close'
+    contentLength                 = '*'
+    contentType                   = ContentType.json.value
+    date                          = "'%Y-%m-%dT%H:%M:%S.%f%z'"

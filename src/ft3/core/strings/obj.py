@@ -442,7 +442,9 @@ StringWrapper = lib.textwrap.TextWrapper(
     break_on_hyphens=True,
     max_lines=Constants.CUTOFF_LEN,
     expand_tabs=False,
-    replace_whitespace=True,
+    replace_whitespace=False,
     drop_whitespace=False,
+    tabsize=Constants.INDENT,
+    placeholder=''
     )
 """Wraps long strings."""
