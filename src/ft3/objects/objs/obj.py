@@ -61,11 +61,11 @@ class ObjectBase(metaclass=metas.Meta):
         cls,
         fn: lib.t.Callable[
             ['api.events.obj.Request'],
-            list[lib.t.Self] | lib.t.Self | str
+            list[lib.Self] | lib.Self | str
             ]
         ) -> lib.t.Callable[
             ['api.events.obj.Request'],
-            list[lib.t.Self] | lib.t.Self | str
+            list[lib.Self] | lib.Self | str
             ]:  # pragma: no cover
         cls.__operations__[Constants.GET] = fn
         return fn
@@ -81,24 +81,24 @@ class ObjectBase(metaclass=metas.Meta):
     @classmethod
     def PATCH(
         cls,
-        fn: 'lib.t.Callable[[api.events.obj.Request], lib.t.Self]'
-        ) -> 'lib.t.Callable[[api.events.obj.Request], lib.t.Self]':  # pragma: no cover
+        fn: 'lib.t.Callable[[api.events.obj.Request], lib.Self]'
+        ) -> 'lib.t.Callable[[api.events.obj.Request], lib.Self]':  # pragma: no cover
         cls.__operations__[Constants.PATCH] = fn
         return fn
 
     @classmethod
     def POST(
         cls,
-        fn: 'lib.t.Callable[[api.events.obj.Request], lib.t.Self]'
-        ) -> 'lib.t.Callable[[api.events.obj.Request], lib.t.Self]':  # pragma: no cover
+        fn: 'lib.t.Callable[[api.events.obj.Request], lib.Self]'
+        ) -> 'lib.t.Callable[[api.events.obj.Request], lib.Self]':  # pragma: no cover
         cls.__operations__[Constants.POST] = fn
         return fn
 
     @classmethod
     def PUT(
         cls,
-        fn: 'lib.t.Callable[[api.events.obj.Request], lib.t.Self]'
-        ) -> 'lib.t.Callable[[api.events.obj.Request], lib.t.Self]':  # pragma: no cover
+        fn: 'lib.t.Callable[[api.events.obj.Request], lib.Self]'
+        ) -> 'lib.t.Callable[[api.events.obj.Request], lib.Self]':  # pragma: no cover
         cls.__operations__[Constants.PUT] = fn
         return fn
 
