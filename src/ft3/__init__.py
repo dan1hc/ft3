@@ -47,7 +47,7 @@ __all__ = (
     'Object'
     )
 
-__version__ = '0.1.0-rc.2'
+__version__ = '0.1.0-rc.3'
 
 from . loggers import log
 from . objects import Field, Object
