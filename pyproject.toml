@@ -24,7 +24,7 @@ keywords = [
     "swagger",
     ]
 readme = "README.md"
-version = "0.1.0-rc.3"
+version = "0.1.0-rc.4"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
