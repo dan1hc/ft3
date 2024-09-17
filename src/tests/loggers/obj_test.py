@@ -104,28 +104,6 @@ class TestLogger(unittest.TestCase):
         """Test exc logging."""
 
         msg = self.msg_str
-        level = lib.logging.ERROR
-        parsed = ft3.loggers.utl.parse_incoming_log_message(msg, level)
-        with self.assertLogs(self.log, level) as logger:
-            try:
-                _ = 1 / 0
-            except Exception:
-                ft3.log.error(msg)
-                expected_output = lib.textwrap.indent(
-                    lib.json.dumps(
-                        parsed,
-                        default=ft3.core.strings.utl.convert_for_repr,
-                        indent=Constants.INDENT,
-                        sort_keys=True
-                        ),
-                    Constants.INDENT * ' '
-                    )
-            self.assertEqual(logger.records[0].msg, expected_output)
-
-    def test_06_log(self):
-        """Test exc logging."""
-
-        msg = self.msg_str
         level = lib.logging.DEBUG
         parsed = ft3.loggers.utl.parse_incoming_log_message(msg, level)
         with self.assertLogs(self.log, level) as logger:
@@ -144,7 +122,7 @@ class TestLogger(unittest.TestCase):
                     )
             self.assertEqual(logger.records[0].msg, expected_output)
 
-    def test_07_print(self):
+    def test_06_print(self):
         """Test first print + warning interception."""
 
         msg = self.msg_str
@@ -169,7 +147,7 @@ class TestLogger(unittest.TestCase):
                 expected_output
                 )
 
-    def test_08_print(self):
+    def test_07_print(self):
         """Test subsequent print interceptions."""
 
         msg = self.msg_str
@@ -181,7 +159,7 @@ class TestLogger(unittest.TestCase):
                     Constants.WARN_MSG
                     )
 
-    def test_09_parse_log_record(self):
+    def test_08_parse_log_record(self):
         """Test idempotent `LogRecord` parsing."""
 
         msg = ft3.loggers.typ.LogRecord(message='test')
@@ -190,7 +168,7 @@ class TestLogger(unittest.TestCase):
             ft3.loggers.utl.parse_incoming_log_message(msg, 20)
             )
 
-    def test_10_parse_log_record(self):
+    def test_09_parse_log_record(self):
         """Test array msg for `LogRecord` parsing."""
 
         msg = ('test', )

@@ -17,23 +17,24 @@ from .. import pkg
 def delete(request: Request) -> None:
     """Delete a single record."""
 
-    if isinstance(request.body, dict):
-        parent_id = request.path_params['petWithPetId']
-        id_ = request.path_params['petId']
-        pet_with_pet: pkg.obj.PetWithPet = (
-            pkg.clients.DatabaseClient.find_one(parent_id)
-            )
-        if pet_with_pet is None:
-            raise FileNotFoundError
-        pet_with_pet.pets = [
-            pet
-            for pet
-            in pet_with_pet.pets
-            if pet.id_ != id_
-            ]
-        pkg.clients.DatabaseClient.update_one(pet_with_pet)
-    else:
-        raise SyntaxError
+    parent_id = request.path_params['petWithPetId']
+    id_ = request.path_params['petId']
+
+    pet_with_pet: pkg.obj.PetWithPet = (
+        pkg.clients.DatabaseClient.find_one(parent_id)
+        )
+
+    if pet_with_pet is None:
+        raise FileNotFoundError
+
+    pet_with_pet.pets = [
+        pet
+        for pet
+        in pet_with_pet.pets
+        if pet.id_ != id_
+        ]
+
+    pkg.clients.DatabaseClient.update_one(pet_with_pet)
 
     return None
 
@@ -63,26 +64,23 @@ def read(request: Request) -> pkg.obj.Pet:
 def update(request: Request) -> pkg.obj.Pet:
     """Update a single record."""
 
-    if isinstance(request.body, dict):
-        parent_id = request.path_params['petWithPetId']
-        id_ = request.path_params['petId']
+    parent_id = request.path_params['petWithPetId']
+    id_ = request.path_params['petId']
 
-        pet_with_pet: pkg.obj.PetWithPet = (
-            pkg.clients.DatabaseClient.find_one(parent_id)
-            )
+    pet_with_pet: pkg.obj.PetWithPet = (
+        pkg.clients.DatabaseClient.find_one(parent_id)
+        )
 
-        if pet_with_pet is None:
-            raise FileNotFoundError
-
-        for pet in pet_with_pet.pets:
-            if pet.id_ == id_:
-                pet.update(request.query_params)
-                pkg.clients.DatabaseClient.update_one(pet_with_pet)
-                return pet
-
+    if pet_with_pet is None:
         raise FileNotFoundError
-    else:
-        raise SyntaxError
+
+    for pet in pet_with_pet.pets:
+        if pet.id_ == id_:
+            pet |= request.query_params
+            pkg.clients.DatabaseClient.update_one(pet_with_pet)
+            return pet
+
+    raise FileNotFoundError
 
 
 @pkg.obj.Pet.POST
@@ -125,7 +123,7 @@ def replace(request: Request) -> pkg.obj.Pet:
 
         for pet in pet_with_pet.pets:
             if pet.id_ == id_:
-                pet.update(request.body)  # type: ignore[arg-type]
+                pet |= request.body
                 pkg.clients.DatabaseClient.update_one(pet_with_pet)
                 return pet
 

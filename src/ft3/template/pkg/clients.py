@@ -47,12 +47,12 @@ class DatabaseClient:
     def insert_one(cls, record: typ.ObjectType) -> typ.ObjectType:
         """Add record to database."""
 
-        cls.DATA[record.hash_fields[0]] = record
+        cls.DATA[record[record.hash_fields[0]]] = record
         return record
 
     @classmethod
     def update_one(cls, record: typ.ObjectType) -> typ.ObjectType:
         """Update existing record in database."""
 
-        cls.DATA[record.hash_fields[0]] = record
+        cls.DATA[record[record.hash_fields[0]]] = record
         return record

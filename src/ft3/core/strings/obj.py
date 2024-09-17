@@ -125,12 +125,10 @@ class RedactionPattern:
     """
 
     aws_access_key_id = lib.re.compile(
-        r'(?P<secret>(A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|'
-        r'AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16})'
+        r'(A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|'
+        r'AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16}'
         )
-    aws_secret_access_key = lib.re.compile(
-        r'(?i)(^|\s+)(?P<secret>[A-Za-z0-9\/\+=]{40})'
-        )
+    aws_secret_access_key = lib.re.compile(r'[A-Za-z0-9\+=]{40}')
     github_pat = lib.re.compile(r'ghp_[0-9a-zA-Z]{36}')
     github_oauth = lib.re.compile(r'gho_[0-9a-zA-Z]{36}')
     github_app_token = lib.re.compile(r'(ghu|ghs)_[0-9a-zA-Z]{36}')

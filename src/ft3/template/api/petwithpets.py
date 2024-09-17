@@ -17,11 +17,9 @@ from .. import pkg
 def delete(request: Request) -> None:
     """Delete a single record."""
 
-    if isinstance(request.body, dict):
-        id_ = request.path_params['petWithPetId']
-        pkg.clients.DatabaseClient.delete_one(id_)
-    else:
-        raise SyntaxError
+    id_ = request.path_params['petWithPetId']
+
+    pkg.clients.DatabaseClient.delete_one(id_)
 
     return None
 
@@ -41,15 +39,15 @@ def read(request: Request) -> list[pkg.obj.PetWithPet]:
 def update(request: Request) -> pkg.obj.PetWithPet:
     """Update a single record."""
 
-    if isinstance(request.body, dict):
-        id_ = request.path_params['petWithPetId']
-        pet: pkg.obj.PetWithPet = pkg.clients.DatabaseClient.find_one(id_)
-        if pet is None:
-            raise FileNotFoundError
-        pet |= request.query_params
-        pkg.clients.DatabaseClient.update_one(pet)
-    else:
-        raise SyntaxError
+    id_ = request.path_params['petWithPetId']
+
+    pet: pkg.obj.PetWithPet = pkg.clients.DatabaseClient.find_one(id_)
+
+    if pet is None:
+        raise FileNotFoundError
+
+    pet |= request.query_params
+    pkg.clients.DatabaseClient.update_one(pet)
 
     return pet
 

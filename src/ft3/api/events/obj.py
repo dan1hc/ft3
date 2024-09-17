@@ -95,9 +95,11 @@ class Request(Object):
     headers: Field[dict[str, str]] = {}
 
     body: Field[
-        dict[typ.string[typ.camelCase], lib.t.Any]
-        | list[dict[typ.string[typ.camelCase], lib.t.Any]]
-        | str
+        lib.t.Optional[
+            dict[typ.AnyString, lib.t.Any]
+            | list[dict[typ.AnyString, lib.t.Any]]
+            | str
+            ]
         ] = None
 
     path_params: Field[dict[typ.AnyString, str]] = {}
@@ -135,8 +137,10 @@ class Request(Object):
             isinstance(self.body, str)
             and operation.request_body is not None
             and content is not None
-            and method == Constants.POST
-            or method == Constants.PUT
+            and (
+                method == Constants.POST
+                or method == Constants.PUT
+                )
             ):
             str_body: str = self.body
             deserialized = lib.json.loads(str_body)
