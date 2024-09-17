@@ -343,9 +343,10 @@ def paths_from_object(
             child_objs.append(tps[0])
 
     for child_obj in child_objs:
-        paths.extend(
-            paths_from_object(child_obj, tags, path_parameters or None)
-            )
+        if child_obj.hash_fields and child_obj.__name__ not in OBJECTS:
+            paths.extend(
+                paths_from_object(child_obj, tags, path_parameters or None)
+                )
 
     return paths
 
