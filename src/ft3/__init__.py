@@ -34,23 +34,29 @@ Install from command line, with pip:
 """
 
 __all__ = (
+    'api',
     'cli',
     'core',
     'docs',
     'log',
     'loggers',
     'objects',
+    'Api',
     'Field',
+    'File',
     'Object'
     )
 
-__version__ = '0.0.1'
+__version__ = '0.1.0-rc.5'
 
+from . loggers import log
+from . objects import Field, Object
+
+from . import api
 from . import cli
 from . import core
 from . import docs
 from . import loggers
 from . import objects
 
-from . loggers import log
-from . objects import Field, Object
+from . api import Api, File

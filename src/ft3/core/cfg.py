@@ -57,11 +57,18 @@ class Constants:
 
     __ANNOTATIONS__: 'typ.string[typ.snake_case]' = '__annotations__'
     __DATACLASS_FIELDS__: 'typ.string[typ.snake_case]' = '__dataclass_fields__'
-    __DICT__: 'typ.string[typ.snake_case]' = '__dict__'
     __HERITAGE__: 'typ.string[typ.snake_case]' = '__heritage__'
     __SLOTS__: 'typ.string[typ.snake_case]' = '__slots__'
     __MODULE__: 'typ.string[typ.snake_case]' = '__module__'
+    __OPERATIONS__: 'typ.string[typ.snake_case]' = '__operations__'
 
     FIELDS: 'typ.string[typ.snake_case]' = 'fields'
     ENUMERATIONS: 'typ.string[typ.snake_case]' = 'enumerations'
     HASH_FIELDS: 'typ.string[typ.snake_case]' = 'hash_fields'
+
+    DELETE: 'typ.string[typ.snake_case]'  = 'delete'
+    GET: 'typ.string[typ.snake_case]'     = 'get'
+    OPTIONS: 'typ.string[typ.snake_case]' = 'options'
+    PATCH: 'typ.string[typ.snake_case]'   = 'patch'
+    POST: 'typ.string[typ.snake_case]'    = 'post'
+    PUT: 'typ.string[typ.snake_case]'     = 'put'

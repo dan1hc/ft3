@@ -1,6 +1,8 @@
 """Objects utility functions."""
 
 __all__ = (
+    'ast_find_classdef',
+    'get_attribute_docs',
     'get_enumerations_from_fields',
     'get_fields_for_hash',
     'is_public_field',
@@ -11,9 +13,56 @@ from . import cfg
 from . import lib
 from . import typ
 
+if lib.t.TYPE_CHECKING:  # pragma: no cover
+    from . import metas
+
 
 class Constants(cfg.Constants):
     """Constant values specific to this file."""
+
+
+def ast_find_classdef(tree: lib.ast.AST) -> lib.ast.ClassDef:
+    """Get `ClassDef` from an AST."""
+
+    defs = [e for e in lib.ast.walk(tree) if isinstance(e, lib.ast.ClassDef)]
+    return defs[0]
+
+
+def get_attribute_docs(
+    cls: 'metas.Meta'
+    ) -> dict[typ.string[typ.snake_case], str]:
+    """Get class attribute docstrings."""
+
+    attribute_docs: dict[typ.string[typ.snake_case], str] = {}
+
+    try:
+        src = lib.inspect.getsource(cls)
+        tree = lib.ast.parse(src)
+        tree = ast_find_classdef(tree)
+    except (IndentationError, IndexError, OSError):
+        pass
+    else:
+        tree_slice = tree.body[1:]
+        for i, expr in enumerate(tree_slice):
+            if (
+                isinstance(expr, lib.ast.AnnAssign)
+                and (i + 1) < len(tree_slice)
+                ):
+                name: typ.string[typ.snake_case] = lib.ast.unparse(
+                    expr.target
+                    )
+                stmt = tree_slice[i + 1]
+                if isinstance(stmt, lib.ast.Expr) and stmt.value is not None:
+                    doc_raw: lib.t.Optional[str] = getattr(
+                        stmt.value,
+                        'value',
+                        None
+                        )
+                    if doc_raw is not None:
+                        doc = lib.textwrap.dedent(doc_raw)
+                        attribute_docs[name] = doc
+
+    return attribute_docs
 
 
 @lib.functools.cache
@@ -90,14 +139,12 @@ def get_fields_for_hash(
     `'id_'` takes precedence over `'_common_name_'`.
 
     If no fields are named in ways that suggest they can be used to \
-    determine the uniqueness of the object, all fields will instead be \
-    returned.
+    determine the uniqueness of the object, no fields will be returned.
 
     """
 
     id_fields: list[typ.string[typ.snake_case]] = []
     name_fields: list[typ.string[typ.snake_case]] = []
-    primitive_fields: list[typ.string[typ.snake_case]] = []
 
     for f, field in __fields.items():
         if (
@@ -115,16 +162,12 @@ def get_fields_for_hash(
             id_fields.append(f)
         elif s.startswith('name') or s.endswith('name'):
             name_fields.append(f)
-        else:
-            primitive_fields.append(f)
 
     if id_fields:
         fields_for_hash = tuple(id_fields)
     elif name_fields:
         fields_for_hash = tuple(name_fields)
-    elif primitive_fields:
-        fields_for_hash = tuple(primitive_fields)
     else:
-        fields_for_hash = tuple(__fields)
+        fields_for_hash = tuple()
 
     return fields_for_hash

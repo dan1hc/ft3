@@ -21,6 +21,7 @@ __all__ = (
     'Casing',
     'DataClassFields',
     'Enum',
+    'ExceptionType',
     'FieldsTuple',
     'Immutable',
     'Literal',
@@ -33,6 +34,7 @@ __all__ = (
     'OptionalAnyDict',
     'OptionalGenericAlias',
     'PackageExceptionType',
+    'PascalCase',
     'Primitive',
     'Serial',
     'SnakeDict',
@@ -68,12 +70,13 @@ OptionalGenericAlias = type(lib.t.Optional[str])
 UnionGenericAlias = type(int | str)
 Wrapper = obj.SupportsParams[lib.Unpack[ArgsType]]
 
+PascalCase = lib.t.NewType('PascalCase', str)
 camelCase = lib.t.NewType('camelCase', str)
 snake_case = lib.t.NewType('snake_case', str)
 datetime = lib.t.NewType('datetime', str)
 numeric = lib.t.NewType('numeric', str)
 
-AnyDict = dict[str, lib.t.Any]
+AnyDict: lib.t.TypeAlias = dict['AnyString', lib.t.Any]
 AnyField: lib.t.TypeAlias = 'objects.Field[AnyType]'
 AnyString = str | string[StringType]
 Array = obj.ArrayProto[AnyType]
@@ -93,7 +96,7 @@ Immutable: lib.t.TypeAlias = (
     | int
     | lib.types.NoneType  # type: ignore[valid-type]
     | range
-    | str
+    | AnyString
     | lib.enum.EnumMeta
     | frozenset['Immutable']
     | tuple['Immutable', ...]
@@ -103,15 +106,18 @@ Literal = lib.t.Literal['*']
 Mapping = obj.MappingProto[AnyType, AnyOtherType]
 NoneType = lib.types.NoneType  # type: ignore[valid-type]
 Object: lib.t.TypeAlias = 'objects.Object'
-OptionalAnyDict = lib.t.Optional[dict[str, lib.t.Any]]
-Primitive: lib.t.TypeAlias = bool | float | int | NoneType | str  # type: ignore[valid-type]
+OptionalAnyDict = lib.t.Optional[dict[AnyString, lib.t.Any]]
+Primitive: lib.t.TypeAlias = bool | float | int | NoneType | AnyString  # type: ignore[valid-type]
 Serial: lib.t.TypeAlias = Primitive | dict[Primitive, 'Serial'] | list['Serial']  # noqa
 SnakeDict: lib.t.TypeAlias = dict[string[snake_case], lib.t.Any]
-StringFormat: lib.t.TypeAlias = camelCase | snake_case | datetime | numeric
+StringFormat: lib.t.TypeAlias = (
+    camelCase | snake_case | PascalCase | datetime | numeric
+    )
 Typed = obj.SupportsAnnotations
 VariadicArray = obj.VariadicArrayProto[lib.Unpack[tuple[AnyType, ...]]]
 
 ArrayType = lib.t.TypeVar('ArrayType', bound=Array)
+ExceptionType = lib.t.TypeVar('ExceptionType', bound=Exception)
 MappingType = lib.t.TypeVar('MappingType', bound=Mapping)
 NumberType = lib.t.TypeVar('NumberType', bound=lib.numbers.Number)
 ObjectType = lib.t.TypeVar('ObjectType', bound=Object)

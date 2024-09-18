@@ -13,7 +13,7 @@ def main() -> None:  # pragma: no cover
 
     Commands follow the structure:
 
-    `$ ft3 {fgr_module_name} ...`
+    `$ ft3 {ft3_module_name} ...`
 
     """
 

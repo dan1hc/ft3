@@ -5,6 +5,7 @@ __all__ = (
     'get_checkable_types',
     'expand_types',
     'is_array',
+    'is_array_of_obj_type',
     'is_array_type',
     'is_bool_type',
     'is_date_type',
@@ -18,12 +19,14 @@ __all__ = (
     'is_none_type',
     'is_number_type',
     'is_object',
+    'is_object_type',
     'is_params_type',
     'is_primitive',
     'is_serialized_mapping',
     'is_typed',
     'is_typevar',
     'is_union',
+    'is_uuid_type',
     'is_variadic_array_type',
     'is_wrapper_type',
     )
@@ -33,6 +36,7 @@ from .. import lib
 from .. import obj
 
 if lib.t.TYPE_CHECKING:  # pragma: no cover
+    from .... import objects
     from .. import typ
 
 
@@ -180,6 +184,20 @@ def expand_types(
         return (any_tp, )
 
 
+def is_nullable(tp: lib.t.Any) -> bool:
+    """Returns `True` if `tp` can be `None`."""
+
+    return any(
+        any(
+            is_none_type(sub_tp)
+            for sub_tp
+            in get_checkable_types(arg_tp)
+            )
+        for arg_tp
+        in get_type_args(tp)
+        )
+
+
 @lib.t.overload
 def is_params_type(
     tp: 'obj.SupportsParams[lib.Unpack[typ.ArgsType]]',
@@ -188,7 +206,7 @@ def is_params_type(
         ]: ...
 @lib.t.overload
 def is_params_type(
-    tp: lib.t.Any
+    tp: lib.t.Any | type[lib.t.Any]
     ) -> lib.t.TypeGuard[
         'obj.SupportsParams[lib.Unpack[tuple[lib.t.Any, ...]]]'
         ]: ...
@@ -267,7 +285,7 @@ def is_number_type(
     otps = get_checkable_types(tp)
 
     if otps:
-        return issubclass(tp, get_checkable_types(lib.numbers.Number))
+        return issubclass(otps[0], get_checkable_types(lib.numbers.Number))
     else:
         return False
 
@@ -405,7 +423,7 @@ def is_array(
 
     return (
         isinstance(obj, lib.t.Collection)
-        and not isinstance(obj, (str, lib.t.Mapping))
+        and not isinstance(obj, (str, lib.t.Mapping, lib.enum.EnumMeta))
         )
 
 
@@ -418,6 +436,21 @@ def is_object(
         otp = lib.t.get_origin(obj_) or obj_
     else:
         otp = type(obj_)
+
+    from .... import objects
+
+    return issubclass(otp, objects.Object)
+
+
+def is_object_type(
+    tp: lib.t.Any
+    ) -> lib.t.TypeGuard[type['objects.Object']]:
+    """Return `True` if `tp` is an `Object`."""
+
+    if isinstance(tp, type):
+        otp = lib.t.get_origin(tp) or tp
+    else:
+        otp = type(tp)
 
     from .... import objects
 
@@ -476,6 +509,19 @@ def is_wrapper_type(
         )
 
 
+def is_uuid_type(
+    tp: type[lib.t.Any] | lib.t.Any
+    ) -> lib.t.TypeGuard[lib.uuid.UUID]:
+    """Return `True` if `tp` is `UUID`."""
+
+    otps = get_checkable_types(tp)
+
+    if otps:
+        return issubclass(otps[0], lib.uuid.UUID)
+    else:
+        return False
+
+
 def is_typed(
     any: 'type[typ.Typed] | type[lib.t.Any] | lib.t.Any'
     ) -> 'lib.t.TypeGuard[type[typ.Typed]]':
@@ -491,6 +537,20 @@ def is_typed(
                 lib.types.MethodType
                 )
             )
+        )
+
+
+def is_array_of_obj_type(
+    tp: type[lib.t.Any]
+    ) -> 'lib.t.TypeGuard[type[typ.Array[typ.Object]]]':
+    """Return `True` if `tp` is `type[typ.Array[typ.Object]]`."""
+
+    return (
+        bool(otps := get_checkable_types(tp))
+        and issubclass(otps[0], lib.t.Collection)
+        and not issubclass(otps[0], lib.t.Mapping)
+        and bool(argtps := get_type_args(tp))
+        and is_object_type(argtps[0])
         )
 
 

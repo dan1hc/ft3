@@ -14,6 +14,7 @@ from .. import typ
 from . import utl
 
 if lib.t.TYPE_CHECKING:  # pragma: no cover
+    from ... import api
     from .. import fields as fields_
 
 
@@ -26,9 +27,19 @@ class Meta(type):
 
     if lib.t.TYPE_CHECKING:  # pragma: no cover
         __annotations__: typ.SnakeDict
-        __dict__: dict[typ.AnyString, lib.t.Any]
         __dataclass_fields__: lib.t.ClassVar[typ.DataClassFields]
         __heritage__: lib.t.ClassVar[tuple['Meta', ...]]
+        __operations__: lib.t.ClassVar[
+            dict[
+                typ.string[typ.snake_case],
+                lib.t.Callable[
+                    ['api.events.obj.Request', ],
+                    lib.t.Optional[typ.Object]
+                    | lib.t.Optional[list[typ.Object]]
+                    | str
+                    ]
+                ]
+            ]
 
         enumerations: lib.t.ClassVar[dict[str, tuple[typ.Primitive, ...]]]
         fields: lib.t.ClassVar[typ.FieldsTuple]
@@ -67,6 +78,15 @@ class Meta(type):
             for k, v
             in annotations.items()
             }
+        operations: dict[
+            typ.string[typ.snake_case],
+            lib.t.Callable[
+                ['api.events.obj.Request', ],
+                lib.t.Optional[typ.Object]
+                | lib.t.Optional[list[typ.Object]]
+                | str
+                ]
+            ] = __namespace.pop(Constants.__OPERATIONS__, {})
 
         base_count = 0
         for _base in reversed(__bases):
@@ -153,6 +173,7 @@ class Meta(type):
         namespace[Constants.__ANNOTATIONS__] = annotations
         namespace[Constants.__DATACLASS_FIELDS__] = fields
         namespace[Constants.__HERITAGE__] = heritage
+        namespace[Constants.__OPERATIONS__] = operations
 
         namespace[Constants.FIELDS] = fields_tuple
         namespace[Constants.ENUMERATIONS] = (
@@ -163,13 +184,19 @@ class Meta(type):
         else:
             namespace[Constants.HASH_FIELDS] = ('name', )
 
-        return super().__new__(
+        cls = super().__new__(
             mcs,
             __name,
             __bases,
             namespace,
             **kwargs
             )
+
+        docs = utl.get_attribute_docs(cls)
+        for name, field in cls.__dataclass_fields__.items():
+            field['description'] = docs.get(name)
+
+        return cls
 
     def __repr__(cls) -> str:
         """

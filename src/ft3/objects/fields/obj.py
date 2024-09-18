@@ -136,7 +136,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
     Sequence of which field value SHOULD be a member, unless \
     `"*"` is included in the sequence, in which case ANY value \
     MAY be allowed, in addition to those explicitly specified.
-    `None` is assumed to be allowed if the field is nullable.
+    `None` is always allowed.
 
 
     ```py
@@ -257,24 +257,26 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 
     """
 
+
     name: 'Field[str]' = None
     type_: 'Field[type[typ.AnyType]]' = None
+    description: 'Field[str]' = None
     default: 'Field[typ.AnyType]' = None
     required: 'Field[bool]' = False
     enum: 'Field[typ.Enum]' = None
     min_length: 'Field[int]' = None
     max_length: 'Field[int]' = None
     minimum: 'Field[float]' = None
-    exclusive_minimum: 'Field[bool]' = False
+    exclusive_minimum: 'Field[bool]' = None
     maximum: 'Field[float]' = None
-    exclusive_maximum: 'Field[bool]' = False
+    exclusive_maximum: 'Field[bool]' = None
     multiple_of: 'Field[float]' = None
     pattern: 'Field[str]' = None
     min_items: 'Field[int]' = None
     max_items: 'Field[int]' = None
-    unique_items: 'Field[bool]' = False
-    read_only: 'Field[bool]' = False
-    write_only: 'Field[bool]' = False
+    unique_items: 'Field[bool]' = None
+    read_only: 'Field[bool]' = None
+    write_only: 'Field[bool]' = None
 
     @lib.t.overload
     def __get__(
@@ -318,22 +320,23 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
         /,
         *,
         type_: type[typ.Type] = None,
+        description: str = None,
         default: typ.Type = None,
         required: bool = False,
         enum: typ.Enum = None,
         min_length: int = None,
         max_length: int = None,
         minimum: float = None,
-        exclusive_minimum: bool = False,
+        exclusive_minimum: bool = None,
         maximum: float = None,
-        exclusive_maximum: bool = False,
+        exclusive_maximum: bool = None,
         multiple_of: float = None,
         pattern: str = None,
         min_items: int = None,
         max_items: int = None,
-        unique_items: bool = False,
-        read_only: bool = False,
-        write_only: bool = False,
+        unique_items: bool = None,
+        read_only: bool = None,
+        write_only: bool = None,
         **kwargs: lib.t.Any
         ): ...
     @lib.t.overload
@@ -343,22 +346,23 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
         /,
         *,
         type_: type[typ.AnyType] = None,
+        description: str = None,
         default: typ.AnyType = None,
         required: bool = False,
         enum: typ.Enum = None,
         min_length: int = None,
         max_length: int = None,
         minimum: float = None,
-        exclusive_minimum: bool = False,
+        exclusive_minimum: bool = None,
         maximum: float = None,
-        exclusive_maximum: bool = False,
+        exclusive_maximum: bool = None,
         multiple_of: float = None,
         pattern: str = None,
         min_items: int = None,
         max_items: int = None,
-        unique_items: bool = False,
-        read_only: bool = False,
-        write_only: bool = False,
+        unique_items: bool = None,
+        read_only: bool = None,
+        write_only: bool = None,
         **kwargs: lib.t.Any
         ): ...
     def __init__(
@@ -367,22 +371,23 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
         /,
         *,
         type_: type | type[typ.Type] | type[typ.AnyType] = None,
+        description: str = None,
         default: lib.t.Any | typ.Type | typ.AnyType = None,
         required: bool = False,
         enum: typ.Enum = None,
         min_length: int = None,
         max_length: int = None,
         minimum: float = None,
-        exclusive_minimum: bool = False,
+        exclusive_minimum: bool = None,
         maximum: float = None,
-        exclusive_maximum: bool = False,
+        exclusive_maximum: bool = None,
         multiple_of: float = None,
         pattern: str = None,
         min_items: int = None,
         max_items: int = None,
-        unique_items: bool = False,
-        read_only: bool = False,
-        write_only: bool = False,
+        unique_items: bool = None,
+        read_only: bool = None,
+        write_only: bool = None,
         **kwargs: lib.t.Any
         ):
         if class_as_dict is not None:
@@ -394,6 +399,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
                     kwargs.pop('type_', kwargs.pop('type', type_))
                     ),
                 default=default,
+                description=description,
                 required=required,
                 enum=enum,
                 min_length=min_length,
@@ -766,14 +772,14 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
                 )
             not in Constants.FACTORY_CACHE
             ):
-            if (
+            if callable(self.default):
+                Constants.FACTORY_CACHE[key] = lambda: self.default()  # type: ignore[operator]
+            elif (
                 typ.utl.check.is_immutable_type(
                     self.type_ or type(self.default)
                     )
                 ):
                 Constants.FACTORY_CACHE[key] = lambda: self.default
-            elif callable(self.default):
-                Constants.FACTORY_CACHE[key] = lambda: self.default()  # type: ignore[operator]
             else:
                 Constants.FACTORY_CACHE[key] = lambda: lib.copy.deepcopy(self.default)
 

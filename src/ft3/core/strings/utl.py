@@ -10,6 +10,7 @@ __all__ = (
     'is_valid_number_str',
     'isCamelCaseIterable',
     'isCamelCaseString',
+    'pluralize',
     'redact_key_value_pair',
     'redact_string',
     'snake_case_to_camel_case',
@@ -30,6 +31,17 @@ class Constants(cfg.Constants):
     """Constants specific to this file."""
 
     CACHED_CNAMES: dict[tuple[typ.AnyString, tuple[typ.AnyString, ...]], typ.AnyString] = {}
+
+
+def pluralize(string: str) -> str:
+    """Pluralize a singular string."""
+
+    if string.endswith(suffix := 'y'):
+        return string.removesuffix(suffix) + 'ies'
+    elif string[-1] in {'s', 'z'}:
+        return string
+    else:
+        return string + 's'
 
 
 def isCamelCaseString(
@@ -120,7 +132,7 @@ def snake_case_to_camel_case(
     camelCaseString: typ.string[typ.camelCase] = (
         obj.Pattern.SnakeToCamelReplacements.sub(
             lambda match: match.group()[-1].upper(),
-            snake_case_string
+            snake_case_string.strip('_')
             )
         )
 
@@ -266,7 +278,7 @@ def cname_for(
             isCamelCaseString(__k)
             and (
                 (
-                    k := (_k := camel_case_to_snake_case(__k.strip('_')))
+                    k := (_k := camel_case_to_snake_case(__k))
                     ) in container
                 or (k := '_' + _k) in container
                 or (k := _k + '_') in container
@@ -277,7 +289,7 @@ def cname_for(
             is_snake_case_string(__k)
             and (
                 (
-                    k := (_k := snake_case_to_camel_case(__k.strip('_')))
+                    k := (_k := snake_case_to_camel_case(__k))
                     ) in container
                 or (k := '_' + _k) in container
                 or (k := _k + '_') in container
@@ -361,7 +373,14 @@ def convert_for_repr(obj_: lib.t.Any) -> typ.Serial:
     if isinstance(obj_, str):
         redacted = redact_string(obj_)
         if len(redacted) > Constants.MAX_CHARS:
-            return [Constants.M_LINE_TOKEN, *obj.StringWrapper.wrap(redacted)]
+            lines = obj.StringWrapper.wrap(redacted)
+            if len(lines) >= Constants.CUTOFF_LEN:
+                lines.insert(Constants.CUTOFF_LEN, '\n[[...]]')
+            lines.insert(0, Constants.M_LINE_TOKEN + '\n')
+            as_array: list[typ.Serial] = ''.join(
+                lines[:Constants.CUTOFF_LEN + 2]
+                ).split('\n')
+            return as_array
         else:
             return redacted
     elif obj_ is None or typ.utl.check.is_primitive(obj_):
@@ -398,13 +417,13 @@ def convert_for_repr(obj_: lib.t.Any) -> typ.Serial:
                 convert_for_repr(v)
                 for v
                 in obj_
-                ]
+                ][:Constants.CUTOFF_LEN]
         else:
-            return list(obj_)
+            return list(obj_)[:Constants.CUTOFF_LEN]
     elif isinstance(obj_, (lib.types.FunctionType, lib.types.MethodType)):
         rtn_tp: typ.Serial | lib.t.Any = (
             obj_.__annotations__.get('return', codecs.utl.encode(obj_))
             )
         return convert_for_repr(rtn_tp)
     else:
-        return codecs.utl.encode(obj_)
+        return convert_for_repr(codecs.utl.encode(obj_))
