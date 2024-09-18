@@ -12,9 +12,34 @@ from . import lib
 
 
 class Human(Object):
-    """A human, may or may not be owned by a pet."""
+    """
+    A human, may or may not be owned by a pet.
+
+    ---
+
+    To serve through the API as a resource at its own path, use \
+    `@Api.register`.
+
+    ### Example
+
+    ```
+    @Api.register
+    class Human(Object):
+        ...
+
+    ```
+
+    ---
+
+    For now, since `Humans` belong to `PetWithPets`, but do \
+    not have any unique identifiers that would cause them to become \
+    a sub resource (i.e. like `Pet` below), they will not be surfaced \
+    in the API.
+
+    """
 
     name: Field[str] = 'Dale'
+    """The human's name."""
 
 
 class Pet(Object):

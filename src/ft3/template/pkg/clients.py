@@ -16,7 +16,7 @@ class DatabaseClient:
     DATA: dict[str, Object] = {}
 
     @classmethod
-    def delete_one(cls, _id: str) -> lib.t.Optional[lib.t.Never]:
+    def delete_one(cls, _id: str) -> lib.t.Optional[lib.Never]:
         """Delete an existing record from database."""
 
         if _id in cls.DATA:
