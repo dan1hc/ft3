@@ -118,9 +118,16 @@ class ApiDeriv(MixinDeriv, DubDeriv):
 
     test_another: ft3.Field[bool] = False
     new_deriv: ft3.Field[NewDeriv] = NewDeriv()
-    dict_field: ft3.Field[dict] = {'record_id': 'Arnold'}
+    dict_field: ft3.Field[lib.t.Optional[dict]] = {'record_id': 'Arnold'}
     generic_dict_field: ft3.Field[dict[str, float]] = {'record_id': 1.23}
-    typed_dict_field: ft3.Field[TypedObj] = {'name': 'Dan', 'integer': 42}
+    typed_dict_field: ft3.Field[lib.t.Optional[TypedObj]] = {
+        'name': 'Dan',
+        'integer': 42
+        }
     literal_field: ft3.Field[lib.t.Literal[1]] = 1
-    bound_typevar_field:ft3.Field[BasicNumber] = 42.42
-    constrained_typevar_field:ft3.Field[ConstrainedNumber] = 42
+    bound_typevar_field: ft3.Field[BasicNumber] = 42.42
+    constrained_typevar_field: ft3.Field[ConstrainedNumber] = 42
+    uuid_field: ft3.Field[lib.t.Optional[lib.uuid.UUID]] = lib.uuid.uuid4
+    optional_decimal_field: ft3.Field[lib.t.Optional[lib.decimal.Decimal]] = (
+        lib.decimal.Decimal('1.8')
+        )

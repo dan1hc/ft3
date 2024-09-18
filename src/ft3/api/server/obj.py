@@ -9,7 +9,7 @@ from .. import events
 from . import lib
 
 
-class Server(lib.http.server.BaseHTTPRequestHandler):
+class Server(lib.http.server.BaseHTTPRequestHandler):  # pragma: no cover
     """A very basic HTTP server."""
 
     handler: events.Handler

@@ -191,3 +191,8 @@ class TestUtils(unittest.TestCase):
                 '[[...]]'
                 ]
             )
+
+    def test_16_pluralize_y(self):
+        """Test pluralize on a string that ends with 'y'."""
+
+        self.assertEqual(ft3.core.strings.utl.pluralize('fairy'), 'fairies')

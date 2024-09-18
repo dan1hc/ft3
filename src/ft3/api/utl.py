@@ -84,7 +84,7 @@ def response_type_from_object(
     """Calculate response type from an `Object`."""
 
     callback = cls.__operations__.get(method)  # type: ignore[call-overload]
-    if callback is None:
+    if callback is None:  # pragma: no cover
         return Constants.EMPTY
 
     tp = callback.__annotations__.get('return')
@@ -274,7 +274,7 @@ def operation_from_object(
                     ) or None,
                 responses={'200': response_obj}
                 )
-        case _:
+        case _:  # pragma: no cover
             operation = None
 
     return operation
@@ -370,9 +370,9 @@ def api_from_package(
         def respond(request: Request) -> obj.Healthz:
             """Application status check."""
 
-            return obj.Healthz()
+            return obj.Healthz()  # pragma: no cover
 
-    if not name.startswith('.'.join((Constants.PACAKGE, 'template'))):
+    if not name.startswith('.'.join((Constants.PACAKGE, 'template'))):  # pragma: no cover
         from .. template . pkg . obj import PetWithPet
         del OBJECTS[PetWithPet.__name__]
 
@@ -494,7 +494,7 @@ def serve(
     version: str,
     api_path: str,
     include_heartbeat: bool,
-    ) -> None:
+    ) -> None:  # pragma: no cover
     """
     CLI entrypoint for serving an application.
 

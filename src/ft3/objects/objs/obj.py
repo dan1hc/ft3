@@ -52,7 +52,7 @@ class ObjectBase(metaclass=metas.Meta):
     def DELETE(
         cls,
         fn: lib.t.Callable[['api.events.obj.Request'], None]
-        ) -> lib.t.Callable[['api.events.obj.Request'], None]:  # pragma: no cover
+        ) -> lib.t.Callable[['api.events.obj.Request'], None]:
         cls.__operations__[Constants.DELETE] = fn
         return fn
 
@@ -66,7 +66,7 @@ class ObjectBase(metaclass=metas.Meta):
         ) -> lib.t.Callable[
             ['api.events.obj.Request'],
             list[lib.Self] | lib.Self | str
-            ]:  # pragma: no cover
+            ]:
         cls.__operations__[Constants.GET] = fn
         return fn
 
@@ -82,7 +82,7 @@ class ObjectBase(metaclass=metas.Meta):
     def PATCH(
         cls,
         fn: 'lib.t.Callable[[api.events.obj.Request], lib.Self]'
-        ) -> 'lib.t.Callable[[api.events.obj.Request], lib.Self]':  # pragma: no cover
+        ) -> 'lib.t.Callable[[api.events.obj.Request], lib.Self]':
         cls.__operations__[Constants.PATCH] = fn
         return fn
 
@@ -90,7 +90,7 @@ class ObjectBase(metaclass=metas.Meta):
     def POST(
         cls,
         fn: 'lib.t.Callable[[api.events.obj.Request], lib.Self]'
-        ) -> 'lib.t.Callable[[api.events.obj.Request], lib.Self]':  # pragma: no cover
+        ) -> 'lib.t.Callable[[api.events.obj.Request], lib.Self]':
         cls.__operations__[Constants.POST] = fn
         return fn
 
@@ -98,7 +98,7 @@ class ObjectBase(metaclass=metas.Meta):
     def PUT(
         cls,
         fn: 'lib.t.Callable[[api.events.obj.Request], lib.Self]'
-        ) -> 'lib.t.Callable[[api.events.obj.Request], lib.Self]':  # pragma: no cover
+        ) -> 'lib.t.Callable[[api.events.obj.Request], lib.Self]':
         cls.__operations__[Constants.PUT] = fn
         return fn
 
@@ -484,7 +484,7 @@ class ObjectBase(metaclass=metas.Meta):
 
         """
 
-        return self.to_dict(  # pragma: no cover
+        return self.to_dict(
             camel_case=True,
             include_null=True,
             include_private=False,

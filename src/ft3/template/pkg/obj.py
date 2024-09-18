@@ -11,6 +11,12 @@ from . import enm
 from . import lib
 
 
+class Human(Object):
+    """A human, may or may not be owned by a pet."""
+
+    name: Field[str] = 'Dale'
+
+
 class Pet(Object):
     """Pet of a pet."""
 
@@ -119,10 +125,13 @@ class PetWithPet(Object):
         )
     """The pet(s) of a pet."""
 
+    human: Field[Human] = Human()
+    """Sometimes pets also own humans."""
+
     def __post_init__(self) -> None:
         """Automatically set pets' parent ids on instantiation."""
 
-        for pet in self.pets:
+        for pet in self.pets:  # pragma: no cover
             pet.pet_with_pet_id = self.id_
 
         return super().__post_init__()

@@ -21,7 +21,7 @@ class DatabaseClient:
 
         if _id in cls.DATA:
             del cls.DATA[_id]
-        else:
+        else:  # pragma: no cover
             raise FileNotFoundError
 
         return None

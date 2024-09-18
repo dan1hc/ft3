@@ -74,11 +74,7 @@ exclude_lines = [
     "pragma: no cover",
     "if typing.TYPE_CHECKING:",
     ]
-omit = [
-    "**/ft3/api/**",
-    "**/ft3/docs/utl.py",
-    "**/ft3/template/**"
-    ]
+omit = ["**/ft3/docs/utl.py"]
 
 [tool.pytest.ini_options]
 addopts = "--cov=ft3 --cov-report=term-missing -p no:warnings -x"

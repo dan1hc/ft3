@@ -33,7 +33,7 @@ class Constants(cfg.Constants):
     CACHED_CNAMES: dict[tuple[typ.AnyString, tuple[typ.AnyString, ...]], typ.AnyString] = {}
 
 
-def pluralize(string: str) -> str:  # pragma: no cover
+def pluralize(string: str) -> str:
     """Pluralize a singular string."""
 
     if string.endswith(suffix := 'y'):

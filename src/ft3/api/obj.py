@@ -204,8 +204,6 @@ class Schema(Component):
             return cls.from_obj(typ_, **kwargs)
         elif typ.utl.check.is_uuid_type(typ_):
             types_.append(enm.Type.string.value)
-            if typ.utl.check.is_nullable(typ_):
-                types_.append(enm.Type.null.value)
             return cls(
                 type_=types_,
                 format_=enm.Format.uuid.value,
@@ -213,8 +211,6 @@ class Schema(Component):
                 )
         elif typ.utl.check.is_typed(typ_):
             types_.append(enm.Type.object.value)
-            if typ.utl.check.is_nullable(typ_):
-                types_.append(enm.Type.null.value)
             return cls(
                 properties={
                     core.strings.utl.snake_case_to_camel_case(annotation): (
@@ -228,8 +224,6 @@ class Schema(Component):
                 )
         elif typ.utl.check.is_array_type(typ_):
             types_.append(enm.Type.array.value)
-            if typ.utl.check.is_nullable(typ_):
-                types_.append(enm.Type.null.value)
             if (tps := typ.utl.check.get_args(typ_)):
                 tp = tps[0]
             else:
@@ -241,13 +235,9 @@ class Schema(Component):
                 )
         elif typ.utl.check.is_mapping_type(typ_):
             types_.append(enm.Type.object.value)
-            if typ.utl.check.is_nullable(typ_):
-                types_.append(enm.Type.null.value)
             return cls(type_=types_, **kwargs)
         elif typ.utl.check.is_bool_type(typ_):
             types_.append(enm.Type.boolean.value)
-            if typ.utl.check.is_nullable(typ_):
-                types_.append(enm.Type.null.value)
             return cls(
                 type_=types_,
                 format_=enm.Format.boolean.value,
@@ -260,8 +250,6 @@ class Schema(Component):
             otp = lib.t.get_origin(typ_) or typ_
             if issubclass(otp, lib.decimal.Decimal):
                 types_.append(enm.Type.number.value)
-                if typ.utl.check.is_nullable(typ_):
-                    types_.append(enm.Type.null.value)
                 return cls(
                     type_=types_,
                     format_=enm.Format.double.value,
@@ -269,8 +257,6 @@ class Schema(Component):
                     )
             elif issubclass(otp, int):
                 types_.append(enm.Type.integer.value)
-                if typ.utl.check.is_nullable(typ_):
-                    types_.append(enm.Type.null.value)
                 return cls(
                     type_=types_,
                     format_=enm.Format.int32.value,
@@ -278,8 +264,6 @@ class Schema(Component):
                     )
             elif issubclass(otp, float):
                 types_.append(enm.Type.number.value)
-                if typ.utl.check.is_nullable(typ_):
-                    types_.append(enm.Type.null.value)
                 return cls(
                     type_=types_,
                     format_=enm.Format.float.value,
@@ -287,13 +271,9 @@ class Schema(Component):
                     )
             else:  # pragma: no cover
                 types_.append(enm.Type.number.value)
-                if typ.utl.check.is_nullable(typ_):
-                    types_.append(enm.Type.null.value)
                 return cls(type_=types_, **kwargs)
         elif typ.utl.check.is_datetime_type(typ_):
             types_.append(enm.Type.string.value)
-            if typ.utl.check.is_nullable(typ_):
-                types_.append(enm.Type.null.value)
             return cls(
                 type_=types_,
                 format_=enm.Format.datetime.value,
@@ -301,8 +281,6 @@ class Schema(Component):
                 )
         elif typ.utl.check.is_date_type(typ_):
             types_.append(enm.Type.string.value)
-            if typ.utl.check.is_nullable(typ_):
-                types_.append(enm.Type.null.value)
             return cls(
                 type_=types_,
                 format_=enm.Format.date.value,

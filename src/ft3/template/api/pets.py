@@ -25,7 +25,7 @@ def delete(request: Request) -> None:
         )
 
     if pet_with_pet is None:
-        raise FileNotFoundError
+        raise FileNotFoundError  # pragma: no cover
 
     pet_with_pet.pets = [
         pet
@@ -50,14 +50,14 @@ def read(request: Request) -> pkg.obj.Pet:
         pkg.clients.DatabaseClient.find_one(parent_id)
         )
 
-    if pet_with_pet is None:
+    if pet_with_pet is None:  # pragma: no cover
         raise FileNotFoundError
 
     for pet in pet_with_pet.pets:
-        if pet.id_ == id_:
+        if pet.id_ == id_:  # pragma: no cover
             return pet
 
-    raise FileNotFoundError
+    raise FileNotFoundError('No pet could be found for that `petId`.')
 
 
 @pkg.obj.Pet.PATCH
@@ -71,7 +71,7 @@ def update(request: Request) -> pkg.obj.Pet:
         pkg.clients.DatabaseClient.find_one(parent_id)
         )
 
-    if pet_with_pet is None:
+    if pet_with_pet is None:  # pragma: no cover
         raise FileNotFoundError
 
     for pet in pet_with_pet.pets:
@@ -80,7 +80,7 @@ def update(request: Request) -> pkg.obj.Pet:
             pkg.clients.DatabaseClient.update_one(pet_with_pet)
             return pet
 
-    raise FileNotFoundError
+    raise FileNotFoundError  # pragma: no cover
 
 
 @pkg.obj.Pet.POST
@@ -95,7 +95,7 @@ def insert(request: Request) -> pkg.obj.Pet:
             )
 
         if pet_with_pet is None:
-            raise FileNotFoundError
+            raise FileNotFoundError  # pragma: no cover
 
         pet = pkg.obj.Pet(pet_with_pet_id=parent_id, **request.body)  # type: ignore[misc]
         pet_with_pet.pets.append(pet)
@@ -103,7 +103,7 @@ def insert(request: Request) -> pkg.obj.Pet:
 
         return pet
     else:
-        raise SyntaxError
+        raise SyntaxError  # pragma: no cover
 
 
 @pkg.obj.Pet.PUT
@@ -119,14 +119,16 @@ def replace(request: Request) -> pkg.obj.Pet:
             )
 
         if pet_with_pet is None:
-            raise FileNotFoundError
+            raise FileNotFoundError  # pragma: no cover
 
         for pet in pet_with_pet.pets:
             if pet.id_ == id_:
+                if pet.name == 'Sophie':
+                    raise pkg.exc.CustomExampleError
                 pet |= request.body
                 pkg.clients.DatabaseClient.update_one(pet_with_pet)
                 return pet
 
-        raise FileNotFoundError
-    else:
+        raise FileNotFoundError  # pragma: no cover
+    else:  # pragma: no cover
         raise SyntaxError

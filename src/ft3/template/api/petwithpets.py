@@ -44,7 +44,9 @@ def update(request: Request) -> pkg.obj.PetWithPet:
     pet: pkg.obj.PetWithPet = pkg.clients.DatabaseClient.find_one(id_)
 
     if pet is None:
-        raise FileNotFoundError
+        raise pkg.exc.ResourceNotFoundError(
+            'No pet could be found with that id.'
+            )
 
     pet |= request.query_params
     pkg.clients.DatabaseClient.update_one(pet)
@@ -76,7 +78,7 @@ def replace(request: Request) -> pkg.obj.PetWithPet:
                 **request.body
                 )
             )
-    else:
+    else:  # pragma: no cover
         raise SyntaxError
 
     return pet

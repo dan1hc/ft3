@@ -19,11 +19,8 @@ __all__ = (
 from ..  exc import *
 
 
-class HTTPError(BasePackageException[str]):
+class HTTPError(Exception):
     """Base HTTP Error class."""
-
-    def __init__(self, message: str):
-        super().__init__(message, message)
 
 
 class RequestError(HTTPError):

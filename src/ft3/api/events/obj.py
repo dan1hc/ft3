@@ -44,17 +44,12 @@ class Error(Object):
     @classmethod
     def from_exception(
         cls,
-        exception: typ.ExceptionType | type[BaseException]
+        exception: typ.ExceptionType | type[typ.ExceptionType]
         ) -> lib.Self:
         """Populate error object from an exception."""
 
-        exc_tp: type[Exception] | type
-        if isinstance(exception, Exception):
-            name_ = exception.__class__.__name__
-            exc_tp = exception.__class__
-        else:
-            name_ = exception.__name__
-            exc_tp = exception
+        name_ = exception.__class__.__name__
+        exc_tp: type[typ.ExceptionType] = exception.__class__
 
         msg: lib.t.Optional[str]
         if isinstance(exception.args, tuple) and exception.args:
@@ -107,7 +102,6 @@ class Request(Object):
 
     def parse_body(
         self,
-        method: typ.string[typ.snake_case],
         operation: 'Operation',
         obj_: lib.t.Optional[type[typ.Object]] = None,
         ) -> lib.t.Optional[lib.Never]:
@@ -130,7 +124,7 @@ class Request(Object):
             content = operation.request_body.content.get(
                 enm.ContentType.json.value
                 )
-        else:
+        else:  # pragma: no cover
             content = None
 
         if (
@@ -138,27 +132,27 @@ class Request(Object):
             and operation.request_body is not None
             and content is not None
             and (
-                method == Constants.POST
-                or method == Constants.PUT
+                self.method == Constants.POST
+                or self.method == Constants.PUT
                 )
             ):
             str_body: str = self.body
             deserialized = lib.json.loads(str_body)
         elif operation.request_body is not None and content is not None:
             deserialized = self.body
-        else:
+        else:  # pragma: no cover
             deserialized = None
 
         id_params: dict[typ.string[typ.camelCase], str] = {}
         if (
-            method == Constants.PUT
+            self.method == Constants.PUT
             and self.path_params
             and content is not None
             and content.schema is not None
             and content.schema.properties is not None
             ):
-            ref_map = {
-                schema._ref_: name_
+            ref_map: typ.AnyDict = {
+                name_: schema._ref_
                 for name_, schema
                 in content.schema.properties.items()
                 if schema._ref_ is not None

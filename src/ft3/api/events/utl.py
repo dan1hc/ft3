@@ -41,9 +41,9 @@ def paths_from_api(api: obj.Api) -> list[str]:
                     '{version}',
                     server.variables['version'].default
                     )
-            else:
+            else:  # pragma: no cover
                 path_root = ''
-        else:
+        else:  # pragma: no cover
             path_root = ''
         PATHS.extend(
             sorted(
@@ -77,9 +77,9 @@ def handle_request(
                 server.variables['version'].default
                 )
             server_root += '/'
-        else:
+        else:  # pragma: no cover
             server_root = Constants.API_PATH
-    else:
+    else:  # pragma: no cover
         server_root = Constants.API_PATH
 
     path_pattern = ''
@@ -131,16 +131,16 @@ def handle_request(
                         )
                     request.parse_query_params(method, operation, obj_)
                 if operation.request_body is not None:
-                    request.parse_body(method, operation, obj_)
+                    request.parse_body(operation, obj_)
                 log.info(request)
                 response_obj = callback(request)
             except Exception as exception:
                 last_frame = lib.traceback.format_tb(exception.__traceback__)[-1]
-                is_error_raised = ' raise ' in last_frame
+                is_error_raised = 'raise ' in last_frame
                 is_error_from_api = api.info.title in last_frame
                 if is_error_raised or is_error_from_api:
                     error = obj.Error.from_exception(exception)
-                else:
+                else:  # pragma: no cover
                     error = obj.Error.from_exception(exc.UnexpectedError)
                 log.error(error)
                 content_type = enm.ContentType.json.value
@@ -151,7 +151,7 @@ def handle_request(
                     content_type = enm.ContentType.text.value
                     status_code = 204 if method == Constants.DELETE else 200
                     response_body = ''
-                elif isinstance(response_obj, str):
+                elif isinstance(response_obj, str):  # pragma: no cover
                     content_type = enm.ContentType.text.value
                     status_code = 200
                     response_body = response_obj

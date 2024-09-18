@@ -69,7 +69,7 @@ def get_attribute_docs(
 def is_public_field(f: str) -> bool:
     """Return if field name is public."""
 
-    return not (  # pragma: no cover
+    return not (
         (f in Constants.FORBIDDEN_KEYWORDS)
         or f.startswith('_')
         )

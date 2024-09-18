@@ -143,6 +143,15 @@ class TestUtils(unittest.TestCase):
                 )
             )
 
+    def test_17_is_nullable(self):
+        """Test `is_nullable`."""
+
+        self.assertTrue(
+            ft3.core.typ.utl.check.is_nullable(
+                ft3.core.lib.t.Optional[tuple[str, ...]]
+                )
+            )
+
 
 class Mockery(ft3.core.lib.t.Generic[ft3.core.typ.AnyType]):
     """An as yet undefined generic class for testing."""

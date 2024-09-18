@@ -545,7 +545,7 @@ def is_array_of_obj_type(
     ) -> 'lib.t.TypeGuard[type[typ.Array[typ.Object]]]':
     """Return `True` if `tp` is `type[typ.Array[typ.Object]]`."""
 
-    return (  # pragma: no cover
+    return (
         bool(otps := get_checkable_types(tp))
         and issubclass(otps[0], lib.t.Collection)
         and not issubclass(otps[0], lib.t.Mapping)
