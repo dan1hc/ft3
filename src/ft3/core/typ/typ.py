@@ -83,7 +83,6 @@ Array = obj.ArrayProto[AnyType]
 CamelDict: lib.t.TypeAlias = dict[string[camelCase], lib.t.Any]
 Casing = camelCase | snake_case
 DataClassFields: lib.t.TypeAlias = 'dict[string[snake_case], AnyField[lib.t.Any]]'  # noqa
-FieldsTuple: lib.t.TypeAlias = tuple[string[snake_case], ...]
 Enum: lib.t.TypeAlias = (
     frozenset['Immutable']
     | list['Immutable']
@@ -91,6 +90,7 @@ Enum: lib.t.TypeAlias = (
     | tuple['Immutable', ...]
     | lib.enum.EnumMeta
     )
+FieldsTuple: lib.t.TypeAlias = tuple[string[snake_case], ...]
 Immutable: lib.t.TypeAlias = (
     bool
     | bytes

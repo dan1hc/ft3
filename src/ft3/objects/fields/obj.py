@@ -302,15 +302,6 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
         __object: lib.t.Any,
         __value: typ.AnyType
         ) -> lib.t.Optional[lib.Never]:
-        # if isinstance(__value, str):
-        #     object.__setattr__(__object, self.name, self.parse(__value))
-        # elif isinstance(
-        #     __value,
-        #     typ.utl.check.get_checkable_types(self.type_)
-        #     ):
-        #     object.__setattr__(__object, self.name, __value)
-        # else:
-        #     raise exc.IncorrectTypeError(self.name, self.type_, __value)
         object.__setattr__(
             __object,
             self.name,
