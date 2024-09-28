@@ -49,14 +49,15 @@ __all__ = (
 
 __version__ = '0.1.0'
 
+from . import core
+from . import cli
+from . import docs
+from . import loggers
+from . import objects
+
 from . loggers import log
 from . objects import Field, Object
 
 from . import api
-from . import cli
-from . import core
-from . import docs
-from . import loggers
-from . import objects
 
 from . api import Api, File

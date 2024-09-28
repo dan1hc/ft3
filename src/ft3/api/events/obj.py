@@ -89,13 +89,7 @@ class Request(Object):
 
     headers: Field[dict[str, str]] = {}
 
-    body: Field[
-        lib.t.Optional[
-            dict[typ.AnyString, lib.t.Any]
-            | list[dict[typ.AnyString, lib.t.Any]]
-            | str
-            ]
-        ] = None
+    body: Field[lib.t.Any] = None
 
     path_params: Field[dict[typ.AnyString, str]] = {}
     query_params: Field[dict[typ.AnyString, lib.t.Any]] = {}
@@ -304,7 +298,7 @@ class Response(Object):
 
     headers: Field[dict[str, str]] = {}
 
-    body: Field[typ.CamelDict | list[typ.CamelDict] | str | bytes]
+    body: Field[lib.t.Any]
 
     def serialize(self) -> bytes | str:
         """JSON serialize body if not already a string."""

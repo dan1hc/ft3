@@ -103,7 +103,7 @@ class Schema(Component):
     one_of: Field[lib.t.Optional[list['Schema']]] = None
 
     def __post_init__(self) -> None:
-        if isinstance(self.enum, lib.enum.EnumMeta):
+        if isinstance(self.enum, lib.enum.EnumMeta):  # pragma: no cover
             self.enum = sorted(self.enum._value2member_map_)
         return super().__post_init__()
 
@@ -195,7 +195,7 @@ class Schema(Component):
                     all_of=[cls.from_type(type_=typ_.__bound__)],
                     **kwargs
                     )
-            else:
+            else:  # pragma: no cover
                 return cls(**kwargs)
         elif typ.utl.check.is_literal(typ_):
             literal_tp = typ.utl.check.get_type_args(typ_)[0]
@@ -448,7 +448,7 @@ class Path(Component):
             summary='Options for the endpoint.',
             tags=tags,
             parameters=list(path_params.values()) or None,
-            responses={'200': response_obj}
+            responses={'204': response_obj}
             )
 
         return None

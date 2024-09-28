@@ -688,7 +688,7 @@ class TestEndpoint(unittest.TestCase):
 
         response = self.handler(request)
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 204)
 
     def test_17_not_implemented(self):
         """Test method not implemented."""
