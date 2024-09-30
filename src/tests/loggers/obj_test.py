@@ -41,7 +41,7 @@ class TestLogger(unittest.TestCase):
                 sort_keys=True
                 ),
             Constants.INDENT * ' '
-            )
+            ).lstrip()
         with self.assertLogs(self.log, level) as logger:
             ft3.log.debug(msg)
             self.assertEqual(logger.records[0].msg, expected_output)
@@ -59,7 +59,7 @@ class TestLogger(unittest.TestCase):
                 sort_keys=True
                 ),
             Constants.INDENT * ' '
-            )
+            ).lstrip()
         with self.assertLogs(self.log, level) as logger:
             ft3.log.info(msg)
             self.assertEqual(logger.records[0].msg, expected_output)
@@ -77,7 +77,7 @@ class TestLogger(unittest.TestCase):
                 sort_keys=True
                 ),
             Constants.INDENT * ' '
-            )
+            ).lstrip()
         with self.assertLogs(self.log, level) as logger:
             ft3.log.warning(msg)
             self.assertEqual(logger.records[0].msg, expected_output)
@@ -95,7 +95,7 @@ class TestLogger(unittest.TestCase):
                 sort_keys=True
                 ),
             Constants.INDENT * ' '
-            )
+            ).lstrip()
         with self.assertLogs(self.log, level) as logger:
             ft3.log.error(msg)
             self.assertEqual(logger.records[0].msg, expected_output)
@@ -119,7 +119,7 @@ class TestLogger(unittest.TestCase):
                         sort_keys=True
                         ),
                     Constants.INDENT * ' '
-                    )
+                    ).lstrip()
             self.assertEqual(logger.records[0].msg, expected_output)
 
     def test_06_print(self):
@@ -141,7 +141,7 @@ class TestLogger(unittest.TestCase):
                     sort_keys=True
                     ),
                 Constants.INDENT * ' '
-                )
+                ).lstrip()
             self.assertEqual(
                 logger.records[0].msg,
                 expected_output
@@ -162,7 +162,7 @@ class TestLogger(unittest.TestCase):
     def test_08_parse_log_record(self):
         """Test idempotent `LogRecord` parsing."""
 
-        msg = ft3.loggers.typ.LogRecord(message='test')
+        msg = ft3.loggers.typ.LogRecord(content='test')
         self.assertEqual(
             msg,
             ft3.loggers.utl.parse_incoming_log_message(msg, 20)
@@ -173,7 +173,7 @@ class TestLogger(unittest.TestCase):
 
         msg = ('test', )
         self.assertEqual(
-            ft3.loggers.typ.LogRecord(message=msg),
+            ft3.loggers.typ.LogRecord(content=msg),
             ft3.loggers.utl.parse_incoming_log_message(msg, 20)
             )
 
@@ -229,7 +229,7 @@ class TestDeployedLogger(unittest.TestCase):
                     sort_keys=True
                     ),
                 Constants.INDENT * ' '
-                )
+                ).lstrip()
             self.assertEqual(
                 logger.records[0].msg,
                 expected_output
@@ -277,7 +277,7 @@ class TestDeployedLogger(unittest.TestCase):
                     sort_keys=True
                     ),
                 Constants.INDENT * ' '
-                )
+                ).lstrip()
             self.assertEqual(
                 logger.records[0].msg,
                 expected_output
@@ -299,7 +299,7 @@ class TestDeployedLogger(unittest.TestCase):
                     sort_keys=True
                     ),
                 Constants.INDENT * ' '
-                )
+                ).lstrip()
             self.assertEqual(
                 logger.records[0].msg,
                 expected_output
@@ -396,14 +396,14 @@ class TestTraceBackLogger(unittest.TestCase):
                     msg_final = (
                         ft3.loggers.typ.LogRecordWithPrintAndTraceBack(
                             traceback=lib.traceback.format_exc(),
-                            message=msg_dict['message'],
+                            content=msg_dict['content'],
                             printed=msg_dict['printed']  # type: ignore[typeddict-item]
                             )
                         )
                 else:
                     msg_final = ft3.loggers.typ.LogRecordWithTraceBack(
                         traceback=lib.traceback.format_exc(),
-                        message=msg_dict['message']
+                        content=msg_dict['content']
                         )
             else:
                 msg_final = msg_dict
@@ -421,7 +421,7 @@ class TestTraceBackLogger(unittest.TestCase):
                         sort_keys=True
                         ),
                     Constants.INDENT * ' '
-                    ),
+                    ).lstrip(),
                 tuple(),
                 None,
                 func,
@@ -447,7 +447,7 @@ class TestTraceBackLogger(unittest.TestCase):
             except Exception:
                 self.log.error(msg)
                 with_tb = ft3.loggers.typ.LogRecordWithTraceBack(
-                    message=parsed['message'],
+                    content=parsed['content'],
                     traceback=lib.traceback.format_exc()
                     )
                 expected_output = lib.textwrap.indent(
@@ -458,7 +458,7 @@ class TestTraceBackLogger(unittest.TestCase):
                         sort_keys=True
                         ),
                     Constants.INDENT * ' '
-                    )
+                    ).lstrip()
             self.assertEqual(logger.records[0].msg, expected_output)
 
     def test_02_log(self):
@@ -480,7 +480,7 @@ class TestTraceBackLogger(unittest.TestCase):
                         sort_keys=True
                         ),
                     Constants.INDENT * ' '
-                    )
+                    ).lstrip()
             self.assertEqual(logger.records[0].msg, expected_output)
 
     def tearDown(self) -> None:

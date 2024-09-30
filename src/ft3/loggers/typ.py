@@ -34,7 +34,7 @@ SupportedLogObject: lib.t.TypeAlias = lib.t.Union[
 class LogRecord(lib.t.TypedDict):
     """Basic log record."""
 
-    message: SupportedLogObject
+    content: SupportedLogObject
 
 
 class LogRecordWithPrint(LogRecord):
