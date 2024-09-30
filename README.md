@@ -256,7 +256,7 @@ print(AgentFlea())
 #   "level": WARNING,
 #   "timestamp": 2024-02-26T18:50:20.317Z,
 #   "logger": ft3,
-#   "message":   {
+#   "message": {
 #     "content": "Calls to print() will be silenced by ft3."
 #   }
 # }
@@ -312,7 +312,7 @@ print(AgentFlea())
 #   "level": WARNING,
 #   "timestamp": 2024-02-26T19:02:29.020Z,
 #   "logger": ft3,
-#   "message":   {
+#   "message": {
 #     "text": "Call to print() silenced by ft3.",
 #     "printed": "{\n  \"api_key\": \"[ REDACTED :: API KEY ]\",\n  \"aws_access_key_id\": \"falsePositive\",\n  \"name\": \"FLEA\",\n  \"sneaky\": \"[ REDACTED :: AWS ACCESS KEY ID ]\"\n}"
 #   }
@@ -327,7 +327,7 @@ ft3.log.info(AgentFlea())
 #   "level": INFO,
 #   "timestamp": 2024-02-26T19:13:21.726Z,
 #   "logger": ft3,
-#   "message":   {
+#   "message": {
 #     "AgentFlea": {
 #       "api_key": "[ REDACTED :: API KEY ]",
 #       "aws_access_key_id": "falsePositive",
