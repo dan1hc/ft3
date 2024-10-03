@@ -47,7 +47,7 @@ __all__ = (
     'Object'
     )
 
-__version__ = '0.1.1-rc.4'
+__version__ = '0.1.1-rc.5'
 
 from . import core
 from . import cli
