@@ -374,7 +374,7 @@ def api_from_package(
 
     if not name.startswith('.'.join((Constants.PACAKGE, 'template'))):  # pragma: no cover
         from .. template . pkg . obj import PetWithPet
-        del OBJECTS[PetWithPet.__name__]
+        OBJECTS.pop(PetWithPet.__name__, None)
 
     paths: list[obj.Path] = []
     for obj_ in OBJECTS.values():
