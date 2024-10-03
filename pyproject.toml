@@ -63,6 +63,7 @@ ft3 = "ft3.cli:main"
 
 [tool.setuptools.package-data]
 "*" = [
+    "**/static/*.html",
     "**/static/*.ico",
     "**/static/*.png",
     "**/static/*.tpl",
