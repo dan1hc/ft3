@@ -24,7 +24,8 @@ class TestEndpoint(unittest.TestCase):
         cls.api = ft3.api.api_from_package(
             f'{Constants.PACAKGE}.template',
             Constants.DEFAULT_VERSION,
-            Constants.API_PATH
+            Constants.API_PATH,
+            include_version_prefix=True
             )
         cls.handler = ft3.api.Handler(api=cls.api)
         return super().setUpClass()

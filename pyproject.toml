@@ -61,6 +61,9 @@ docs = [
 [project.scripts]
 ft3 = "ft3.cli:main"
 
+[tool.setuptools.packages.find]
+exclude = ["tests*"]
+
 [tool.setuptools.package-data]
 "*" = [
     "**/static/*.html",

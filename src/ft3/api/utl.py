@@ -356,6 +356,7 @@ def api_from_package(
     version: str,
     api_path: str,
     include_heartbeat: bool = True,
+    include_version_prefix: bool = False
     ) -> obj.Api:
     """Generate a RESTful API from passed python package name."""
 
@@ -416,16 +417,20 @@ def api_from_package(
             )
         )
 
+
+    if include_version_prefix:
+        server = obj.ServerObject(
+            url='/'.join((api_path.strip('/'), '{version}')),
+            variables={'version': obj.ServerVariable(default=version)}
+            )
+    else:  # pragma: no cover
+        server = obj.ServerObject(url=api_path)
+
     api = obj.Api(
         info=info,
         paths={path.pop('ref'): path for path in paths},
         tags=tags,
-        servers=[
-            obj.ServerObject(
-                url='/'.join((api_path.strip('/'), '{version}')),
-                variables={'version': obj.ServerVariable(default=version)}
-                )
-            ]
+        servers=[server]
         )
 
     from . import static
@@ -494,6 +499,7 @@ def serve(
     version: str,
     api_path: str,
     include_heartbeat: bool,
+    include_version_prefix: bool
     ) -> None:  # pragma: no cover
     """
     CLI entrypoint for serving an application.
@@ -533,7 +539,8 @@ def serve(
             package,
             version,
             api_path,
-            include_heartbeat
+            include_heartbeat,
+            include_version_prefix
             )
         )
 

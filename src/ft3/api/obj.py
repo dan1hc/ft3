@@ -612,3 +612,9 @@ api_parser.add_argument(
     help='set to disinclude /healthz endpoint',
     dest='include_heartbeat',
     )
+api_parser.add_argument(
+    '--include-version-prefix',
+    action='store_true',
+    help='set to include a version prefix (ex. /v1/healthz)',
+    dest='include_version_prefix',
+    )
