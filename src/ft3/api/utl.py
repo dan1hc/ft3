@@ -485,12 +485,7 @@ def api_from_package(
         content_type=enm.ContentType.json.value
         )
     obj.File(
-        path='/'.join(
-            (
-                path_root if include_version_prefix else api_path,
-                'favicon.ico'
-                )
-            ),
+        path='/favicon.ico',
         content=static.favicon,
         content_type=enm.ContentType.icon.value
         )
