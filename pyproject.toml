@@ -62,6 +62,7 @@ docs = [
 ft3 = "ft3.cli:main"
 
 [tool.setuptools.packages.find]
+where = ["src"]
 exclude = ["tests*"]
 
 [tool.setuptools.package-data]
