@@ -24,8 +24,8 @@ lib.logging.basicConfig(
         (
             '{\n',
             '"level": %(levelname)s,\n',
-            '"timestamp": %(asctime)sT\n',
-            '"loggerZ ft3,\n',
+            '"timestamp": %(asctime)s,\n',
+            '"logger": ft3,\n',
             '"message": %(message)s\n}',
             )
         ),
