@@ -213,7 +213,7 @@ class HeaderValue(lib.enum.Enum):
     accessControlMaxAge           = 86400
     accessControlAllowMethods     = '*'
     accessControlAllowOrigin      = '*'
-    connection                    = 'close'
+    connection                    = 'keep-alive'
     contentLength                 = '*'
     contentType                   = ContentType.json.value
     date                          = "'%Y-%m-%dT%H:%M:%S.%f%z'"

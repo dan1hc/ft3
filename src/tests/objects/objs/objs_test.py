@@ -337,7 +337,7 @@ class TestObjectDocumentationExamples(unittest.TestCase):
         """Test setdefault."""
 
         key = 'name'
-        object_= self.cls()
+        object_ = self.cls()
         object_.setdefault(key, self.new_name)
         object_.setdefault(key, self.instance_values[key])
         self.assertTrue(

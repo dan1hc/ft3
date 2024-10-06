@@ -241,7 +241,7 @@ class TestFieldValidation(unittest.TestCase):
         def _fn():
             mocking.NewDeriv.generic_tuple_deriv_field.__set__(obj, 3)
 
-        self.assertRaises(ft3.objects.exc.IncorrectTypeError, _fn)
+        self.assertRaises(ft3.objects.exc.TypeValidationError, _fn)
 
     def test_16_set(self):
         """

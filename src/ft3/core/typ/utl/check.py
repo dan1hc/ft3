@@ -528,7 +528,7 @@ def is_typed(
     """Return `True` if `any` is type-hinted."""
 
     return (
-        getattr(any, '__annotations__', False) is not False
+        getattr(any, '__annotations__', False)
         and not isinstance(any, lib.t.ForwardRef)
         and not isinstance(
             any,

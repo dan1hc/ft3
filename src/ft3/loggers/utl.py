@@ -72,7 +72,7 @@ def parse_incoming_log_message(
 
     if isinstance(msg, str):
         if level != lib.logging.WARNING:
-            return typ.LogRecord(message=msg)
+            return typ.LogRecord(content=msg)
         else:
             original_msg, _, warn_msg = msg.partition('.py')
             if warn_msg:
@@ -81,28 +81,28 @@ def parse_incoming_log_message(
                 if Constants.SILENCE_MSG in warn_msg:
                     warn_msg, _, printed = warn_msg.partition('\n')
                     return typ.LogRecordWithPrint(
-                        message=warn_msg,
+                        content=warn_msg,
                         printed=printed
                         )
                 else:
-                    return typ.LogRecord(message=warn_msg)
+                    return typ.LogRecord(content=warn_msg)
             else:
-                return typ.LogRecord(message=original_msg)
+                return typ.LogRecord(content=original_msg)
     elif core.typ.utl.check.is_object(msg):
         if isinstance(msg, type):
-            return typ.LogRecord(message={msg.__name__: msg})
+            return typ.LogRecord(content={msg.__name__: msg})
         else:
-            return typ.LogRecord(message={msg.__class__.__name__: msg})
+            return typ.LogRecord(content={msg.__class__.__name__: msg})
     elif core.typ.utl.check.is_array(msg):
-        return typ.LogRecord(message=msg)
+        return typ.LogRecord(content=msg)
     elif core.typ.utl.check.is_mapping(msg):
         if (
-            (dict_keys := sorted(msg.keys())) == ['message']
-            or dict_keys == ['message', 'printed']
+            (dict_keys := sorted(msg.keys())) == ['content']
+            or dict_keys == ['content', 'printed']
             ):
             msg_: typ.LogRecord | typ.LogRecordWithPrint = msg
             return msg_
         else:
-            return typ.LogRecord(message=msg)
+            return typ.LogRecord(content=msg)
     else:
         raise exc.InvalidLogMessageTypeError(msg)

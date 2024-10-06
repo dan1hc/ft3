@@ -165,7 +165,7 @@ def handle_request(
                     response_body = response_obj.as_response
         elif method == Constants.OPTIONS:
             content_type = enm.ContentType.text.value
-            status_code = 200
+            status_code = 204
             response_body = ''
         else:
             error = obj.Error.from_exception(NotImplementedError)

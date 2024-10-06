@@ -24,9 +24,9 @@ lib.logging.basicConfig(
         (
             '{\n',
             '"level": %(levelname)s,\n',
-            '"time": %(asctime)s,\n',
-            '"log": %(name)s,\n',
-            '"data": %(message)s\n}',
+            '"timestamp": %(asctime)s,\n',
+            '"logger": ft3,\n',
+            '"message": %(message)s\n}',
             )
         ),
     )
@@ -101,10 +101,10 @@ ft3.log.debug('example')
 # >>>
 # {
 #   "level": DEBUG,
-#   "time": 2024-02-25 15:30:01.061 UTC,
-#   "log": ft3.core.log,
-#   "data": {
-#     "message": "example"
+#   "timestamp": 2024-02-25T15:30:01.061Z,
+#   "logger": ft3,
+#   "message": {
+#     "content": "example"
 #   }
 # }
 
@@ -112,9 +112,9 @@ ft3.log.info({'str': 'example', 'a': 2})
 # >>>
 # {
 #   "level": INFO,
-#   "time": 2024-02-25 15:31:11.118 UTC,
-#   "log": ft3.core.log,
-#   "data": {
+#   "timestamp": 2024-02-25T15:31:11.118Z,
+#   "logger": ft3,
+#   "message": {
 #     "a": 2,
 #     "str": "example"
 #   }
@@ -137,9 +137,9 @@ ft3.log.debug(Pet)
 # >>>
 # {
 #   "level": DEBUG,
-#   "time": 2024-02-25 15:30:01.339 UTC,
-#   "log": ft3.core.log,
-#   "data": {
+#   "timestamp": 2024-02-25T15:30:01.339Z,
+#   "logger": ft3,
+#   "message": {
 #     "Pet": {
 #       "_alternate_id": "Field[str]",
 #       "id": "Field[str]",
@@ -161,9 +161,9 @@ ft3.log.debug(
 # >>>
 # {
 #   "level": DEBUG,
-#   "time": 2024-02-25 15:30:01.450 UTC,
-#   "log": ft3.core.log,
-#   "data": {
+#   "timestamp": 2024-02-25T15:30:01.450Z,
+#   "logger": ft3,
+#   "message": {
 #     "Pet": {
 #       "_alternate_id": null,
 #       "id": "abc1234",
@@ -253,13 +253,13 @@ def _monkey_log(
         ):
         if 'printed' in msg_dict:  # pragma: no cover (still covered)
             msg_final = typ.LogRecordWithPrintAndTraceBack(
-                message=msg_dict['message'],
+                content=msg_dict['content'],
                 printed=msg_dict['printed'],  # type: ignore[typeddict-item]
                 traceback=lib.traceback.format_exc()
                 )
         else:  # pragma: no cover (still covered)
             msg_final = typ.LogRecordWithTraceBack(
-                message=msg_dict['message'],
+                content=msg_dict['content'],
                 traceback=lib.traceback.format_exc()
                 )
     else:
@@ -278,7 +278,7 @@ def _monkey_log(
                 sort_keys=True
                 ),
             Constants.INDENT * ' '
-            ),
+            ).lstrip(),
         tuple(),
         None,
         func,

@@ -12,8 +12,8 @@ from . import lib
 class Constants(core.cfg.Constants):
     """Constant values shared across log modules."""
 
-    FTIME_LOG      = '%Y-%m-%d %H:%M:%S'
-    FTIME_LOG_MSEC = '%s.%03d UTC'
+    FTIME_LOG      = '%Y-%m-%dT%H:%M:%S'
+    FTIME_LOG_MSEC = '%s.%03dZ'
 
     LOG_LEVEL      = lib.os.getenv(
         'LOG_LEVEL',

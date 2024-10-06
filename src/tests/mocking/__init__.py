@@ -19,12 +19,13 @@ from . import examples
 class Derivative(ft3.Object):
     """Simple test derivative."""
 
+    required_field: ft3.Field[int]
     secondary_key: ft3.Field[int] = 123
     str_field: ft3.Field[str] = 'abc'
     bool_field: ft3.Field[bool] = True
     int_field: ft3.Field[int] = 2
-    forward_ref_alias_field: 'ft3.Field[ft3.core.typ.AnyType]' = 2
-    forward_ref_union_field: 'ft3.Field[float | int | tuple[int | float, ...]]' = 2  # noqa
+    forward_ref_alias_field: ft3.Field['ft3.core.typ.AnyType'] = 2
+    forward_ref_union_field: ft3.Field['float | int | tuple[int | float, ...]'] = 2  # noqa
     forward_ref_field: ft3.Field[list['Derivative']] = []
     enumerated_bool_field: ft3.Field[bool] = ft3.Field(
         default=False,
@@ -38,7 +39,6 @@ class Derivative(ft3.Object):
         }
     null_field: ft3.Field[ft3.core.typ.NoneType] = None
     non_nullable_field: ft3.Field[int] = ft3.Field(default=4, type=int)
-    required_field: ft3.Field[int]
     date_field: ft3.Field[lib.datetime.date] = (  # noqa: E731
         lambda: lib.datetime.datetime.now(lib.datetime.timezone.utc).date()
         )

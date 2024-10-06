@@ -34,7 +34,9 @@ def serialize(value: lib.t.Any) -> str:
 def encode(value: lib.t.Any) -> typ.Serial:
     """
     JSON encode `value` using a corresponding encoder, otherwise returns \
-    `repr(value)`."""
+    `repr(value)`.
+
+    """
 
     if (encoder := Constants.ENCODERS.get(value.__class__)) is not None:
         return encoder(value)
@@ -57,7 +59,10 @@ def try_decode(
     """
 
     try:
-        if typ.utl.check.is_literal(tp):
+        if tp is lib.t.Any:
+            as_tp: typ.AnyType = value
+            return as_tp
+        elif typ.utl.check.is_literal(tp):
             literals = typ.utl.check.get_args(tp)
             literal: typ.AnyType
             if value in literals:
@@ -112,6 +117,8 @@ def try_decode(
                     return enm.ParseErrorRef.null_decode
             else:  # pragma: no cover
                 return tp(value)  # type: ignore[call-arg]
+        elif value is None:
+            return enm.ParseErrorRef.null_decode
         else:
             return tp(value)  # type: ignore[call-arg]
     except:  # noqa: E722
@@ -220,12 +227,16 @@ def parse(
     elif typ.utl.check.is_typed(tp):
         if typ.utl.check.is_object(tp):
             tp_annotations = {
-                k: typ.utl.check.get_args(v)[0]  # Expand Field[Any] --> Any
+                k: typ.utl.hint.finalize_type(typ.utl.check.get_args(v)[0])  # Expand Field[Any] --> Any
                 for k, v
                 in typ.utl.hint.collect_annotations(tp).items()
                 }
         else:
-            tp_annotations = typ.utl.hint.collect_annotations(tp)
+            tp_annotations = {
+                k: typ.utl.hint.finalize_type(v)
+                for k, v
+                in typ.utl.hint.collect_annotations(tp).items()
+                }
         if typ.utl.check.is_serialized_mapping(value):
             tp_dict: dict[str, lib.t.Any] = {}
             for k, val in value.items():

@@ -20,7 +20,7 @@ class InitVarClass(ft3.Object):
     """Has an InitVar for testing."""
 
     init_var: ft3.Field[ft3.core.lib.dataclasses.InitVar]
-    init_var_as_str: 'ft3.Field[ft3.core.lib.dataclasses.InitVar]'
+    init_var_as_str: ft3.Field['ft3.core.lib.dataclasses.InitVar']
 
 
 class Constants(cfg.Constants):
