@@ -726,6 +726,18 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
         else:
             return None
 
+    @lib.t.overload
+    def parse(
+        self,
+        value: lib.t.Any,
+        raise_validation_error: bool,
+        ) -> typ.AnyType | lib.Never: ...
+    @lib.t.overload
+    def parse(
+        self,
+        value: lib.t.Any,
+        raise_validation_error: bool = False,
+        ) -> lib.t.Optional[typ.AnyType]: ...
     def parse(
         self,
         value: lib.t.Any,
