@@ -736,8 +736,8 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
     def parse(
         self,
         value: lib.t.Any,
-        raise_validation_error: bool = False,
-        ) -> lib.t.Optional[typ.AnyType]: ...
+        raise_validation_error: bool = True,
+        ) -> typ.AnyType | lib.Never: ...
     def parse(
         self,
         value: lib.t.Any,
