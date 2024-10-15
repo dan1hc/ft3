@@ -23,5 +23,6 @@ class Constants(core.cfg.Constants):
         'put',
         )
     SKIP_FIELDS = (
+        'default',
         'required',
         )

@@ -129,6 +129,7 @@ class Schema(Component):
                     )
                 ): cls.from_type(
                     ref=fname + oname,
+                    default=field.factory(),
                     **{
                         k: v
                         for k, v
