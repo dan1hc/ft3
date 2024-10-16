@@ -20,7 +20,7 @@ from . import lib
 from . import obj
 from . import typ
 
-from . obj import OBJECTS
+from . obj import OBJECTS, REQUEST_HEADERS, SECURITY
 
 
 class Constants(cfg.Constants):
@@ -123,6 +123,19 @@ def operation_from_object(
 
     parameters = parameters_from_object(cls)
 
+    if (headers := REQUEST_HEADERS.get(cls.__name__)):
+        parameters.extend(headers[method])
+
+    security: list[dict[str, list[str]]] = []
+    if (security_schemes := SECURITY.get(cls.__name__)):
+        security.extend(
+            [
+                {scheme.name_: []}
+                for scheme
+                in security_schemes[method]
+                ]
+            )
+
     tags: list[str] = []
     if parent_tags is not None:
         tags.extend(parent_tags)
@@ -137,7 +150,7 @@ def operation_from_object(
         case Constants.MANY:
             response_obj = obj.ResponseObject(
                 description='Success response.',
-                headers=obj.RESPONSE_HEADERS,
+                headers=obj.DEFAULT_RESPONSE_HEADERS,
                 content={
                     enm.ContentType.json.value: obj.Content(
                         schema=obj.Schema.from_type(type_=list[cls])  # type: ignore[valid-type]
@@ -147,7 +160,7 @@ def operation_from_object(
         case Constants.ONE:
             response_obj = obj.ResponseObject(
                 description='Success response.',
-                headers=obj.RESPONSE_HEADERS,
+                headers=obj.DEFAULT_RESPONSE_HEADERS,
                 content={
                     enm.ContentType.json.value: obj.Content(
                         schema=obj.Schema.from_obj(cls)
@@ -157,7 +170,7 @@ def operation_from_object(
         case _:
             response_obj = obj.ResponseObject(
                 description='Empty response.',
-                headers=obj.RESPONSE_HEADERS
+                headers=obj.DEFAULT_RESPONSE_HEADERS
                 )
 
     match method:
@@ -171,9 +184,10 @@ def operation_from_object(
                         param
                         for param
                         in parameters
-                        if param.in_ == enm.ParameterLocation.path.value
+                        if param.in_ != enm.ParameterLocation.query.value
                         ]
                     ) or None,
+                security=security,
                 responses={'204': response_obj}
                 )
         case Constants.GET if response_type == Constants.MANY:
@@ -196,6 +210,7 @@ def operation_from_object(
                         in parameters
                         ]
                     ) or None,
+                security=security,
                 responses={'200': response_obj}
                 )
         case Constants.GET:
@@ -208,9 +223,10 @@ def operation_from_object(
                         parameter
                         for parameter
                         in parameters
-                        if parameter.in_ == enm.ParameterLocation.path.value
+                        if parameter.in_ != enm.ParameterLocation.query.value
                         ]
                     ) or None,
+                security=security,
                 responses={'200': response_obj}
                 )
         case Constants.PATCH:
@@ -234,6 +250,7 @@ def operation_from_object(
                         in parameters
                         ]
                     ) or None,
+                security=security,
                 responses={'200': response_obj}
                 )
         case Constants.POST:
@@ -250,6 +267,7 @@ def operation_from_object(
                 parameters=filter_to_unique_params(
                     parent_path_parameters or []
                     ) or None,
+                security=security,
                 responses={'201': response_obj}
                 )
         case Constants.PUT:
@@ -269,9 +287,10 @@ def operation_from_object(
                         parameter
                         for parameter
                         in parameters
-                        if parameter.in_ == enm.ParameterLocation.path.value
+                        if parameter.in_ != enm.ParameterLocation.query.value
                         ]
                     ) or None,
+                security=security,
                 responses={'200': response_obj}
                 )
         case _:  # pragma: no cover
@@ -356,6 +375,7 @@ def api_from_package(
     version: str,
     api_path: str,
     include_heartbeat: bool = True,
+    include_version_prefix: bool = False
     ) -> obj.Api:
     """Generate a RESTful API from passed python package name."""
 
@@ -374,7 +394,7 @@ def api_from_package(
 
     if not name.startswith('.'.join((Constants.PACAKGE, 'template'))):  # pragma: no cover
         from .. template . pkg . obj import PetWithPet
-        del OBJECTS[PetWithPet.__name__]
+        OBJECTS.pop(PetWithPet.__name__, None)
 
     paths: list[obj.Path] = []
     for obj_ in OBJECTS.values():
@@ -416,16 +436,32 @@ def api_from_package(
             )
         )
 
+    if include_version_prefix:
+        server = obj.ServerObject(
+            url='/'.join((api_path.strip('/'), '{version}')),
+            variables={'version': obj.ServerVariable(default=version)}
+            )
+    else:  # pragma: no cover
+        server = obj.ServerObject(url=api_path)
+
+    security: dict[str, obj.SecurityScheme] = {}
+    for obj_security_requirements in SECURITY.values():
+        for security_requirements in obj_security_requirements.values():
+            for security_scheme in security_requirements:
+                security[security_scheme.name_] = security_scheme.to_dict(
+                    camel_case=True,
+                    include_null=False,
+                    include_private=False,
+                    include_write_only=True,
+                    include_read_only=False
+                    )
+
     api = obj.Api(
         info=info,
         paths={path.pop('ref'): path for path in paths},
         tags=tags,
-        servers=[
-            obj.ServerObject(
-                url='/'.join((api_path.strip('/'), '{version}')),
-                variables={'version': obj.ServerVariable(default=version)}
-                )
-            ]
+        servers=[server],
+        components={'securitySchemes': security}
         )
 
     from . import static
@@ -433,7 +469,7 @@ def api_from_package(
     path_root = '/'.join((api_path.strip('/'), version))
 
     obj.File(
-        path=api_path,
+        path=path_root if include_version_prefix else api_path,
         content=(
             lib
             .string
@@ -494,6 +530,7 @@ def serve(
     version: str,
     api_path: str,
     include_heartbeat: bool,
+    include_version_prefix: bool
     ) -> None:  # pragma: no cover
     """
     CLI entrypoint for serving an application.
@@ -533,7 +570,8 @@ def serve(
             package,
             version,
             api_path,
-            include_heartbeat
+            include_heartbeat,
+            include_version_prefix
             )
         )
 

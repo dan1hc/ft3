@@ -24,7 +24,8 @@ class TestEndpoint(unittest.TestCase):
         cls.api = ft3.api.api_from_package(
             f'{Constants.PACAKGE}.template',
             Constants.DEFAULT_VERSION,
-            Constants.API_PATH
+            Constants.API_PATH,
+            include_version_prefix=True
             )
         cls.handler = ft3.api.Handler(api=cls.api)
         return super().setUpClass()
@@ -642,8 +643,8 @@ class TestEndpoint(unittest.TestCase):
         """Test GET file."""
 
         request = ft3.api.Request(
-            url=Constants.API_PATH,
-            path=Constants.API_PATH,
+            url=Constants.PATH_ROOT,
+            path=Constants.PATH_ROOT,
             method=Constants.GET
             )
 
@@ -651,15 +652,15 @@ class TestEndpoint(unittest.TestCase):
 
         self.assertEqual(
             response.body,
-            ft3.api.FILES[Constants.API_PATH].content
+            ft3.api.FILES[Constants.PATH_ROOT].content
             )
 
     def test_15_get_file_unexpected_error(self):
         """Test GET file raises unexpected error."""
 
         request = ft3.api.Request(
-            url=Constants.PATH_ROOT,
-            path=Constants.PATH_ROOT,
+            url=Constants.API_PATH,
+            path=Constants.API_PATH,
             method=Constants.GET
             )
 
@@ -688,7 +689,7 @@ class TestEndpoint(unittest.TestCase):
 
         response = self.handler(request)
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 204)
 
     def test_17_not_implemented(self):
         """Test method not implemented."""

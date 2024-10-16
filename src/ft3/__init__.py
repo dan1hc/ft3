@@ -47,16 +47,17 @@ __all__ = (
     'Object'
     )
 
-__version__ = '0.1.0'
+__version__ = '0.2.0-rc.1'
+
+from . import core
+from . import cli
+from . import docs
+from . import loggers
+from . import objects
 
 from . loggers import log
 from . objects import Field, Object
 
 from . import api
-from . import cli
-from . import core
-from . import docs
-from . import loggers
-from . import objects
 
 from . api import Api, File

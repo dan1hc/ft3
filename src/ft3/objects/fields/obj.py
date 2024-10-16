@@ -302,26 +302,22 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
         __object: lib.t.Any,
         __value: typ.AnyType
         ) -> lib.t.Optional[lib.Never]:
-        if isinstance(__value, str):
-            object.__setattr__(__object, self.name, self.parse(__value))
-        elif isinstance(
-            __value,
-            typ.utl.check.get_checkable_types(self.type_)
-            ):
-            object.__setattr__(__object, self.name, __value)
-        else:
-            raise exc.IncorrectTypeError(self.name, self.type_, __value)
+        object.__setattr__(
+            __object,
+            self.name,
+            self.parse(__value, not self.required)
+            )
         return None
 
     @lib.t.overload
     def __init__(
         self,
-        class_as_dict: lib.t.Optional[dict[typ.string[typ.snake_case], lib.t.Any]] = None,
+        class_as_dict: lib.t.Optional[dict[typ.AnyString, lib.t.Any]] = None,
         /,
         *,
         type_: type[typ.Type] = None,
         description: str = None,
-        default: typ.Type = None,
+        default: typ.Type | lib.t.Callable[[], typ.Type] = None,
         required: bool = False,
         enum: typ.Enum = None,
         min_length: int = None,
@@ -342,12 +338,12 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
     @lib.t.overload
     def __init__(
         self,
-        class_as_dict: lib.t.Optional[dict[typ.string[typ.snake_case], lib.t.Any]] = None,
+        class_as_dict: lib.t.Optional[dict[typ.AnyString, lib.t.Any]] = None,
         /,
         *,
         type_: type[typ.AnyType] = None,
         description: str = None,
-        default: typ.AnyType = None,
+        default: typ.AnyType | lib.t.Callable[[], typ.AnyType] = None,
         required: bool = False,
         enum: typ.Enum = None,
         min_length: int = None,
@@ -367,12 +363,12 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
         ): ...
     def __init__(
         self,
-        class_as_dict: lib.t.Optional[dict[typ.string[typ.snake_case], lib.t.Any]] = None,
+        class_as_dict: lib.t.Optional[dict[typ.AnyString, lib.t.Any]] = None,
         /,
         *,
         type_: type | type[typ.Type] | type[typ.AnyType] = None,
         description: str = None,
-        default: lib.t.Any | typ.Type | typ.AnyType = None,
+        default: lib.t.Any | lib.t.Callable[[], lib.t.Any] = None,
         required: bool = False,
         enum: typ.Enum = None,
         min_length: int = None,
@@ -730,6 +726,18 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
         else:
             return None
 
+    @lib.t.overload
+    def parse(
+        self,
+        value: lib.t.Any,
+        raise_validation_error: bool,
+        ) -> typ.AnyType | lib.Never: ...
+    @lib.t.overload
+    def parse(
+        self,
+        value: lib.t.Any,
+        raise_validation_error: bool = True,
+        ) -> typ.AnyType | lib.Never: ...
     def parse(
         self,
         value: lib.t.Any,
@@ -741,6 +749,8 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
         method's default behavior.
 
         """
+
+        self.type_ = typ.utl.hint.finalize_type(self.type_)  # type: ignore[arg-type]
 
         parsed = core.codecs.utl.parse(value, self.type_)
         if isinstance(parsed, core.codecs.enm.ParseErrorRef):

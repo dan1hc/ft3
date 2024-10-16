@@ -1,6 +1,7 @@
 """Api objects module."""
 
 __all__ = (
+    'Api',
     'Component',
     'Content',
     'File',
@@ -8,19 +9,20 @@ __all__ = (
     'Healthz',
     'Info',
     'Operation',
-    'Api',
     'Parameter',
     'Path',
     'RequestBody',
     'ResponseObject',
     'Schema',
     'SecurityScheme',
-    'ServerVariable',
     'ServerObject',
+    'ServerVariable',
     'Tag',
     'FILES',
+    'DEFAULT_RESPONSE_HEADERS',
+    'REQUEST_HEADERS',
     'OBJECTS',
-    'RESPONSE_HEADERS'
+    'SECURITY',
     )
 
 from .. import cli
@@ -43,6 +45,12 @@ FILES: dict[str, 'File'] = {}
 
 OBJECTS: dict[str, 'type[typ.Object]'] = {}
 """All `Objects` served by the API."""
+
+REQUEST_HEADERS: dict[str, dict[str, list['Parameter']]] = {}
+"""All `Headers` registered to the API."""
+
+SECURITY: dict[str, dict[str, list['SecurityScheme']]] = {}
+"""All `SecuritySchemes` registered to the API."""
 
 
 class Component(Object):
@@ -103,7 +111,7 @@ class Schema(Component):
     one_of: Field[lib.t.Optional[list['Schema']]] = None
 
     def __post_init__(self) -> None:
-        if isinstance(self.enum, lib.enum.EnumMeta):
+        if isinstance(self.enum, lib.enum.EnumMeta):  # pragma: no cover
             self.enum = sorted(self.enum._value2member_map_)
         return super().__post_init__()
 
@@ -129,6 +137,7 @@ class Schema(Component):
                     )
                 ): cls.from_type(
                     ref=fname + oname,
+                    default=field.factory(),
                     **{
                         k: v
                         for k, v
@@ -195,7 +204,7 @@ class Schema(Component):
                     all_of=[cls.from_type(type_=typ_.__bound__)],
                     **kwargs
                     )
-            else:
+            else:  # pragma: no cover
                 return cls(**kwargs)
         elif typ.utl.check.is_literal(typ_):
             literal_tp = typ.utl.check.get_type_args(typ_)[0]
@@ -296,7 +305,7 @@ class Parameter(Component):
 
     """
 
-    name: Field[typ.string[typ.camelCase]]
+    name: Field[typ.AnyString]
 
     in_: Field[str] = Field(
         default=enm.ParameterLocation.query.value,
@@ -319,6 +328,42 @@ class Header(Component):
 
     description: Field[lib.t.Optional[str]] = None
     schema: Field[lib.t.Optional[Schema]] = None
+
+    @classmethod
+    def request(
+        cls,
+        name: str,
+        description: lib.t.Optional[str],
+        *methods: str
+        ) -> lib.t.Callable[[type[typ.ObjectType]], type[typ.ObjectType]]:
+        """Register a request header for `Object`."""
+
+        def _inner(obj_: type[typ.ObjectType]) -> type[typ.ObjectType]:
+            REQUEST_HEADERS.setdefault(
+                obj_.__name__,
+                {
+                    method: []
+                    for method
+                    in Constants.METHODS
+                    }
+                )
+            parameter = Parameter(
+                name=name,
+                in_=enm.ParameterLocation.header.value,
+                description=description,
+                schema=Schema.from_type(type_=str)
+                )
+            if not methods:
+                for method in Constants.METHODS:
+                    REQUEST_HEADERS[obj_.__name__][method].append(parameter)
+            else:
+                for method in methods:
+                    REQUEST_HEADERS[obj_.__name__][method.lower()].append(
+                        parameter
+                        )
+            return obj_
+
+        return _inner
 
 
 class Content(Component):
@@ -379,6 +424,8 @@ class Operation(Component):
 
     responses: Field[lib.t.Optional[dict[str, ResponseObject]]] = None
 
+    security: Field[lib.t.Optional[list[dict[str, list[str]]]]] = None
+
     @property
     def path_uri(self) -> str:
         """Path URI."""
@@ -425,9 +472,11 @@ class Path(Component):
 
         tags: list[str] = []
         path_params: dict[str, Parameter] = {}
+        security_requirements: dict[str, list[dict[str, list[str]]]] = {}
         for method in Constants.METHODS:
             operation: lib.t.Optional[Operation] = self[method]
             if operation is not None:
+                security_requirements[method] = operation.security
                 path_params |= {
                     param._ref_: param
                     for param
@@ -441,14 +490,26 @@ class Path(Component):
 
         response_obj = ResponseObject(
             description='Empty response.',
-            headers=RESPONSE_HEADERS
+            headers=DEFAULT_RESPONSE_HEADERS
             )
+
+        security: list[dict[str, list[str]]] = []
+        if not (get_security := security_requirements.get(Constants.GET)):
+            secured: list[str] = []
+            for op_security_requirements in security_requirements.values():
+                for security_requirement in op_security_requirements:
+                    if not all(k in secured for k in security_requirement):
+                        secured.extend(security_requirement.keys())
+                        security.append(security_requirement)
+        else:
+            security.extend(get_security)
 
         self.options = Operation(
             summary='Options for the endpoint.',
             tags=tags,
             parameters=list(path_params.values()) or None,
-            responses={'200': response_obj}
+            security=security,
+            responses={'204': response_obj}
             )
 
         return None
@@ -505,29 +566,6 @@ class File(Object):
         return super().__post_init__()
 
 
-class Api(Component):
-    """
-    [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#openapi-object) OpenAPI Object.
-
-    """
-
-    info: Field[Info]
-    openapi: Field[str] = Constants.VERSION
-
-    paths: Field[dict[str, Path]] = {}
-    tags: Field[list[Tag]] = []
-
-    servers: Field[lib.t.Optional[list[ServerObject]]] = None
-
-    @classmethod
-    def register(cls, obj_: type[typ.ObjectType]) -> type[typ.ObjectType]:
-        """Register an `Object` to be served from the API."""
-
-        OBJECTS[obj_.__name__] = obj_
-
-        return obj_
-
-
 class SecurityScheme(Component):
     """
     [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#security-scheme-object) Security Scheme Object.
@@ -539,7 +577,7 @@ class SecurityScheme(Component):
         enum=enm.SecuritySchemeType
         )
 
-    name_: Field[lib.t.Optional[str]] = None
+    name_: Field[str]
     in_: Field[lib.t.Optional[str]] = Field(
         default=None,
         enum=enm.ApiKeyLocation
@@ -555,6 +593,64 @@ class SecurityScheme(Component):
         enm.ContentType.json.value: Content()
         }
 
+    @classmethod
+    def api_key(
+        cls,
+        name: str,
+        description: lib.t.Optional[str],
+        *methods: str
+        ) -> lib.t.Callable[[type[typ.ObjectType]], type[typ.ObjectType]]:
+        """Register API Key `SecurityScheme` for `Object`."""
+
+        def _inner(obj_: type[typ.ObjectType]) -> type[typ.ObjectType]:
+            security = cls(
+                name_=name,
+                description=description,
+                in_=enm.ApiKeyLocation.header.value
+                )
+            SECURITY.setdefault(
+                obj_.__name__,
+                {
+                    method: []
+                    for method
+                    in Constants.METHODS
+                    }
+                )
+            if not methods:
+                for method in Constants.METHODS:
+                    SECURITY[obj_.__name__][method].append(security)
+            else:
+                for method in methods:  # pragma: no cover
+                    SECURITY[obj_.__name__][method.lower()].append(security)
+            return obj_
+
+        return _inner
+
+
+class Api(Component):
+    """
+    [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#openapi-object) OpenAPI Object.
+
+    """
+
+    info: Field[Info]
+    openapi: Field[str] = Constants.VERSION
+
+    paths: Field[dict[str, Path]] = {}
+    tags: Field[list[Tag]] = []
+
+    servers: Field[lib.t.Optional[list[ServerObject]]] = None
+
+    components: Field[lib.t.Optional[dict[str, dict[str, lib.t.Any]]]] = None
+
+    @classmethod
+    def register(cls, obj_: type[typ.ObjectType]) -> type[typ.ObjectType]:
+        """Register an `Object` to be served from the API."""
+
+        OBJECTS[obj_.__name__] = obj_
+
+        return obj_
+
 
 class Healthz(Object):
     """Default application heartbeat."""
@@ -563,7 +659,7 @@ class Healthz(Object):
     """Application status."""
 
 
-RESPONSE_HEADERS = {
+DEFAULT_RESPONSE_HEADERS = {
     header.value: Header(
         description=(
             '\\' + value
@@ -611,4 +707,10 @@ api_parser.add_argument(
     action='store_false',
     help='set to disinclude /healthz endpoint',
     dest='include_heartbeat',
+    )
+api_parser.add_argument(
+    '--include-version-prefix',
+    action='store_true',
+    help='set to include a version prefix (ex. /v1/healthz)',
+    dest='include_version_prefix',
     )

@@ -112,7 +112,7 @@ class ObjectBase(metaclass=metas.Meta):
 
     def __init__(
         self,
-        class_as_dict: lib.t.Optional[dict[typ.string[typ.snake_case], lib.t.Any]] = None,
+        class_as_dict: lib.t.Optional[dict[typ.AnyString, lib.t.Any]] = None,
         /,
         **kwargs: lib.t.Any
         ):
@@ -143,6 +143,16 @@ class ObjectBase(metaclass=metas.Meta):
 
     def __post_init__(self) -> None:
         """Method that will always run after instantiation."""
+
+    def __setattr__(self, __name: str, __value: lib.t.Any) -> None:
+        """Set attribute with type validation."""
+
+        if typ.utl.check.is_field(self):
+            object.__setattr__(self, __name, __value)
+        elif core.strings.utl.is_snake_case_string(__name):
+            self.__dataclass_fields__[__name].__set__(self, __value)
+
+        return None
 
     def __delitem__(self, __key: lib.t.Any) -> lib.t.Optional[lib.Never]:
         """Reset current value for key to field default."""
@@ -461,10 +471,10 @@ class ObjectBase(metaclass=metas.Meta):
 
         return self.__copy__()
 
-    def __getstate__(self) -> typ.SnakeDict:
+    def __getstate__(self) -> typ.AnyDict:
         return dict(self)
 
-    def __setstate__(self, state: typ.SnakeDict) -> None:
+    def __setstate__(self, state: typ.AnyDict) -> None:
         other: typ.obj.ObjectLike = self.__class__(state)
         self.update(other)
         return None
@@ -1031,7 +1041,7 @@ class Object(ObjectBase):
     """
 
     class_as_dict: lib.t.Final[
-        lib.t.Optional[dict[typ.string[typ.snake_case], lib.t.Any]]
+        lib.t.Optional[dict[typ.AnyString, lib.t.Any]]
         ] = None
     """
     Instantiate class directly from passed `dict` (assumed to be \

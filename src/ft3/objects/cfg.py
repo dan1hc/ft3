@@ -44,7 +44,6 @@ class Constants(core.cfg.Constants):
         '__init__',
         '__init_subclass__',
         '__new__',
-        '__hash__',
         '__getattribute__',
         '__bool__',
         '__contains__',

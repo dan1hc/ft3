@@ -24,7 +24,7 @@ keywords = [
     "swagger",
     ]
 readme = "README.md"
-version = "0.1.0"
+version = "0.2.0-rc.1"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
@@ -61,8 +61,13 @@ docs = [
 [project.scripts]
 ft3 = "ft3.cli:main"
 
+[tool.setuptools.packages.find]
+where = ["src"]
+exclude = ["tests*"]
+
 [tool.setuptools.package-data]
 "*" = [
+    "**/static/*.html",
     "**/static/*.ico",
     "**/static/*.png",
     "**/static/*.tpl",
