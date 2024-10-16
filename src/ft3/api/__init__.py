@@ -35,6 +35,7 @@ __all__ = (
     'Header',
     'Request',
     'Response',
+    'SecurityScheme',
     'FILES',
     'OBJECTS'
     )
@@ -50,5 +51,5 @@ from . import typ
 from . import utl
 
 from . events import Handler, Request, Response
-from . obj import Api, File, Header, FILES, OBJECTS
+from . obj import Api, File, Header, SecurityScheme, FILES, OBJECTS
 from . utl import api_from_package

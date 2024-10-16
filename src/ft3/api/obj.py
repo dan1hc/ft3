@@ -22,6 +22,7 @@ __all__ = (
     'DEFAULT_RESPONSE_HEADERS',
     'REQUEST_HEADERS',
     'OBJECTS',
+    'SECURITY',
     )
 
 from .. import cli
@@ -42,11 +43,14 @@ class Constants(cfg.Constants):
 FILES: dict[str, 'File'] = {}
 """All `Files` served by the API."""
 
+OBJECTS: dict[str, 'type[typ.Object]'] = {}
+"""All `Objects` served by the API."""
+
 REQUEST_HEADERS: dict[str, dict[str, list['Parameter']]] = {}
 """All `Headers` registered to the API."""
 
-OBJECTS: dict[str, 'type[typ.Object]'] = {}
-"""All `Objects` served by the API."""
+SECURITY: dict[str, dict[str, list['SecurityScheme']]] = {}
+"""All `SecuritySchemes` registered to the API."""
 
 
 class Component(Object):
@@ -420,6 +424,8 @@ class Operation(Component):
 
     responses: Field[lib.t.Optional[dict[str, ResponseObject]]] = None
 
+    security: Field[lib.t.Optional[list[dict[str, list[str]]]]] = None
+
     @property
     def path_uri(self) -> str:
         """Path URI."""
@@ -466,9 +472,11 @@ class Path(Component):
 
         tags: list[str] = []
         path_params: dict[str, Parameter] = {}
+        security_requirements: dict[str, list[dict[str, list[str]]]] = {}
         for method in Constants.METHODS:
             operation: lib.t.Optional[Operation] = self[method]
             if operation is not None:
+                security_requirements[method] = operation.security
                 path_params |= {
                     param._ref_: param
                     for param
@@ -485,10 +493,22 @@ class Path(Component):
             headers=DEFAULT_RESPONSE_HEADERS
             )
 
+        security: list[dict[str, list[str]]] = []
+        if not (get_security := security_requirements.get(Constants.GET)):
+            secured: list[str] = []
+            for op_security_requirements in security_requirements.values():
+                for security_requirement in op_security_requirements:
+                    if not all(k in secured for k in security_requirement):
+                        secured.extend(security_requirement.keys())
+                        security.append(security_requirement)
+        else:
+            security.extend(get_security)
+
         self.options = Operation(
             summary='Options for the endpoint.',
             tags=tags,
             parameters=list(path_params.values()) or None,
+            security=security,
             responses={'204': response_obj}
             )
 
@@ -546,29 +566,6 @@ class File(Object):
         return super().__post_init__()
 
 
-class Api(Component):
-    """
-    [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#openapi-object) OpenAPI Object.
-
-    """
-
-    info: Field[Info]
-    openapi: Field[str] = Constants.VERSION
-
-    paths: Field[dict[str, Path]] = {}
-    tags: Field[list[Tag]] = []
-
-    servers: Field[lib.t.Optional[list[ServerObject]]] = None
-
-    @classmethod
-    def register(cls, obj_: type[typ.ObjectType]) -> type[typ.ObjectType]:
-        """Register an `Object` to be served from the API."""
-
-        OBJECTS[obj_.__name__] = obj_
-
-        return obj_
-
-
 class SecurityScheme(Component):
     """
     [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#security-scheme-object) Security Scheme Object.
@@ -580,7 +577,7 @@ class SecurityScheme(Component):
         enum=enm.SecuritySchemeType
         )
 
-    name_: Field[lib.t.Optional[str]] = None
+    name_: Field[str]
     in_: Field[lib.t.Optional[str]] = Field(
         default=None,
         enum=enm.ApiKeyLocation
@@ -595,6 +592,64 @@ class SecurityScheme(Component):
     content: Field[dict[typ.ContentType, Content]] = {
         enm.ContentType.json.value: Content()
         }
+
+    @classmethod
+    def api_key(
+        cls,
+        name: str,
+        description: lib.t.Optional[str],
+        *methods: str
+        ) -> lib.t.Callable[[type[typ.ObjectType]], type[typ.ObjectType]]:
+        """Register API Key `SecurityScheme` for `Object`."""
+
+        def _inner(obj_: type[typ.ObjectType]) -> type[typ.ObjectType]:
+            security = cls(
+                name_=name,
+                description=description,
+                in_=enm.ApiKeyLocation.header.value
+                )
+            SECURITY.setdefault(
+                obj_.__name__,
+                {
+                    method: []
+                    for method
+                    in Constants.METHODS
+                    }
+                )
+            if not methods:
+                for method in Constants.METHODS:
+                    SECURITY[obj_.__name__][method].append(security)
+            else:
+                for method in methods:  # pragma: no cover
+                    SECURITY[obj_.__name__][method.lower()].append(security)
+            return obj_
+
+        return _inner
+
+
+class Api(Component):
+    """
+    [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#openapi-object) OpenAPI Object.
+
+    """
+
+    info: Field[Info]
+    openapi: Field[str] = Constants.VERSION
+
+    paths: Field[dict[str, Path]] = {}
+    tags: Field[list[Tag]] = []
+
+    servers: Field[lib.t.Optional[list[ServerObject]]] = None
+
+    components: Field[lib.t.Optional[dict[str, dict[str, lib.t.Any]]]] = None
+
+    @classmethod
+    def register(cls, obj_: type[typ.ObjectType]) -> type[typ.ObjectType]:
+        """Register an `Object` to be served from the API."""
+
+        OBJECTS[obj_.__name__] = obj_
+
+        return obj_
 
 
 class Healthz(Object):

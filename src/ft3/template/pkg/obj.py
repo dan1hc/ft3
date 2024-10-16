@@ -86,6 +86,7 @@ class Pet(Object):
     """Whether the [sub] pet's tail is currently wagging."""
 
 
+@api.SecurityScheme.api_key('x-api-key', 'Optional API Key.')
 @api.Header.request('x-forwarded-for', 'Optional IP chain.', 'get')
 @api.Header.request('user-agent', 'Optional device metadata.')
 @Api.register
