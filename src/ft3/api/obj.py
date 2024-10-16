@@ -1,6 +1,7 @@
 """Api objects module."""
 
 __all__ = (
+    'Api',
     'Component',
     'Content',
     'File',
@@ -8,19 +9,19 @@ __all__ = (
     'Healthz',
     'Info',
     'Operation',
-    'Api',
     'Parameter',
     'Path',
     'RequestBody',
     'ResponseObject',
     'Schema',
     'SecurityScheme',
-    'ServerVariable',
     'ServerObject',
+    'ServerVariable',
     'Tag',
     'FILES',
+    'DEFAULT_RESPONSE_HEADERS',
+    'REQUEST_HEADERS',
     'OBJECTS',
-    'RESPONSE_HEADERS'
     )
 
 from .. import cli
@@ -40,6 +41,9 @@ class Constants(cfg.Constants):
 
 FILES: dict[str, 'File'] = {}
 """All `Files` served by the API."""
+
+REQUEST_HEADERS: dict[str, dict[str, list['Parameter']]] = {}
+"""All `Headers` registered to the API."""
 
 OBJECTS: dict[str, 'type[typ.Object]'] = {}
 """All `Objects` served by the API."""
@@ -297,7 +301,7 @@ class Parameter(Component):
 
     """
 
-    name: Field[typ.string[typ.camelCase]]
+    name: Field[typ.AnyString]
 
     in_: Field[str] = Field(
         default=enm.ParameterLocation.query.value,
@@ -320,6 +324,42 @@ class Header(Component):
 
     description: Field[lib.t.Optional[str]] = None
     schema: Field[lib.t.Optional[Schema]] = None
+
+    @classmethod
+    def request(
+        cls,
+        name: str,
+        description: lib.t.Optional[str],
+        *methods: str
+        ) -> lib.t.Callable[[type[typ.ObjectType]], type[typ.ObjectType]]:
+        """Register a request header for `Object`."""
+
+        def _inner(obj_: type[typ.ObjectType]) -> type[typ.ObjectType]:
+            REQUEST_HEADERS.setdefault(
+                obj_.__name__,
+                {
+                    method: []
+                    for method
+                    in Constants.METHODS
+                    }
+                )
+            parameter = Parameter(
+                name=name,
+                in_=enm.ParameterLocation.header.value,
+                description=description,
+                schema=Schema.from_type(type_=str)
+                )
+            if not methods:
+                for method in Constants.METHODS:
+                    REQUEST_HEADERS[obj_.__name__][method].append(parameter)
+            else:
+                for method in methods:
+                    REQUEST_HEADERS[obj_.__name__][method.lower()].append(
+                        parameter
+                        )
+            return obj_
+
+        return _inner
 
 
 class Content(Component):
@@ -442,7 +482,7 @@ class Path(Component):
 
         response_obj = ResponseObject(
             description='Empty response.',
-            headers=RESPONSE_HEADERS
+            headers=DEFAULT_RESPONSE_HEADERS
             )
 
         self.options = Operation(
@@ -564,7 +604,7 @@ class Healthz(Object):
     """Application status."""
 
 
-RESPONSE_HEADERS = {
+DEFAULT_RESPONSE_HEADERS = {
     header.value: Header(
         description=(
             '\\' + value

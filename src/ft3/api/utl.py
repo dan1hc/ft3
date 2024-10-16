@@ -20,7 +20,7 @@ from . import lib
 from . import obj
 from . import typ
 
-from . obj import OBJECTS
+from . obj import OBJECTS, REQUEST_HEADERS
 
 
 class Constants(cfg.Constants):
@@ -123,6 +123,9 @@ def operation_from_object(
 
     parameters = parameters_from_object(cls)
 
+    if (headers := REQUEST_HEADERS.get(cls.__name__)):
+        parameters.extend(headers[method])
+
     tags: list[str] = []
     if parent_tags is not None:
         tags.extend(parent_tags)
@@ -137,7 +140,7 @@ def operation_from_object(
         case Constants.MANY:
             response_obj = obj.ResponseObject(
                 description='Success response.',
-                headers=obj.RESPONSE_HEADERS,
+                headers=obj.DEFAULT_RESPONSE_HEADERS,
                 content={
                     enm.ContentType.json.value: obj.Content(
                         schema=obj.Schema.from_type(type_=list[cls])  # type: ignore[valid-type]
@@ -147,7 +150,7 @@ def operation_from_object(
         case Constants.ONE:
             response_obj = obj.ResponseObject(
                 description='Success response.',
-                headers=obj.RESPONSE_HEADERS,
+                headers=obj.DEFAULT_RESPONSE_HEADERS,
                 content={
                     enm.ContentType.json.value: obj.Content(
                         schema=obj.Schema.from_obj(cls)
@@ -157,7 +160,7 @@ def operation_from_object(
         case _:
             response_obj = obj.ResponseObject(
                 description='Empty response.',
-                headers=obj.RESPONSE_HEADERS
+                headers=obj.DEFAULT_RESPONSE_HEADERS
                 )
 
     match method:
@@ -171,7 +174,7 @@ def operation_from_object(
                         param
                         for param
                         in parameters
-                        if param.in_ == enm.ParameterLocation.path.value
+                        if param.in_ != enm.ParameterLocation.query.value
                         ]
                     ) or None,
                 responses={'204': response_obj}
@@ -208,7 +211,7 @@ def operation_from_object(
                         parameter
                         for parameter
                         in parameters
-                        if parameter.in_ == enm.ParameterLocation.path.value
+                        if parameter.in_ != enm.ParameterLocation.query.value
                         ]
                     ) or None,
                 responses={'200': response_obj}
@@ -269,7 +272,7 @@ def operation_from_object(
                         parameter
                         for parameter
                         in parameters
-                        if parameter.in_ == enm.ParameterLocation.path.value
+                        if parameter.in_ != enm.ParameterLocation.query.value
                         ]
                     ) or None,
                 responses={'200': response_obj}
@@ -416,7 +419,6 @@ def api_from_package(
             else None
             )
         )
-
 
     if include_version_prefix:
         server = obj.ServerObject(

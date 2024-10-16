@@ -5,7 +5,7 @@ __all__ = (
     'PetWithPet'
     )
 
-from ... import Api, Field, Object
+from ... import api, Api, Field, Object
 
 from . import enm
 from . import lib
@@ -86,6 +86,8 @@ class Pet(Object):
     """Whether the [sub] pet's tail is currently wagging."""
 
 
+@api.Header.request('x-forwarded-for', 'Optional IP chain.', 'get')
+@api.Header.request('user-agent', 'Optional device metadata.')
 @Api.register
 class PetWithPet(Object):
     """
