@@ -393,8 +393,11 @@ def api_from_package(
             return obj.Healthz()  # pragma: no cover
 
     if not name.startswith('.'.join((Constants.PACAKGE, 'template'))):  # pragma: no cover
-        from .. template . pkg . obj import PetWithPet
+        from .. template . pkg . obj import Pet, PetWithPet
         OBJECTS.pop(PetWithPet.__name__, None)
+        REQUEST_HEADERS.pop(PetWithPet.__name__, None)
+        SECURITY.pop(PetWithPet.__name__, None)
+        SECURITY.pop(Pet.__name__, None)
 
     paths: list[obj.Path] = []
     for obj_ in OBJECTS.values():
