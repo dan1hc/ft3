@@ -42,6 +42,7 @@ class Human(Object):
     """The human's name."""
 
 
+@api.SecurityScheme.api_key('x-api-key', 'Optional API Key.', 'post', 'put')
 class Pet(Object):
     """Pet of a pet."""
 

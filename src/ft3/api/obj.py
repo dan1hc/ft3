@@ -620,7 +620,7 @@ class SecurityScheme(Component):
                 for method in Constants.METHODS:
                     SECURITY[obj_.__name__][method].append(security)
             else:
-                for method in methods:  # pragma: no cover
+                for method in methods:
                     SECURITY[obj_.__name__][method.lower()].append(security)
             return obj_
 
