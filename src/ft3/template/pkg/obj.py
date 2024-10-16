@@ -42,7 +42,7 @@ class Human(Object):
     """The human's name."""
 
 
-@api.SecurityScheme.api_key('x-api-key', 'Optional API Key.', 'post', 'put')
+@api.SecurityScheme.api_key('x-ft3-key', 'Optional API Key.', 'post', 'put')
 class Pet(Object):
     """Pet of a pet."""
 
@@ -87,9 +87,9 @@ class Pet(Object):
     """Whether the [sub] pet's tail is currently wagging."""
 
 
-@api.SecurityScheme.api_key('x-api-key', 'Optional API Key.')
-@api.Header.request('x-forwarded-for', 'Optional IP chain.', 'get')
-@api.Header.request('user-agent', 'Optional device metadata.')
+@api.SecurityScheme.api_key('x-ft3-key', 'Optional API Key.')
+@api.Header.request('x-ft3-forwarded-for', 'Optional IP chain.', 'get')
+@api.Header.request('x-ft3-user-agent', 'Optional device metadata.')
 @Api.register
 class PetWithPet(Object):
     """

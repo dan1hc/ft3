@@ -68,8 +68,8 @@ class Schema(Component):
 
     """
 
-    type_: Field[list[typ.ApiType]] = Field(
-        default=[enm.Type.string.value],
+    type_: Field[lib.t.Optional[list[typ.ApiType]]] = Field(
+        default=None,
         enum=enm.Type
         )
     format_: Field[lib.t.Optional[typ.ApiFormat]] = Field(
