@@ -68,8 +68,8 @@ class Schema(Component):
 
     """
 
-    type_: Field[list[typ.ApiType]] = Field(
-        default=[enm.Type.string.value],
+    type_: Field[lib.t.Optional[list[typ.ApiType]]] = Field(
+        default=None,
         enum=enm.Type
         )
     format_: Field[lib.t.Optional[typ.ApiFormat]] = Field(
@@ -620,7 +620,7 @@ class SecurityScheme(Component):
                 for method in Constants.METHODS:
                     SECURITY[obj_.__name__][method].append(security)
             else:
-                for method in methods:  # pragma: no cover
+                for method in methods:
                     SECURITY[obj_.__name__][method.lower()].append(security)
             return obj_
 
