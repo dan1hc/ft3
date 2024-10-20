@@ -1,10 +1,109 @@
 # CHANGELOG
 
+
+## v0.1.1 (2024-10-20)
+
+### Bug Fixes
+
+* fix: __multiple_fixes__ (#19)
+
+* fix: __multiple_fixes__
+
+Fixes multiple issues for ft3, primarily parsing on instantiation and automatic validation.
+
+fixes #18
+
+* docs: __v0.1.1-rc.1__ [skip ci]
+
+* fix: typ ordering and comment cleanup
+
+* docs: __v0.1.1-rc.2__ [skip ci]
+
+* fix: hash does not need to be reserved
+
+* docs: __v0.1.1-rc.3__ [skip ci]
+
+* fix: align log format with lambda and polish
+
+* docs: __v0.1.1-rc.4__ [skip ci]
+
+* docs: minor readme touchups
+
+* fix: install static html
+
+* docs: __v0.1.1-rc.5__ [skip ci]
+
+* fix: need to pop template not del
+
+* docs: __v0.1.1-rc.6__ [skip ci]
+
+* fix: mypy compliance pytyped
+
+* docs: __v0.1.1-rc.7__ [skip ci]
+
+* fix: dont build tests and dont auto-include version prefix
+
+* docs: __v0.1.1-rc.8__ [skip ci]
+
+* fix: build
+
+* docs: __v0.1.1-rc.9__ [skip ci]
+
+* fix: version prefix for swagger
+
+* docs: __v0.1.1-rc.10__ [skip ci]
+
+* fix: favicon path
+
+* docs: __v0.1.1-rc.11__ [skip ci]
+
+* fix: log formatting fix
+
+* docs: __v0.1.1-rc.12__ [skip ci]
+
+* fix: default connection header to keep-alive
+
+* docs: __v0.1.1-rc.13__ [skip ci]
+
+* perf: improve typing for parse
+
+* fix: correctly type parse fn
+
+* docs: __v0.1.1-rc.14__ [skip ci]
+
+* fix: use default factory for openapi schema definition
+
+* docs: __v0.1.1-rc.15__ [skip ci]
+
+* fix: allow default on field to be a Callable[[], AnyType@Field]
+
+* docs: __v0.1.1-rc.16__ [skip ci]
+
+* feat: allow for optional inclusion of specific request headers with decorator
+
+* docs: __v0.2.0-rc.1__ [skip ci]
+
+* feat(api): implement api key security scheme
+
+---------
+
+Co-authored-by: dan <dan@dans-MacBook-Air.local>
+Co-authored-by: github-actions <action@github.com> ([`015dd74`](https://github.com/dan1hc/ft3/commit/015dd74cbc7316eaafb0b3416421f62fdee514ba))
+
+### Testing
+
+* test: simple case to expand coverage for security schemes (#22)
+
+* test: simple case to expand coverage for security schemes
+
+* feat: fix oas rendering with optional type on schema ([`fd93e27`](https://github.com/dan1hc/ft3/commit/fd93e27cb74e061fe8448757e4da44798df34e42))
+
+
 ## v0.1.0 (2024-09-18)
 
-### Build
+### Build System
 
-* build(deps): update sphinx requirement from ==7.* to &gt;=7,&lt;9 (#9)
+* build(deps): update sphinx requirement from ==7.* to >=7,<9 (#9)
 
 Updates the requirements on [sphinx](https://github.com/sphinx-doc/sphinx) to permit the latest version.
 - [Release notes](https://github.com/sphinx-doc/sphinx/releases)
@@ -17,10 +116,10 @@ updated-dependencies:
   dependency-type: direct:production
 ...
 
-Signed-off-by: dependabot[bot] &lt;support@github.com&gt;
-Co-authored-by: dependabot[bot] &lt;49699333+dependabot[bot]@users.noreply.github.com&gt; ([`7b3ccce`](https://github.com/dan1hc/ft3/commit/7b3ccce705a7fef8a73ddf0b61972defc65b3c1c))
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com> ([`7b3ccce`](https://github.com/dan1hc/ft3/commit/7b3ccce705a7fef8a73ddf0b61972defc65b3c1c))
 
-* build(deps): update pre-commit requirement from ==3.7.* to &gt;=3.7,&lt;3.9 (#10)
+* build(deps): update pre-commit requirement from ==3.7.* to >=3.7,<3.9 (#10)
 
 Updates the requirements on [pre-commit](https://github.com/pre-commit/pre-commit) to permit the latest version.
 - [Release notes](https://github.com/pre-commit/pre-commit/releases)
@@ -33,14 +132,16 @@ updated-dependencies:
   dependency-type: direct:production
 ...
 
-Signed-off-by: dependabot[bot] &lt;support@github.com&gt;
-Co-authored-by: dependabot[bot] &lt;49699333+dependabot[bot]@users.noreply.github.com&gt; ([`f3e9fd1`](https://github.com/dan1hc/ft3/commit/f3e9fd1e52c6d5b54b6614914d9d733308fd71e8))
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com> ([`f3e9fd1`](https://github.com/dan1hc/ft3/commit/f3e9fd1e52c6d5b54b6614914d9d733308fd71e8))
 
 ### Documentation
 
+* docs: __v0.1.0__ [skip ci] ([`ee93236`](https://github.com/dan1hc/ft3/commit/ee93236193bbd4dc07e7bff225eba95169e1b8b7))
+
 * docs: __get_funding__ ([`e39c69a`](https://github.com/dan1hc/ft3/commit/e39c69ad32b1462fb322a0b8b9d6028c30e58e78))
 
-### Feature
+### Features
 
 * feat: progress toward full OAS integration (#14)
 
@@ -78,15 +179,16 @@ closes #5
 
 ---------
 
-Co-authored-by: github-actions &lt;action@github.com&gt; ([`a36847e`](https://github.com/dan1hc/ft3/commit/a36847e01c6116e25cfc916e19ae8c83d23947c5))
+Co-authored-by: github-actions <action@github.com> ([`a36847e`](https://github.com/dan1hc/ft3/commit/a36847e01c6116e25cfc916e19ae8c83d23947c5))
 
-### Test
+### Testing
 
 * test: re-test readme ([`3fa848f`](https://github.com/dan1hc/ft3/commit/3fa848f14d972a227a5b3cf34115728f198f779f))
 
+
 ## v0.0.1 (2024-07-28)
 
-### Build
+### Build System
 
 * build: dunder init ([`6ce6400`](https://github.com/dan1hc/ft3/commit/6ce6400aa6abbaa51865524108f3ecee65218c7c))
 
