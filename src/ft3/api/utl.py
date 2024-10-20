@@ -20,7 +20,7 @@ from . import lib
 from . import obj
 from . import typ
 
-from . obj import OBJECTS, REQUEST_HEADERS, SECURITY
+from . obj import OBJECTS, REQUEST_HEADERS, RESPONSE_HEADERS, SECURITY
 
 
 class Constants(cfg.Constants):
@@ -118,13 +118,24 @@ def operation_from_object(
     method: typ.ApiMethod,
     parent_tags: lib.t.Optional[list[str]] = None,
     parent_path_parameters: lib.t.Optional[list[obj.Parameter]] = None,
+    include_default_response_headers: bool = True,
     ) -> lib.t.Optional[obj.Operation]:
     """Generate RESTful API `Operation` from an `Object`."""
 
     parameters = parameters_from_object(cls)
 
-    if (headers := REQUEST_HEADERS.get(cls.__name__)):
-        parameters.extend(headers[method])
+    if (request_headers := REQUEST_HEADERS.get(cls.__name__)):
+        parameters.extend(request_headers[method])
+
+    response_headers: dict[str, obj.Header]
+    if include_default_response_headers:
+        response_headers = obj.DEFAULT_RESPONSE_HEADERS
+    else:
+        response_headers = {}  # pragma: no cover
+
+    response_headers_by_method = RESPONSE_HEADERS.get(cls.__name__)
+    if response_headers_by_method is not None:
+        response_headers.update(response_headers_by_method[method])
 
     security: list[dict[str, list[str]]] = []
     if (security_schemes := SECURITY.get(cls.__name__)):
@@ -150,7 +161,7 @@ def operation_from_object(
         case Constants.MANY:
             response_obj = obj.ResponseObject(
                 description='Success response.',
-                headers=obj.DEFAULT_RESPONSE_HEADERS,
+                headers=response_headers,
                 content={
                     enm.ContentType.json.value: obj.Content(
                         schema=obj.Schema.from_type(type_=list[cls])  # type: ignore[valid-type]
@@ -160,7 +171,7 @@ def operation_from_object(
         case Constants.ONE:
             response_obj = obj.ResponseObject(
                 description='Success response.',
-                headers=obj.DEFAULT_RESPONSE_HEADERS,
+                headers=response_headers,
                 content={
                     enm.ContentType.json.value: obj.Content(
                         schema=obj.Schema.from_obj(cls)
@@ -170,7 +181,7 @@ def operation_from_object(
         case _:
             response_obj = obj.ResponseObject(
                 description='Empty response.',
-                headers=obj.DEFAULT_RESPONSE_HEADERS
+                headers=response_headers
                 )
 
     match method:
@@ -303,6 +314,7 @@ def paths_from_object(
     cls: type[Object],
     parent_tags: lib.t.Optional[list[str]] = None,
     parent_path_parameters: lib.t.Optional[list[obj.Parameter]] = None,
+    include_default_response_headers: bool = True,
     ) -> list[obj.Path]:
     """Generate RESTful API `Path` Objects from an `Object`."""
 
@@ -316,7 +328,8 @@ def paths_from_object(
                 cls,
                 method,
                 parent_tags,
-                parent_path_parameters
+                parent_path_parameters,
+                include_default_response_headers
                 )
             if operation is not None:
                 operations_by_uri.setdefault(operation.path_uri, {})
@@ -364,7 +377,12 @@ def paths_from_object(
     for child_obj in child_objs:
         if child_obj.hash_fields and child_obj.__name__ not in OBJECTS:
             paths.extend(
-                paths_from_object(child_obj, tags, path_parameters or None)
+                paths_from_object(
+                    child_obj,
+                    tags,
+                    path_parameters or None,
+                    include_default_response_headers
+                    )
                 )
 
     return paths
@@ -375,7 +393,8 @@ def api_from_package(
     version: str,
     api_path: str,
     include_heartbeat: bool = True,
-    include_version_prefix: bool = False
+    include_version_prefix: bool = False,
+    include_default_response_headers: bool = True,
     ) -> obj.Api:
     """Generate a RESTful API from passed python package name."""
 
@@ -401,7 +420,14 @@ def api_from_package(
 
     paths: list[obj.Path] = []
     for obj_ in OBJECTS.values():
-        paths.extend(paths_from_object(obj_))
+        paths.extend(
+            paths_from_object(
+                obj_,
+                include_default_response_headers=(
+                    include_default_response_headers
+                    )
+                )
+            )
 
     tags: list[obj.Tag] = []
     tagged: list[str] = []
@@ -533,7 +559,8 @@ def serve(
     version: str,
     api_path: str,
     include_heartbeat: bool,
-    include_version_prefix: bool
+    include_version_prefix: bool,
+    include_default_response_headers: bool
     ) -> None:  # pragma: no cover
     """
     CLI entrypoint for serving an application.
@@ -574,7 +601,8 @@ def serve(
             version,
             api_path,
             include_heartbeat,
-            include_version_prefix
+            include_version_prefix,
+            include_default_response_headers
             )
         )
 
