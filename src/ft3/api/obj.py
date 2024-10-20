@@ -21,6 +21,7 @@ __all__ = (
     'FILES',
     'DEFAULT_RESPONSE_HEADERS',
     'REQUEST_HEADERS',
+    'RESPONSE_HEADERS',
     'OBJECTS',
     'SECURITY',
     )
@@ -47,7 +48,10 @@ OBJECTS: dict[str, 'type[typ.Object]'] = {}
 """All `Objects` served by the API."""
 
 REQUEST_HEADERS: dict[str, dict[str, list['Parameter']]] = {}
-"""All `Headers` registered to the API."""
+"""All request `Headers` registered to the API."""
+
+RESPONSE_HEADERS: dict[str, dict[str, dict[str, 'Header']]] = {}
+"""All response `Headers` registered to the API."""
 
 SECURITY: dict[str, dict[str, list['SecurityScheme']]] = {}
 """All `SecuritySchemes` registered to the API."""
@@ -360,6 +364,40 @@ class Header(Component):
                 for method in methods:
                     REQUEST_HEADERS[obj_.__name__][method.lower()].append(
                         parameter
+                        )
+            return obj_
+
+        return _inner
+
+    @classmethod
+    def response(
+        cls,
+        name: str,
+        description: lib.t.Optional[str],
+        *methods: str
+        ) -> lib.t.Callable[[type[typ.ObjectType]], type[typ.ObjectType]]:
+        """Register a response header for `Object`."""
+
+        def _inner(obj_: type[typ.ObjectType]) -> type[typ.ObjectType]:
+            RESPONSE_HEADERS.setdefault(
+                obj_.__name__,
+                {
+                    method: {}
+                    for method
+                    in Constants.METHODS
+                    }
+                )
+            header = cls(
+                description=description,
+                schema=Schema.from_type(type_=dict[str, str])
+                )
+            if not methods:
+                for method in Constants.METHODS:
+                    RESPONSE_HEADERS[obj_.__name__][method][name] = header
+            else:
+                for method in methods:
+                    RESPONSE_HEADERS[obj_.__name__][method.lower()][name] = (
+                        header
                         )
             return obj_
 
@@ -713,4 +751,10 @@ api_parser.add_argument(
     action='store_true',
     help='set to include a version prefix (ex. /v1/healthz)',
     dest='include_version_prefix',
+    )
+api_parser.add_argument(
+    '--no-include-default-response-headers',
+    action='store_false',
+    help='set to disinclude default response headers',
+    dest='include_default_response_headers',
     )

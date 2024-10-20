@@ -88,6 +88,8 @@ class Pet(Object):
 
 
 @api.SecurityScheme.api_key('x-ft3-key', 'Optional API Key.')
+@api.Header.response('x-ft3-page-number', '\\*', 'get')
+@api.Header.response('x-ft3-response-type', 'application/ft3')
 @api.Header.request('x-ft3-forwarded-for', 'Optional IP chain.', 'get')
 @api.Header.request('x-ft3-user-agent', 'Optional device metadata.')
 @Api.register
