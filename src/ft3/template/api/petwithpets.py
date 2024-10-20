@@ -32,6 +32,8 @@ def read(request: Request) -> list[pkg.obj.PetWithPet]:
         pkg.clients.DatabaseClient.find_many(request.query_params)
         )
 
+    request.headers['x-ft3-page-number'] = len(pets) // 10 + 1
+
     return pets
 
 

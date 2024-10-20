@@ -127,11 +127,9 @@ def operation_from_object(
     if (request_headers := REQUEST_HEADERS.get(cls.__name__)):
         parameters.extend(request_headers[method])
 
-    response_headers: dict[str, obj.Header]
+    response_headers: dict[str, obj.Header] = {}
     if include_default_response_headers:
-        response_headers = obj.DEFAULT_RESPONSE_HEADERS
-    else:
-        response_headers = {}  # pragma: no cover
+        response_headers.update(obj.DEFAULT_RESPONSE_HEADERS)
 
     response_headers_by_method = RESPONSE_HEADERS.get(cls.__name__)
     if response_headers_by_method is not None:
@@ -361,7 +359,7 @@ def paths_from_object(
                 if tag not in tags:
                     tags.append(tag)
 
-        path.update_options()
+        path.update_options(cls, include_default_response_headers)
         paths.append(path)
 
     child_objs: list[type[Object]] = []
@@ -415,6 +413,7 @@ def api_from_package(
         from .. template . pkg . obj import Pet, PetWithPet
         OBJECTS.pop(PetWithPet.__name__, None)
         REQUEST_HEADERS.pop(PetWithPet.__name__, None)
+        RESPONSE_HEADERS.pop(PetWithPet.__name__, None)
         SECURITY.pop(PetWithPet.__name__, None)
         SECURITY.pop(Pet.__name__, None)
 
@@ -485,12 +484,16 @@ def api_from_package(
                     include_read_only=False
                     )
 
+    components = {'securitySchemes': security}
+    if include_default_response_headers:
+        components['headers'] = obj.DEFAULT_RESPONSE_HEADERS
+
     api = obj.Api(
         info=info,
         paths={path.pop('ref'): path for path in paths},
         tags=tags,
         servers=[server],
-        components={'securitySchemes': security}
+        components=components
         )
 
     from . import static
