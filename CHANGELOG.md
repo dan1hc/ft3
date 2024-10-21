@@ -1,6 +1,33 @@
 # CHANGELOG
 
 
+## v0.1.2 (2024-10-21)
+
+### Bug Fixes
+
+* fix: allow for custom response headers (#23)
+
+* fix: allow for custom response headers
+
+* style: escape template resp header asterisk
+
+* docs: __v0.1.2-rc.1__ [skip ci]
+
+---------
+
+Co-authored-by: github-actions <action@github.com> ([`df84bb5`](https://github.com/dan1hc/ft3/commit/df84bb511edb60a69d4a2f876cf3983a2c04e2a7))
+
+### Unknown
+
+* Response headers   (#24)
+
+* fix: allow for custom response headers
+
+* style: escape template resp header asterisk
+
+* fix: allow use of custom response headers by injecting on request object ([`2d1b396`](https://github.com/dan1hc/ft3/commit/2d1b3968fbd398874c0c944815bfe96e6c997c66))
+
+
 ## v0.1.1 (2024-10-20)
 
 ### Bug Fixes
@@ -89,6 +116,10 @@ fixes #18
 
 Co-authored-by: dan <dan@dans-MacBook-Air.local>
 Co-authored-by: github-actions <action@github.com> ([`015dd74`](https://github.com/dan1hc/ft3/commit/015dd74cbc7316eaafb0b3416421f62fdee514ba))
+
+### Documentation
+
+* docs: __v0.1.1__ [skip ci] ([`4d3baf4`](https://github.com/dan1hc/ft3/commit/4d3baf45ad4bfa1c9eecdc8591be95231134bb93))
 
 ### Testing
 
