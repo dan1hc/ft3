@@ -69,7 +69,7 @@ Additionally, commit messages must adhere to [angular commit guidelines](https:/
 
 ---
 
-```py
+```python
 import re
 
 pattern = re.compile(

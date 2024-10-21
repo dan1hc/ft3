@@ -248,7 +248,7 @@ def cname_for(
 
     ### Example Usage
 
-    ```py
+    ```python
     d = {
         '_id': 123,
         '_meaning_of_life': 42

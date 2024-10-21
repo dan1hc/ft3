@@ -79,7 +79,7 @@ class Query(objs.Object):
 
     ### Example
 
-    ```py
+    ```python
     query: Query = (
         (
             (Object.integer_field >= 1)

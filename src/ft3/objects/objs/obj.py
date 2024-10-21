@@ -801,7 +801,7 @@ class Object(ObjectBase):
 
     #### python representation
 
-    ```py
+    ```python
     import ft3
 
 
@@ -868,7 +868,7 @@ class Object(ObjectBase):
     so, a dictionary with key `in` will correctly map to the `in_` \
     field on the Object. See below for more detail.
 
-    ```py
+    ```python
     import ft3
 
 
@@ -934,7 +934,7 @@ class Object(ObjectBase):
     python [slots](https://wiki.python.org/moin/UsingSlots) to better \
     understand why this is necessary.
 
-    ```py
+    ```python
     import ft3
 
 
@@ -981,60 +981,60 @@ class Object(ObjectBase):
     the Object instance are different from default values, \
     otherwise False.
 
-    ```py
+    ```python
     if Object:
     ```
 
     Objects are designed to display themselves as neatly \
     formatted JSON on calls to `__repr__`.
 
-    ```py
+    ```python
     print(Object)
     ```
 
     Updates Object1 with values from Object2 if they \
     are a non-default value for the object.
 
-    ```py
+    ```python
     Object1 << Object2
     ```
 
     Overwrites Object1 values with those from Object2 \
     if they are a non-default value for the object.
 
-    ```py
+    ```python
     Object1 >> Object2
     ```
 
     Returns a dictionary with {fieldName: fieldValue2} for \
     any fields that differ between the two Objects.
 
-    ```py
+    ```python
     Object1 - Object2
     ```
 
     Get value for Object field.
 
-    ```py
+    ```python
     value = Object['field']
     ```
 
     Set value for Object field.
 
-    ```py
+    ```python
     Object['field'] = value
     ```
 
     Returns True if any one of field, _field, field_, or _field_ \
     is a valid field for the Object, otherwise False.
 
-    ```py
+    ```python
     field in Object
     ```
 
     Same as `len(Object.fields)`.
 
-    ```py
+    ```python
     len(Object)
     ```
 

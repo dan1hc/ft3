@@ -64,7 +64,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 
     ### Example
 
-    ```py
+    ```python
     query: Query = (
         (
             (Object.integer_field >= 1)
@@ -90,7 +90,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
     and control its behavior.
 
 
-    ```py
+    ```python
     name: str = None
 
     ```
@@ -99,7 +99,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
     Sourced from / overwritten by attribute name.
 
 
-    ```py
+    ```python
     type: type[lib.t.Any] = None
 
     ```
@@ -108,7 +108,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
     Sourced from / overwritten by type annotation.
 
 
-    ```py
+    ```python
     default: lib.t.Any = None
 
     ```
@@ -118,7 +118,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
     MUST be an instance of field `type` or `None`.
 
 
-    ```py
+    ```python
     required: bool = False
 
     ```
@@ -128,7 +128,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
     no attribute value is specified for the field.
 
 
-    ```py
+    ```python
     enum: deque | frozenset | list | tuple | set | Enum = None
 
     ```
@@ -139,7 +139,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
     `None` is always allowed.
 
 
-    ```py
+    ```python
     min_length: int = None
 
     ```
@@ -148,7 +148,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
     Field type MUST be `str` if specified.
 
 
-    ```py
+    ```python
     max_length: int = None
 
     ```
@@ -157,7 +157,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
     Field type MUST be `str` if specified.
 
 
-    ```py
+    ```python
     minimum: float = None
 
     ```
@@ -166,7 +166,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
     Field type MUST be numeric if specified.
 
 
-    ```py
+    ```python
     exclusive_minimum: bool = False
 
     ```
@@ -175,7 +175,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
     Field minimum MUST also be specified.
 
 
-    ```py
+    ```python
     maximum: float = None
 
     ```
@@ -184,7 +184,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
     Field type MUST be numeric if specified.
 
 
-    ```py
+    ```python
     exclusive_maximum: bool = False
 
     ```
@@ -193,7 +193,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
     Field maximum MUST also be specified.
 
 
-    ```py
+    ```python
     multiple_of: float = None
 
     ```
@@ -202,7 +202,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
     Field type MUST be numeric if specified.
 
 
-    ```py
+    ```python
     pattern: str = None
 
     ```
@@ -211,7 +211,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
     Field type MUST be `str` if specified.
 
 
-    ```py
+    ```python
     min_items: int = None
 
     ```
@@ -220,7 +220,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
     Field type MUST be `deque | frozenset | list | tuple | set` if specified.
 
 
-    ```py
+    ```python
     max_items: int = None
 
     ```
@@ -229,7 +229,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
     Field type MUST be `deque | frozenset | list | tuple | set` if specified.
 
 
-    ```py
+    ```python
     unique_items: bool = False
 
     ```
@@ -238,7 +238,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
     Field type MUST be `deque | frozenset | list | tuple | set` if specified.
 
 
-    ```py
+    ```python
     read_only: bool = False
 
     ```
@@ -247,7 +247,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
     operations (like `GET` http calls).
 
 
-    ```py
+    ```python
     write_only: bool = False
 
     ```
