@@ -68,7 +68,7 @@ def get_type_args(
 
     #### Examples
 
-    ```py
+    ```python
     get_type_args(Literal[1])
     (int, )
 

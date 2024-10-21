@@ -94,7 +94,7 @@ is unavailable in `os.environ` at runtime).
 Usage Examples
 --------------
 
-```py
+```python
 import ft3
 
 ft3.log.debug('example')

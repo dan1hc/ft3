@@ -52,7 +52,7 @@ pip install ft3
 
 ### Basic Usage
 
-```py
+```python
 import ft3
 
 
@@ -112,7 +112,7 @@ pollute your log stream.
 
 ## Example Usage
 
-```py
+```python
 import ft3
 
 
@@ -235,7 +235,7 @@ assert dict(query) == {
 ```
 
 ### Local Logging
-```py
+```python
 import ft3
 
 
@@ -280,7 +280,7 @@ print(AgentFlea())
 
 ### Deployed Logging
 
-```py
+```python
 import os
 os.environ['ENV'] = 'DEV'
 

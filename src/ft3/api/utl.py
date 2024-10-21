@@ -484,9 +484,21 @@ def api_from_package(
                     include_read_only=False
                     )
 
-    components = {'securitySchemes': security}
+    components: dict[str, dict[str, lib.t.Any]] = {
+        'securitySchemes': security
+        }
     if include_default_response_headers:
-        components['headers'] = obj.DEFAULT_RESPONSE_HEADERS
+        components['headers'] = {
+            name: header.to_dict(
+                camel_case=True,
+                include_null=False,
+                include_private=False,
+                include_write_only=True,
+                include_read_only=False
+                )
+            for name, header
+            in obj.DEFAULT_RESPONSE_HEADERS.items()
+            }
 
     api = obj.Api(
         info=info,

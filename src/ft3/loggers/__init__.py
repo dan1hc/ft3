@@ -11,7 +11,7 @@ Usage
 
 ##### Controlled by the following environment variables / defaults.
 
-```py
+```python
 ENV = os.getenv('ENV', 'local').lower()
 LOG_LEVEL = (
     os.getenv(

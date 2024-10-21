@@ -299,6 +299,9 @@ class Schema(Component):
                 format_=enm.Format.date.value,
                 **kwargs
                 )
+        elif isinstance(typ_, type) and issubclass(typ_, str):
+            types_.append(enm.Type.string.value)
+            return cls(type_=types_, **kwargs)
         else:
             return cls(**kwargs)
 

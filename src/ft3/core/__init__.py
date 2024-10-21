@@ -11,7 +11,7 @@ Overview
 Usage
 -----
 
-```py
+```python
 import ft3
 
 ```
