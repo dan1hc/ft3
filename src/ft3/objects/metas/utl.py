@@ -53,7 +53,13 @@ def parse_new_annotations(
     for name, dtype in __annotations.items():
         if (
             typ.utl.check.is_wrapper_type(dtype)
-            or (name in __fields and name not in __base_fields)
+            or (
+                name in __fields
+                and (
+                    name not in __namespace
+                    or name not in __base_fields
+                    )
+                )
             ):
             continue
         elif (

@@ -156,7 +156,7 @@ class PetWithPet(Object):
         )
     """The pet(s) of a pet."""
 
-    human: Field[Human] = Human()
+    human: Field[Human] = Human
     """Sometimes pets also own humans."""
 
     def __post_init__(self) -> None:

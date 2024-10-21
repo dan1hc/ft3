@@ -392,7 +392,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
             kwargs |= dict(
                 type_=lib.t.cast(
                     type[typ.AnyType],
-                    kwargs.pop('type_', kwargs.pop('type', type_))
+                    type_ or kwargs.pop('type_', kwargs.pop('type', type_))
                     ),
                 default=default,
                 description=description,

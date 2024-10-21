@@ -505,7 +505,11 @@ class Path(Component):
     post: Field[lib.t.Optional[Operation]] = None
     put: Field[lib.t.Optional[Operation]] = None
 
-    def update_options(self) -> None:
+    def update_options(
+        self,
+        cls: type[Object],
+        include_default_response_headers: bool
+        ) -> None:
         """Update options operation for the endpoint."""
 
         tags: list[str] = []
@@ -526,9 +530,17 @@ class Path(Component):
                     if tag not in tags:
                         tags.append(tag)
 
+        response_headers: dict[str, Header] = {}
+        if include_default_response_headers:
+            response_headers.update(DEFAULT_RESPONSE_HEADERS)
+
+        response_headers_by_method = RESPONSE_HEADERS.get(cls.__name__)
+        if response_headers_by_method is not None:
+            response_headers.update(response_headers_by_method[method])
+
         response_obj = ResponseObject(
             description='Empty response.',
-            headers=DEFAULT_RESPONSE_HEADERS
+            headers=response_headers
             )
 
         security: list[dict[str, list[str]]] = []

@@ -104,6 +104,14 @@ def handle_request(
     path_name = request.path
     status_code: typ.HttpStatusCode
     response_body: typ.CamelDict | list[typ.CamelDict] | str | bytes
+    response_headers: dict[str, obj.Header] = {}
+
+    default_response_headers: dict[str, obj.Header]
+    if (
+        api.components is not None
+        and (default_response_headers := api.components.get('headers'))
+        ):
+        response_headers.update(default_response_headers)
 
     from ... import log
     from .. import FILES
@@ -117,8 +125,8 @@ def handle_request(
         obj_ = path._resource_
         callback = obj_.__operations__.get(method)
         if callback is not None:
+            operation: obj.Operation = path[method]
             try:
-                operation: obj.Operation = path[method]
                 if operation.parameters is not None:
                     request.parse_path_params(
                         '/'.join(
@@ -163,10 +171,16 @@ def handle_request(
                     content_type = enm.ContentType.json.value
                     status_code = 201 if method == Constants.POST else 200
                     response_body = response_obj.as_response
+            if operation.responses:
+                for response_definition in operation.responses.values():
+                    response_headers.update(response_definition.headers or {})
         elif method == Constants.OPTIONS:
             content_type = enm.ContentType.text.value
             status_code = 204
             response_body = ''
+            if path.options and path.options.responses:
+                for response_definition in path.options.responses.values():
+                    response_headers.update(response_definition.headers or {})
         else:
             error = obj.Error.from_exception(NotImplementedError)
             content_type = enm.ContentType.json.value
@@ -187,12 +201,22 @@ def handle_request(
         header.value: enm.HeaderValue[header.name].value
         for header
         in enm.Header
+        if header.value in response_headers
         }
-    headers[enm.Header.contentLength.value] = content_length
-    headers[enm.Header.contentType.value] = content_type
-    headers[enm.Header.date.value] = (
-        lib.datetime.datetime.now(lib.datetime.timezone.utc).isoformat()
-        )
+    if enm.Header.contentLength.value in response_headers:
+        headers[enm.Header.contentLength.value] = content_length
+    if enm.Header.contentType.value in response_headers:
+        headers[enm.Header.contentType.value] = content_type
+    if enm.Header.date.value in response_headers:
+        headers[enm.Header.date.value] = (
+            lib.datetime.datetime.now(lib.datetime.timezone.utc).isoformat()
+            )
+
+    for name, header in response_headers.items():
+        if name in request.headers:
+            headers[name] = request.headers[name]
+        elif name not in headers:
+            headers[name] = header.description or ''
 
     return obj.Response(
         request_id=request.id_,
