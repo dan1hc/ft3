@@ -274,7 +274,13 @@ def operation_from_object(
                         }
                     ),
                 parameters=filter_to_unique_params(
-                    parent_path_parameters or []
+                    (parent_path_parameters or [])
+                    + [
+                        parameter
+                        for parameter
+                        in parameters
+                        if parameter.in_ == enm.ParameterLocation.header.value
+                        ]
                     ) or None,
                 security=security,
                 responses={'201': response_obj}
