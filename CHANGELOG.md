@@ -1,6 +1,23 @@
 # CHANGELOG
 
 
+## v0.1.3 (2024-10-22)
+
+### Bug Fixes
+
+* fix: syntax fix to trigger ci ([`84158f8`](https://github.com/dan1hc/ft3/commit/84158f81a3eb53742fe4f49322ef7a45543fd78e))
+
+* fix: openapi headers and string types also py in md docs (#25)
+
+* fix: openapi headers and string types also py in md docs
+
+* docs: __v0.1.3-rc.1__ [skip ci]
+
+---------
+
+Co-authored-by: github-actions <action@github.com> ([`87fcf5c`](https://github.com/dan1hc/ft3/commit/87fcf5c47925cccbe6fe4b5aa1e65b1224006c57))
+
+
 ## v0.1.2 (2024-10-21)
 
 ### Bug Fixes
@@ -16,6 +33,10 @@
 ---------
 
 Co-authored-by: github-actions <action@github.com> ([`df84bb5`](https://github.com/dan1hc/ft3/commit/df84bb511edb60a69d4a2f876cf3983a2c04e2a7))
+
+### Documentation
+
+* docs: __v0.1.2__ [skip ci] ([`e890c2f`](https://github.com/dan1hc/ft3/commit/e890c2f2b22a1c0ba247f8df90c3ff9fdd2cf43e))
 
 ### Unknown
 
