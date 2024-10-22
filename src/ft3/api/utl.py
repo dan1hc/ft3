@@ -373,7 +373,14 @@ def paths_from_object(
             child_objs.append(tps[0])
 
     for child_obj in child_objs:
-        if child_obj.hash_fields and child_obj.__name__ not in OBJECTS:
+        if (
+            child_obj.hash_fields
+            and (name := child_obj.__name__) not in OBJECTS
+            and (
+                name.lower() in cls
+                or core.strings.utl.pluralize(name).lower() in cls
+                )
+            ):
             paths.extend(
                 paths_from_object(
                     child_obj,
