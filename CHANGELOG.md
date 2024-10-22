@@ -1,6 +1,33 @@
 # CHANGELOG
 
 
+## v0.1.4 (2024-10-22)
+
+### Bug Fixes
+
+* fix: only allow endpoint hierarchy expansion if field is named same (#27)
+
+* fix: only allow endpoint hierarchy expansion if field is named same
+
+* docs: __v0.1.4-rc.1__ [skip ci]
+
+* fix: allow headers on POST
+
+* docs: __v0.1.4-rc.2__ [skip ci]
+
+* fix: __ior__ and update typing for objs
+
+* docs: __v0.1.4-rc.3__ [skip ci]
+
+---------
+
+Co-authored-by: github-actions <action@github.com> ([`34b685a`](https://github.com/dan1hc/ft3/commit/34b685a2e73012b84b560576ba6afd7ffea24357))
+
+### Continuous Integration
+
+* ci: workaround sem release pr no trigger issue ([`9b6b82a`](https://github.com/dan1hc/ft3/commit/9b6b82aad9aa9e1132e6c78f75c30d8b83e1cae6))
+
+
 ## v0.1.3 (2024-10-22)
 
 ### Bug Fixes
@@ -16,6 +43,10 @@
 ---------
 
 Co-authored-by: github-actions <action@github.com> ([`87fcf5c`](https://github.com/dan1hc/ft3/commit/87fcf5c47925cccbe6fe4b5aa1e65b1224006c57))
+
+### Documentation
+
+* docs: __v0.1.3__ [skip ci] ([`0e61b95`](https://github.com/dan1hc/ft3/commit/0e61b9538c6c3efccd89710125760f7c01d7174b))
 
 
 ## v0.1.2 (2024-10-21)
