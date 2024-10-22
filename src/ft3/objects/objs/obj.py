@@ -475,11 +475,11 @@ class ObjectBase(metaclass=metas.Meta):
         return dict(self)
 
     def __setstate__(self, state: typ.AnyDict) -> None:
-        other: typ.obj.ObjectLike = self.__class__(state)
+        other = self.__class__(state)
         self.update(other)
         return None
 
-    def __ior__(self, other: typ.obj.ObjectLike | typ.AnyDict, /) -> lib.Self:
+    def __ior__(self, other: lib.Self | typ.AnyDict, /) -> lib.Self:
         self.update(other)
         return self
 
@@ -608,7 +608,7 @@ class ObjectBase(metaclass=metas.Meta):
 
         return None
 
-    def update(self, other: typ.obj.ObjectLike | typ.AnyDict, /) -> None:
+    def update(self, other: lib.Self | typ.AnyDict, /) -> None:
         """Update values like a `dict`."""
 
         for k, v in other.items():

@@ -274,7 +274,13 @@ def operation_from_object(
                         }
                     ),
                 parameters=filter_to_unique_params(
-                    parent_path_parameters or []
+                    (parent_path_parameters or [])
+                    + [
+                        parameter
+                        for parameter
+                        in parameters
+                        if parameter.in_ == enm.ParameterLocation.header.value
+                        ]
                     ) or None,
                 security=security,
                 responses={'201': response_obj}
@@ -373,7 +379,14 @@ def paths_from_object(
             child_objs.append(tps[0])
 
     for child_obj in child_objs:
-        if child_obj.hash_fields and child_obj.__name__ not in OBJECTS:
+        if (
+            child_obj.hash_fields
+            and (name := child_obj.__name__) not in OBJECTS
+            and (
+                name.lower() in cls
+                or core.strings.utl.pluralize(name).lower() in cls
+                )
+            ):
             paths.extend(
                 paths_from_object(
                     child_obj,
