@@ -195,7 +195,7 @@ def handle_request(
     if isinstance(response_body, (bytes, str)):
         content_length = len(response_body)
     else:
-        content_length = len(lib.json.dumps(response_body))
+        content_length = len(lib.json.dumps(response_body, default=str))
 
     headers = {
         header.value: enm.HeaderValue[header.name].value
