@@ -150,7 +150,7 @@ def handle_request(
                     error = obj.Error.from_exception(exception)
                 else:  # pragma: no cover
                     error = obj.Error.from_exception(exc.UnexpectedError)
-                log.error(error)
+                log.error(error, exc_info=True)
                 content_type = enm.ContentType.json.value
                 status_code = error.error_code
                 response_body = error.as_response
