@@ -304,7 +304,7 @@ class Response(Object):
         """JSON serialize body if not already a string."""
 
         if not isinstance(self.body, (bytes, str)):
-            return lib.json.dumps(self.body)
+            return lib.json.dumps(self.body, default=str)
         else:
             return self.body
 

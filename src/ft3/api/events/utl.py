@@ -150,7 +150,7 @@ def handle_request(
                     error = obj.Error.from_exception(exception)
                 else:  # pragma: no cover
                     error = obj.Error.from_exception(exc.UnexpectedError)
-                log.error(error)
+                log.error(error, exc_info=True)
                 content_type = enm.ContentType.json.value
                 status_code = error.error_code
                 response_body = error.as_response
@@ -195,7 +195,7 @@ def handle_request(
     if isinstance(response_body, (bytes, str)):
         content_length = len(response_body)
     else:
-        content_length = len(lib.json.dumps(response_body))
+        content_length = len(lib.json.dumps(response_body, default=str))
 
     headers = {
         header.value: enm.HeaderValue[header.name].value

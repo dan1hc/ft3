@@ -36,7 +36,11 @@ class Constants(cfg.Constants):
 def pluralize(string: str) -> str:
     """Pluralize a singular string."""
 
-    if string.endswith(suffix := 'y'):
+    if (
+        string.endswith(suffix := 'y')
+        and not string.endswith('ay')
+        and not string.endswith('ey')
+        ):
         return string.removesuffix(suffix) + 'ies'
     elif string[-1] in {'s', 'z'}:
         return string
