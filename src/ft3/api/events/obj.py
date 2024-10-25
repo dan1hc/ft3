@@ -209,17 +209,18 @@ class Request(Object):
         """
 
         parsed = lib.urllib.parse.urlparse(self.url)
-        self.query_params = {
-            k: lib.urllib.parse.unquote(s[1])
-            for _s
-            in parsed.query.split('&')
-            if (s := _s.split('='))
-            and len(s) == 2
-            and (
-                (k := lib.urllib.parse.unquote(s[0]))
-                and core.strings.utl.isCamelCaseString(k)
-                )
-            }
+        if not self.query_params:
+            self.query_params = {
+                k: lib.urllib.parse.unquote(s[1])
+                for _s
+                in parsed.query.split('&')
+                if (s := _s.split('='))
+                and len(s) == 2
+                and (
+                    (k := lib.urllib.parse.unquote(s[0]))
+                    and core.strings.utl.isCamelCaseString(k)
+                    )
+                }
         if obj_ is not None:
             self.query_params = {
                 param.name: field.parse(query_param)
@@ -304,7 +305,7 @@ class Response(Object):
         """JSON serialize body if not already a string."""
 
         if not isinstance(self.body, (bytes, str)):
-            return lib.json.dumps(self.body)
+            return lib.json.dumps(self.body, default=str)
         else:
             return self.body
 
