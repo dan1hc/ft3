@@ -261,16 +261,17 @@ class Request(Object):
 
         parsed = lib.urllib.parse.urlparse(self.url)
         path_components = uri.strip('/').split('/')
-        self.path_params = {
-            s: lib.urllib.parse.unquote(v)
-            for i, v
-            in enumerate(parsed.path.strip('/').split('/'))
-            if bool(Pattern.PathId.match(k := path_components[i]))
-            and (
-                (s := lib.urllib.parse.unquote(k[1:-1]))
-                and core.strings.utl.isCamelCaseString(s)
-                )
-            }
+        if not self.path_params:
+            self.path_params = {
+                s: lib.urllib.parse.unquote(v)
+                for i, v
+                in enumerate(parsed.path.strip('/').split('/'))
+                if bool(Pattern.PathId.match(k := path_components[i]))
+                and (
+                    (s := lib.urllib.parse.unquote(k[1:-1]))
+                    and core.strings.utl.isCamelCaseString(s)
+                    )
+                }
         self.path_params = {
             param.name: path_param
             for param

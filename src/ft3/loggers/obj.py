@@ -255,12 +255,12 @@ def _monkey_log(
             msg_final = typ.LogRecordWithPrintAndTraceBack(
                 content=msg_dict['content'],
                 printed=msg_dict['printed'],  # type: ignore[typeddict-item]
-                traceback=lib.traceback.format_exc()
+                traceback=''.join(lib.traceback.format_exception(*exc_info))
                 )
         else:  # pragma: no cover (still covered)
             msg_final = typ.LogRecordWithTraceBack(
                 content=msg_dict['content'],
-                traceback=lib.traceback.format_exc()
+                traceback=''.join(lib.traceback.format_exception(*exc_info))
                 )
     else:
         msg_final = msg_dict
