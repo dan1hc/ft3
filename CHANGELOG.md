@@ -1,6 +1,13 @@
 # CHANGELOG
 
 
+## v0.1.6 (2024-10-25)
+
+### Bug Fixes
+
+* fix: traceback formatting and path param parsing ([`afbbb59`](https://github.com/dan1hc/ft3/commit/afbbb592bbfbdf9ae6e66afd7ea25a2de46777b1))
+
+
 ## v0.1.5 (2024-10-25)
 
 ### Bug Fixes
@@ -28,6 +35,8 @@
 Co-authored-by: github-actions <action@github.com> ([`22c78c9`](https://github.com/dan1hc/ft3/commit/22c78c9400b588ebcb5aeb50aab66283d0a6cf36))
 
 ### Documentation
+
+* docs: __v0.1.5__ [skip ci] ([`9060cc6`](https://github.com/dan1hc/ft3/commit/9060cc6464937469c6f0db44be8bd5e7ab2c3192))
 
 * docs: update readme and trigger ci ([`76918f8`](https://github.com/dan1hc/ft3/commit/76918f84d5e595955afcca7574286c3dfd43d5f9))
 
