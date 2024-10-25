@@ -1,6 +1,37 @@
 # CHANGELOG
 
 
+## v0.1.5 (2024-10-25)
+
+### Bug Fixes
+
+* fix: pluralizations aws key redaction api log exc (#29)
+
+* fix: pluralizations aws key redaction api log exc
+
+* docs: __v0.1.5-rc.1__ [skip ci]
+
+* fix: serialize json api resp with default str
+
+* docs: __v0.1.5-rc.2__ [skip ci]
+
+* fix: need to serialize resp with default for content len
+
+* docs: __v0.1.5-rc.3__ [skip ci]
+
+* fix: protection for custom query param passing
+
+* docs: __v0.1.5-rc.4__ [skip ci]
+
+---------
+
+Co-authored-by: github-actions <action@github.com> ([`22c78c9`](https://github.com/dan1hc/ft3/commit/22c78c9400b588ebcb5aeb50aab66283d0a6cf36))
+
+### Documentation
+
+* docs: update readme and trigger ci ([`76918f8`](https://github.com/dan1hc/ft3/commit/76918f84d5e595955afcca7574286c3dfd43d5f9))
+
+
 ## v0.1.4 (2024-10-22)
 
 ### Bug Fixes
@@ -26,6 +57,10 @@ Co-authored-by: github-actions <action@github.com> ([`34b685a`](https://github.c
 ### Continuous Integration
 
 * ci: workaround sem release pr no trigger issue ([`9b6b82a`](https://github.com/dan1hc/ft3/commit/9b6b82aad9aa9e1132e6c78f75c30d8b83e1cae6))
+
+### Documentation
+
+* docs: __v0.1.4__ [skip ci] ([`1323cf2`](https://github.com/dan1hc/ft3/commit/1323cf220940311e8360ff616998899f42db4fb1))
 
 
 ## v0.1.3 (2024-10-22)
