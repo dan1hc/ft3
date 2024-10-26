@@ -1,11 +1,22 @@
 # CHANGELOG
 
 
+## v0.1.8 (2024-10-26)
+
+### Bug Fixes
+
+* fix: allow for more robust logging of parse errors in api ([`7a296e4`](https://github.com/dan1hc/ft3/commit/7a296e45408f69b917aaeabd165af0409ca094e2))
+
+
 ## v0.1.7 (2024-10-26)
 
 ### Bug Fixes
 
 * fix: better api logging and error handling ([`ef6b5b0`](https://github.com/dan1hc/ft3/commit/ef6b5b097012c1de09bf47836203eeef33c761d7))
+
+### Documentation
+
+* docs: __v0.1.7__ [skip ci] ([`96d8a9e`](https://github.com/dan1hc/ft3/commit/96d8a9eebc3c757fe7d45b491d11d0d075ef9c23))
 
 
 ## v0.1.6 (2024-10-25)
