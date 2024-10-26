@@ -1,11 +1,22 @@
 # CHANGELOG
 
 
+## v0.1.7 (2024-10-26)
+
+### Bug Fixes
+
+* fix: better api logging and error handling ([`ef6b5b0`](https://github.com/dan1hc/ft3/commit/ef6b5b097012c1de09bf47836203eeef33c761d7))
+
+
 ## v0.1.6 (2024-10-25)
 
 ### Bug Fixes
 
 * fix: traceback formatting and path param parsing ([`afbbb59`](https://github.com/dan1hc/ft3/commit/afbbb592bbfbdf9ae6e66afd7ea25a2de46777b1))
+
+### Documentation
+
+* docs: __v0.1.6__ [skip ci] ([`f0c6522`](https://github.com/dan1hc/ft3/commit/f0c6522bf6cce6deff9b0fb72cf0c17033e72988))
 
 
 ## v0.1.5 (2024-10-25)
