@@ -5,6 +5,8 @@ __all__ = (
     'paths_from_api'
     )
 
+from ... import objects
+
 from .. import typ
 
 from . import cfg
@@ -146,11 +148,15 @@ def handle_request(
                 last_frame = lib.traceback.format_tb(exception.__traceback__)[-1]
                 is_error_raised = 'raise ' in last_frame
                 is_error_from_api = api.info.title in last_frame
-                if is_error_raised or is_error_from_api:
+                if (
+                    is_error_raised
+                    or is_error_from_api
+                    or isinstance(exception, objects.exc.TypeValidationError)
+                    ):
                     error = obj.Error.from_exception(exception)
                 else:  # pragma: no cover
                     error = obj.Error.from_exception(exc.UnexpectedError)
-                log.error({'error': error}, exc_info=exception)
+                log.error({'error': error})
                 content_type = enm.ContentType.json.value
                 status_code = error.error_code
                 response_body = error.as_response
