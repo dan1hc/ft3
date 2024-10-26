@@ -322,13 +322,13 @@ class Handler(Object):
 
         from . import utl
 
-        log.info(request)
+        log.info({'request.raw': request})
 
         response = utl.handle_request(request, self.api)
 
         if response.status_code < 400:
-            log.info(response)
+            log.info({'response.success': response})
         else:
-            log.warning(response)
+            log.error({'response.error': response}, exc_info=True)
 
         return response

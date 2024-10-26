@@ -140,7 +140,7 @@ def handle_request(
                     request.parse_query_params(method, operation, obj_)
                 if operation.request_body is not None:
                     request.parse_body(operation, obj_)
-                log.info(request)
+                log.info({'request.parsed': request})
                 response_obj = callback(request)
             except Exception as exception:
                 last_frame = lib.traceback.format_tb(exception.__traceback__)[-1]
@@ -150,7 +150,7 @@ def handle_request(
                     error = obj.Error.from_exception(exception)
                 else:  # pragma: no cover
                     error = obj.Error.from_exception(exc.UnexpectedError)
-                log.error(error, exc_info=True)
+                log.error({'error': error}, exc_info=exception)
                 content_type = enm.ContentType.json.value
                 status_code = error.error_code
                 response_body = error.as_response
@@ -182,12 +182,12 @@ def handle_request(
                 for response_definition in path.options.responses.values():
                     response_headers.update(response_definition.headers or {})
         else:
-            error = obj.Error.from_exception(NotImplementedError)
+            error = obj.Error.from_exception(exc.MethodNotImplementedError)
             content_type = enm.ContentType.json.value
             status_code = error.error_code
             response_body = error.as_response
     else:
-        error = obj.Error.from_exception(FileNotFoundError)
+        error = obj.Error.from_exception(exc.ResourceNotFoundError)
         content_type = enm.ContentType.json.value
         status_code = error.error_code
         response_body = error.as_response
