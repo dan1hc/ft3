@@ -1,7 +1,7 @@
 const core = require("@actions/core");
 const github = require("@actions/github");
 
-const pattern = /^([mM]erge .*)$|(^((build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)!?: .+)((\n\n(.+)\n\n)((BREAKING CHANGE|DEPRECATED)(: )(.+)\n\n(.+)\n\n\n)?(resolve[ds]? \#[A-Z0-9\-]+|fix(ed|es)? \#[A-Z0-9\-]+|close[ds]? \#[A-Z0-9\-]+)((, )(resolve[ds]? \#[A-Z0-9\-]+|fix(ed|es)? \#[A-Z0-9\-]+|close[ds]? \#[A-Z0-9\-]+))?)?$)|(^revert: ((build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)!?: .+)(\n\n(This reverts commit [a-z0-9]{40}\..*)\n\n)(fix(ed|es)? \#[A-Z0-9\-]+)((, )(fix(ed|es)? \#[A-Z0-9\-]+))?$)/;
+const pattern = /((^[mM]erge .*$)|(^((build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.+\))?!?: .+)((\n\n(.+)\n\n)((BREAKING CHANGE|DEPRECATED)(: )(.+)\n\n(.+))?(\n\n\nresolve[ds]? \#[A-Z0-9\-]+|fix(ed|es)? \#[A-Z0-9\-]+|close[ds]? \#[A-Z0-9\-]+)((, )(resolve[ds]? \#[A-Z0-9\-]+|fix(ed|es)? \#[A-Z0-9\-]+|close[ds]? \#[A-Z0-9\-]+))?)?)?$)|(^revert: ((build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.+\))?!?: .+)(\n\n(This reverts commit [a-z0-9]{40}\..*))(\n\n(fix(ed|es)? \#[A-Z0-9\-]+)((, )(fix(ed|es)? \#[A-Z0-9\-]+))?)?$)/;
 const restClient = github.getOctokit(core.getInput('token'));
 
 restClient.rest.pulls.listCommits(
