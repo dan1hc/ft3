@@ -1,11 +1,22 @@
 # CHANGELOG
 
 
+## v0.1.10 (2024-10-27)
+
+### Performance Improvements
+
+* perf: cache type check functions for big speedup ([`78c6b9c`](https://github.com/dan1hc/ft3/commit/78c6b9c1cde8ae6b6613076b03b34e0f49e87d11))
+
+
 ## v0.1.9 (2024-10-27)
 
 ### Bug Fixes
 
 * fix: minimalize response objs and allow _id fields through ([`8b71b61`](https://github.com/dan1hc/ft3/commit/8b71b615767b99600e6a51da2ea5c7911b603206))
+
+### Documentation
+
+* docs: __v0.1.9__ [skip ci] ([`c85b9ab`](https://github.com/dan1hc/ft3/commit/c85b9ab31b135e2c8bdb32daed40c029bc0e9dc6))
 
 
 ## v0.1.8 (2024-10-26)
