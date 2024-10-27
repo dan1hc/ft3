@@ -44,10 +44,22 @@ class Constants(cfg.Constants):
     """Constant values specific to this file."""
 
 
+GET_ARGS_CACHE: dict[int, tuple[lib.t.Any, ...]] = {}
+"""Cache for `get_args`."""
+
+
 def get_args(tp: lib.t.Any) -> tuple[lib.t.Any, ...]:
     """Wrapper for `lib.t.get_args`."""
 
-    return lib.t.get_args(tp)
+    if isinstance(tp, type):
+        tp_key = hash(tp)
+    else:
+        tp_key = hash(repr(tp))
+
+    if tp_key not in GET_ARGS_CACHE:
+        GET_ARGS_CACHE[tp_key] = lib.t.get_args(tp)
+
+    return GET_ARGS_CACHE[tp_key]
 
 
 @lib.t.overload
@@ -88,6 +100,10 @@ def get_type_args(
         )
 
 
+GET_CHECKABLE_TYPES_CACHE: dict[int, tuple[type, ...]] = {}
+"""Cache for `get_checkable_types`."""
+
+
 @lib.t.overload
 def get_checkable_types(
     any_tp: 'type[typ.AnyType]'
@@ -112,14 +128,27 @@ def get_checkable_types(
 
     """
 
+    if isinstance(any_tp, type):
+        tp_key = hash(any_tp)
+    else:
+        tp_key = hash(repr(any_tp))
+
+    if tp_key in GET_CHECKABLE_TYPES_CACHE:
+        return GET_CHECKABLE_TYPES_CACHE[tp_key]
+
     checkable_types = {
         otp
         for tp
         in expand_types(any_tp)
         if isinstance((otp := lib.t.get_origin(tp) or tp), type)
         }
+    GET_CHECKABLE_TYPES_CACHE[tp_key] = tuple(checkable_types)
 
     return tuple(checkable_types)
+
+
+EXPAND_TYPES_CACHE: dict[int, tuple[lib.t.Any, ...]] = {}
+"""Cache for `expand_types`."""
 
 
 @lib.t.overload
@@ -149,8 +178,15 @@ def expand_types(
 
     """
 
-    if is_union(any_tp) or is_wrapper_type(any_tp):
-        return tuple(
+    if isinstance(any_tp, type):
+        tp_key = hash(any_tp)
+    else:
+        tp_key = hash(repr(any_tp))
+
+    if tp_key in EXPAND_TYPES_CACHE:
+        return EXPAND_TYPES_CACHE[tp_key]
+    elif is_union(any_tp) or is_wrapper_type(any_tp):
+        tps = tuple(
             tp
             for tp
             in set(
@@ -163,7 +199,7 @@ def expand_types(
             )
     elif is_typevar(any_tp):
         if any_tp.__constraints__:
-            return tuple(
+            tps = tuple(
                 tp
                 for tp
                 in set(
@@ -175,13 +211,17 @@ def expand_types(
                     )
                 )
         elif any_tp.__bound__:
-            return expand_types(any_tp.__bound__)
+            tps = expand_types(any_tp.__bound__)
         else:
-            return (object, )
+            tps = (object, )
     elif is_literal(any_tp):
-        return (type(get_args(any_tp)[0]), )
+        tps = (type(get_args(any_tp)[0]), )
     else:
-        return (any_tp, )
+        tps = (any_tp, )
+
+    EXPAND_TYPES_CACHE[tp_key] = tps
+
+    return tps
 
 
 def is_nullable(tp: lib.t.Any) -> bool:
