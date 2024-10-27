@@ -1,11 +1,22 @@
 # CHANGELOG
 
 
+## v0.1.9 (2024-10-27)
+
+### Bug Fixes
+
+* fix: minimalize response objs and allow _id fields through ([`8b71b61`](https://github.com/dan1hc/ft3/commit/8b71b615767b99600e6a51da2ea5c7911b603206))
+
+
 ## v0.1.8 (2024-10-26)
 
 ### Bug Fixes
 
 * fix: allow for more robust logging of parse errors in api ([`7a296e4`](https://github.com/dan1hc/ft3/commit/7a296e45408f69b917aaeabd165af0409ca094e2))
+
+### Documentation
+
+* docs: __v0.1.8__ [skip ci] ([`c82af31`](https://github.com/dan1hc/ft3/commit/c82af3117e6d27cf51e639f5e9e6508c8cbc098f))
 
 
 ## v0.1.7 (2024-10-26)
