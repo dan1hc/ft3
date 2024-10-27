@@ -496,7 +496,7 @@ class ObjectBase(metaclass=metas.Meta):
 
         return self.to_dict(
             camel_case=True,
-            include_null=True,
+            include_null=False,
             include_private=False,
             include_write_only=False,
             include_read_only=True
@@ -683,7 +683,11 @@ class ObjectBase(metaclass=metas.Meta):
                 (v := self[k]) is not None
                 or (include_null and v is None)
                 )
-            and (include_private or utl.is_public_field(k))
+            and (
+                include_private
+                or utl.is_public_field(k)
+                or k in self.hash_fields
+                )
             and (include_write_only or not field.get('write_only'))
             and (include_read_only or not field.get('read_only'))
             }
@@ -734,7 +738,11 @@ class ObjectBase(metaclass=metas.Meta):
                                 )
                         for k, v
                         in value.items()
-                        if (include_private or utl.is_public_field(k))
+                        if (
+                            include_private
+                            or utl.is_public_field(k)
+                            or k in self.hash_fields
+                            )
                         and (v is not None or include_null)
                         }
                     )
