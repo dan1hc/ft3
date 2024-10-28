@@ -145,6 +145,7 @@ def handle_request(
                 log.info({'request.parsed': request})
                 response_obj = callback(request)
             except Exception as exception:
+                log.error({'error': str(exception)}, exc_info=True)
                 last_frame = lib.traceback.format_tb(exception.__traceback__)[-1]
                 is_error_raised = 'raise ' in last_frame
                 is_error_from_api = api.info.title in last_frame
@@ -156,7 +157,6 @@ def handle_request(
                     error = obj.Error.from_exception(exception)
                 else:  # pragma: no cover
                     error = obj.Error.from_exception(exc.UnexpectedError)
-                log.error({'error': error})
                 content_type = enm.ContentType.json.value
                 status_code = error.error_code
                 response_body = error.as_response
