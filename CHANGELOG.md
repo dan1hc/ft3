@@ -1,7 +1,22 @@
 # CHANGELOG
 
 
+## v0.1.11 (2024-10-28)
+
+### Bug Fixes
+
+* fix: further improve error logging for api ([`58a2d0d`](https://github.com/dan1hc/ft3/commit/58a2d0d0aa7def9e5545d5250c9c277a2c7682f4))
+
+### Continuous Integration
+
+* ci: fix angular commit msg pattern [skip ci] ([`dc1d080`](https://github.com/dan1hc/ft3/commit/dc1d080bc42487ebcd8348754e27eb7a1f809604))
+
+
 ## v0.1.10 (2024-10-27)
+
+### Documentation
+
+* docs: __v0.1.10__ [skip ci] ([`86f86d0`](https://github.com/dan1hc/ft3/commit/86f86d05585437aa7b0451a80100d6bc4169abcb))
 
 ### Performance Improvements
 
