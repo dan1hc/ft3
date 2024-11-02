@@ -1,6 +1,27 @@
 # CHANGELOG
 
 
+## v0.1.12 (2024-11-02)
+
+### Documentation
+
+* docs: update readme and trigger ci ([`3befe50`](https://github.com/dan1hc/ft3/commit/3befe50f076ebe4632e3508581ee37caed21c99a))
+
+### Performance Improvements
+
+* perf: cache improvements (#31)
+
+* perf: cache fixes, enum parse from literals, perf boost
+
+* perf: more caching improvements
+
+* docs: __v0.1.12-rc.1__ [skip ci]
+
+---------
+
+Co-authored-by: github-actions <action@github.com> ([`6258037`](https://github.com/dan1hc/ft3/commit/62580377c5005e7d8743f63cbbac839acdc00851))
+
+
 ## v0.1.11 (2024-10-28)
 
 ### Bug Fixes
@@ -10,6 +31,10 @@
 ### Continuous Integration
 
 * ci: fix angular commit msg pattern [skip ci] ([`dc1d080`](https://github.com/dan1hc/ft3/commit/dc1d080bc42487ebcd8348754e27eb7a1f809604))
+
+### Documentation
+
+* docs: __v0.1.11__ [skip ci] ([`0a2f64f`](https://github.com/dan1hc/ft3/commit/0a2f64f2e224ec101c9a3f982af1c9288e622ab0))
 
 
 ## v0.1.10 (2024-10-27)
