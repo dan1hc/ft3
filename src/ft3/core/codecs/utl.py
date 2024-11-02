@@ -359,5 +359,7 @@ def parse(
                 return try_decode(value, tp)
         else:  # pragma: no cover
             return try_decode(value, tp)
+    elif isinstance(value, typ.utl.check.get_checkable_types(tp)):
+        return value
     else:
         return try_decode(value, tp)

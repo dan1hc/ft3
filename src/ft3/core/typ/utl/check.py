@@ -132,6 +132,7 @@ def get_checkable_types(
         for tp
         in expand_types(any_tp)
         if isinstance((otp := lib.t.get_origin(tp) or tp), type)
+        and otp is not lib.t.Any
         }
     GET_CHECKABLE_TYPES_CACHE[tp_key] = tuple(checkable_types)
 

@@ -193,6 +193,7 @@ def collect_annotations(
         )
 
 
+@lib.functools.cache
 def reference_and_expand_types(tp_or_ref: lib.t.Any) -> list[lib.t.Any]:
     """
     Recursively expand all `types` (and `type` args) into flat list of \
