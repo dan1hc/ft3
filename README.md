@@ -341,13 +341,6 @@ ft3.log.info(AgentFlea())
 
 ## Planned Features
 
-* #### ~~RESTful Framework / OpenAPI Support~~
-    * ~~ft3 should support all aspects of an OpenAPI specification and~~
-    ~~provide corresponding framework functionality for HTTP request~~
-    ~~handling.~~
-* #### ~~Template Packages~~
-    * ~~ft3 should include a Pet shop style demo API and python package~~
-    ~~as a template for developers to copy / paste from.~~
 * #### Database Parse & Sync
     * ft3 should be able to generate a python package with fully enumerated
     and optimized `Objects` (and a corresponding ft3 API package) when
