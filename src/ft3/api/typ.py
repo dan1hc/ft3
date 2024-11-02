@@ -51,12 +51,12 @@ ApiResponseType: lib.t.TypeAlias = (
     | lib.t.Literal['ONE']
     )
 ApiTypeValue: lib.t.TypeAlias = (
-    list['ApiTypeValue']
+    dict[str, 'ApiTypeValue']
+    | list['ApiTypeValue']
     | bool
     | int
-    | NoneType  # type: ignore[valid-type]
     | float
-    | dict[str, 'ApiTypeValue']
+    | NoneType  # type: ignore[valid-type]
     | str
     )
 ContentType: lib.t.TypeAlias = (

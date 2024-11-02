@@ -141,6 +141,28 @@ def try_parse_json(
         return enm.ParseErrorRef.invalid_json
 
 
+@lib.functools.cache
+def _rank_type(tp: lib.t.Any) -> int:
+    if typ.utl.check.is_typed(tp):
+        return 1
+    elif len(generics := typ.utl.check.get_args(tp)) > 1:
+        return 2
+    elif generics:
+        return 3
+    elif typ.utl.check.is_bool_type(tp):
+        return 4
+    elif typ.utl.check.is_number_type(tp):
+        return 5
+    elif typ.utl.check.is_datetime_type(tp):
+        return 6
+    elif typ.utl.check.is_date_type(tp):
+        return 7
+    elif tp is None or typ.utl.check.is_none_type(tp):
+        return 9
+    else:
+        return 8
+
+
 @lib.t.overload
 def parse(
     value: lib.t.Any,
@@ -197,12 +219,13 @@ def parse(
 
     """
 
-    valid_types = typ.utl.check.expand_types(tp)
+    valid_types = sorted(set(typ.utl.check.expand_types(tp)), key=_rank_type)
+
     if len(valid_types) > 1:
-        parsed_value_or_err_ref = parse(value, valid_types[0])
-        for dtype_candidate in valid_types[1:]:
+        parsed_value_or_err_ref = enm.ParseErrorRef.value_decode
+        for dtype_candidate in valid_types:
             if not isinstance(parsed_value_or_err_ref, enm.ParseErrorRef):
-                break
+                break  # type: ignore[unreachable]
             else:  # pragma: no cover
                 parsed_value_or_err_ref = parse(value, dtype_candidate)
         return parsed_value_or_err_ref

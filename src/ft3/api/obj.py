@@ -83,8 +83,8 @@ class Schema(Component):
 
     description: Field[lib.t.Optional[str]] = None
 
-    default: Field[lib.t.Optional[typ.ApiTypeValue]] = None
-    enum: Field[lib.t.Optional[list[typ.Primitive]]] = None
+    default: Field[lib.t.Optional[lib.t.Any]] = None
+    enum: Field[lib.t.Optional[lib.t.Any]] = None
 
     required: Field[lib.t.Optional[list[typ.string[typ.camelCase]]]] = None
 

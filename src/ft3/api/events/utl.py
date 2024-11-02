@@ -142,7 +142,11 @@ def handle_request(
                     request.parse_query_params(method, operation, obj_)
                 if operation.request_body is not None:
                     request.parse_body(operation, obj_)
+            except Exception as exception:  # pragma: no cover
+                log.error({'parse.error': str(exception)}, exc_info=True)
+            else:
                 log.info({'request.parsed': request})
+            try:
                 response_obj = callback(request)
             except Exception as exception:
                 log.error({'error': str(exception)}, exc_info=True)

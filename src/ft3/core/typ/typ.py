@@ -92,28 +92,28 @@ Enum: lib.t.TypeAlias = (
 FieldsTuple: lib.t.TypeAlias = tuple[string[snake_case], ...]
 Immutable: lib.t.TypeAlias = (
     bool
-    | bytes
+    | int
     | complex
-    | lib.decimal.Decimal
     | lib.enum.Enum
+    | lib.decimal.Decimal
     | float
     | lib.fractions.Fraction
-    | int
     | lib.types.NoneType  # type: ignore[valid-type]
     | range
-    | AnyString
     | lib.enum.EnumMeta
-    | frozenset['Immutable']
     | tuple['Immutable', ...]
+    | frozenset['Immutable']
     | lib.types.MappingProxyType['Immutable', 'Immutable']
+    | bytes
+    | AnyString
     )
 Literal = lib.t.Literal['*']
 Mapping = obj.MappingProto[AnyType, AnyOtherType]
 NoneType = lib.types.NoneType  # type: ignore[valid-type]
 Object: lib.t.TypeAlias = 'objects.Object'
 OptionalAnyDict = lib.t.Optional[dict[AnyString, lib.t.Any]]
-Primitive: lib.t.TypeAlias = bool | float | int | NoneType | AnyString  # type: ignore[valid-type]
-Serial: lib.t.TypeAlias = Primitive | dict[Primitive, 'Serial'] | list['Serial']  # noqa
+Primitive: lib.t.TypeAlias = bool | int | float | NoneType | AnyString  # type: ignore[valid-type]
+Serial: lib.t.TypeAlias = dict[Primitive, 'Serial'] | list['Serial'] | Primitive  # noqa
 SnakeDict: lib.t.TypeAlias = dict[string[snake_case], lib.t.Any]
 StringFormat: lib.t.TypeAlias = (
     camelCase | snake_case | PascalCase | datetime | numeric
