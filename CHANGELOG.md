@@ -1,9 +1,22 @@
 # CHANGELOG
 
 
+## v0.1.13 (2024-11-02)
+
+### Unknown
+
+* Merge branch 'main' of github.com:dan1hc/ft3 ([`084c80d`](https://github.com/dan1hc/ft3/commit/084c80dd3b438aa8493eee2e55f3aec207affc2f))
+
+
 ## v0.1.12 (2024-11-02)
 
+### Bug Fixes
+
+* fix: isolate api parse error logging and improve parse order for union tps ([`7138390`](https://github.com/dan1hc/ft3/commit/7138390d41dc642de333d180dbff43eb8a8a8c56))
+
 ### Documentation
+
+* docs: __v0.1.12__ [skip ci] ([`4e0c264`](https://github.com/dan1hc/ft3/commit/4e0c264a543c96d3d64db0eb8b0966228fae4bfe))
 
 * docs: update readme and trigger ci ([`3befe50`](https://github.com/dan1hc/ft3/commit/3befe50f076ebe4632e3508581ee37caed21c99a))
 
