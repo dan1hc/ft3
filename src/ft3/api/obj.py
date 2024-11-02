@@ -84,7 +84,7 @@ class Schema(Component):
     description: Field[lib.t.Optional[str]] = None
 
     default: Field[lib.t.Optional[typ.ApiTypeValue]] = None
-    enum: Field[lib.t.Optional[typ.Enum]] = None
+    enum: Field[lib.t.Optional[list[typ.Primitive]]] = None
 
     required: Field[lib.t.Optional[list[typ.string[typ.camelCase]]]] = None
 
@@ -116,7 +116,7 @@ class Schema(Component):
 
     def __post_init__(self) -> None:
         if isinstance(self.enum, lib.enum.EnumMeta):  # pragma: no cover
-            self.enum = sorted(self.enum._value2member_map_)
+            self.enum = sorted(self.enum._value2member_map_)  # type: ignore[unreachable]
         return super().__post_init__()
 
     @classmethod
@@ -141,7 +141,20 @@ class Schema(Component):
                     )
                 ): cls.from_type(
                     ref=fname + oname,
-                    default=field.factory(),
+                    default=(
+                        factory
+                        if isinstance(
+                            (factory := field.factory()),
+                            typ.utl.check.get_checkable_types(
+                                typ.ApiTypeValue
+                                )
+                            )
+                        else [obj_.as_response for obj_ in factory]
+                        if typ.utl.check.is_array_of_object(factory)
+                        else factory.as_response
+                        if typ.utl.check.is_object_type(factory)
+                        else None
+                        ),
                     **{
                         k: v
                         for k, v
@@ -185,16 +198,51 @@ class Schema(Component):
         typ_ = kwargs.pop('type', type_)
         types_: list[typ.ApiType] = []
 
-        if (
-            typ.utl.check.is_union(typ_)
-            or typ.utl.check.is_wrapper_type(typ_)
-            ):
+        if typ.utl.check.is_union_of_literal(typ_):  # pragma: no cover
+            if not kwargs['enum']:
+                kwargs['enum'] = sorted(
+                    typ.utl.check.get_args(literal_tp)[0]
+                    for literal_tp
+                    in typ.utl.check.get_args(typ_)
+                    )
+            return cls.from_type(
+                type_=typ.utl.check.get_checkable_types(
+                    typ.utl.check.get_type_args(typ_)[0]
+                    )[0],
+                **kwargs
+                )
+        elif typ.utl.check.is_optional_union_of_literal(typ_):  # pragma: no cover
+            literal_tps = [
+                tp
+                for tp
+                in typ.utl.check.get_args(typ_)
+                if not typ.utl.check.is_none_type(tp)
+                ]
+            if not kwargs['enum']:
+                kwargs['enum'] = sorted(
+                    typ.utl.check.get_args(literal_tp)[0]
+                    for literal_tp
+                    in literal_tps
+                    )
+            return cls.from_type(
+                type_=(
+                    typ.utl.check.get_checkable_types(literal_tps[0])[0]
+                    | None
+                    ),
+                **kwargs
+                )
+        elif typ.utl.check.is_union(typ_):
             schemae = [
                 cls.from_type(type_=tp)
                 for tp
                 in typ.utl.check.get_type_args(typ_)
                 ]
             return cls(any_of=schemae, **kwargs)
+        elif typ.utl.check.is_wrapper_type(typ_):  # pragma: no cover
+            return cls.from_type(
+                type_=typ.utl.check.get_type_args(typ_)[0],
+                **kwargs
+                )
         elif typ.utl.check.is_typevar(typ_):
             if typ_.__constraints__:
                 schemae = [
