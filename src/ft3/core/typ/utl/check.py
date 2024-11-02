@@ -5,6 +5,7 @@ __all__ = (
     'get_checkable_types',
     'expand_types',
     'is_array',
+    'is_array_of_object',
     'is_array_of_obj_type',
     'is_array_type',
     'is_bool_type',
@@ -20,12 +21,14 @@ __all__ = (
     'is_number_type',
     'is_object',
     'is_object_type',
+    'is_optional_union_of_literal',
     'is_params_type',
     'is_primitive',
     'is_serialized_mapping',
     'is_typed',
     'is_typevar',
     'is_union',
+    'is_union_of_literal',
     'is_uuid_type',
     'is_variadic_array_type',
     'is_wrapper_type',
@@ -44,22 +47,10 @@ class Constants(cfg.Constants):
     """Constant values specific to this file."""
 
 
-GET_ARGS_CACHE: dict[int, tuple[lib.t.Any, ...]] = {}
-"""Cache for `get_args`."""
-
-
 def get_args(tp: lib.t.Any) -> tuple[lib.t.Any, ...]:
     """Wrapper for `lib.t.get_args`."""
 
-    if isinstance(tp, type):
-        tp_key = hash(tp)
-    else:
-        tp_key = hash(repr(tp))
-
-    if tp_key not in GET_ARGS_CACHE:
-        GET_ARGS_CACHE[tp_key] = lib.t.get_args(tp)
-
-    return GET_ARGS_CACHE[tp_key]
+    return lib.t.get_args(tp)
 
 
 @lib.t.overload
@@ -141,6 +132,7 @@ def get_checkable_types(
         for tp
         in expand_types(any_tp)
         if isinstance((otp := lib.t.get_origin(tp) or tp), type)
+        and otp is not lib.t.Any
         }
     GET_CHECKABLE_TYPES_CACHE[tp_key] = tuple(checkable_types)
 
@@ -269,6 +261,46 @@ def is_typevar(
     """Return `True` if obj is a `TypeVar`."""
 
     return isinstance(obj, lib.t.TypeVar)
+
+
+def is_union_of_literal(
+    obj: lib.t.Any
+    ) -> lib.t.TypeGuard[lib.lib.types.UnionType]:
+    """
+    Return `True` if obj is a `UnionType` of all same typed `Literal`.
+
+    """
+
+    return (
+        is_union(obj)
+        and all(
+            is_literal(tp)
+            for tp
+            in get_args(obj)
+            )
+        and len(set(get_checkable_types(obj))) == 1
+        )
+
+
+def is_optional_union_of_literal(
+    obj: lib.t.Any
+    ) -> lib.t.TypeGuard[lib.lib.types.UnionType]:
+    """
+    Return `True` if obj is a `Optional[UnionType]` of all same typed \
+    `Literal`.
+
+    """
+
+    return (
+        is_union(obj)
+        and all(
+            is_literal(tp) or is_none_type(tp)
+            for tp
+            in get_args(obj)
+            )
+        and len(tps := set(get_checkable_types(obj))) == 2
+        and any(is_none_type(tp) for tp in tps)
+        )
 
 
 def is_union(
@@ -464,6 +496,18 @@ def is_array(
     return (
         isinstance(obj, lib.t.Collection)
         and not isinstance(obj, (str, lib.t.Mapping, lib.enum.EnumMeta))
+        )
+
+
+def is_array_of_object(
+    obj: lib.t.Any
+    ) -> 'lib.t.TypeGuard[typ.Array[typ.Object]]':
+    """Return `True` if `obj` is `Array[Object]`."""
+
+    return (
+        is_array_type(type(obj))
+        and bool(obj)
+        and is_object(obj[0])
         )
 
 

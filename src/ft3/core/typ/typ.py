@@ -84,8 +84,7 @@ CamelDict: lib.t.TypeAlias = dict[string[camelCase], lib.t.Any]
 Casing = camelCase | snake_case
 DataClassFields: lib.t.TypeAlias = 'dict[string[snake_case], AnyField[lib.t.Any]]'  # noqa
 Enum: lib.t.TypeAlias = (
-    frozenset['Immutable']
-    | list['Immutable']
+    list['Immutable']
     | set['Immutable']
     | tuple['Immutable', ...]
     | lib.enum.EnumMeta
