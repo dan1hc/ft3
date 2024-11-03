@@ -370,7 +370,16 @@ def paths_from_object(
 
     child_objs: list[type[Object]] = []
     for field in cls.__dataclass_fields__.values():
-        if typ.utl.check.is_object_type(field.type_):
+        if (
+            typ.utl.check.is_union(field.type_)
+            and len(u_tps := typ.utl.check.get_type_args(field.type_)) == 2
+            and any(typ.utl.check.is_none_type(tp) for tp in u_tps)
+            and any(typ.utl.check.is_object_type(tp) for tp in u_tps)
+            ):
+            for tp in u_tps:  # pragma: no cover
+                if typ.utl.check.is_object_type(tp):
+                    child_objs.append(tp)
+        elif typ.utl.check.is_object_type(field.type_):
             child_objs.append(field.type_)
         elif typ.utl.check.is_array_of_obj_type(field.type_):
             tps: tuple[type[Object], ...] = (

@@ -329,6 +329,6 @@ class Handler(Object):
         if response.status_code < 400:
             log.info({'response.success': response})
         else:
-            log.error({'response.error': response}, exc_info=True)
+            log.warning({'response.error': response})
 
         return response

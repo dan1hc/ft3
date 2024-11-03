@@ -29,7 +29,7 @@ PATHS: list[str] = []
 def _uri_len(uri: str) -> tuple[int, int]:
     split_ = uri.split('/')
     count_ = len([e for e in split_ if bool(obj.Pattern.PathId.match(e))])
-    return count_, len(split_)
+    return len(split_), -count_
 
 
 def paths_from_api(api: obj.Api) -> list[str]:
@@ -143,13 +143,12 @@ def handle_request(
                 if operation.request_body is not None:
                     request.parse_body(operation, obj_)
             except Exception as exception:  # pragma: no cover
-                log.error({'parse.error': str(exception)}, exc_info=True)
+                log.error({'request.error': repr(exception)})
             else:
                 log.info({'request.parsed': request})
             try:
                 response_obj = callback(request)
             except Exception as exception:
-                log.error({'error': str(exception)}, exc_info=True)
                 last_frame = lib.traceback.format_tb(exception.__traceback__)[-1]
                 is_error_raised = 'raise ' in last_frame
                 is_error_from_api = api.info.title in last_frame
@@ -161,6 +160,7 @@ def handle_request(
                     error = obj.Error.from_exception(exception)
                 else:  # pragma: no cover
                     error = obj.Error.from_exception(exc.UnexpectedError)
+                log.error({'operation.error': error})
                 content_type = enm.ContentType.json.value
                 status_code = error.error_code
                 response_body = error.as_response
