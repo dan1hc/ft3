@@ -19,7 +19,7 @@ class Constants(core.cfg.Constants):
         'LOG_LEVEL',
         'DEBUG' if core.cfg.Constants.ENV in {'dev', 'develop', 'local'} else 'INFO'
         ).upper()
-    LOG_TRACEBACK  = lib.os.getenv('LOG_TRACEBACK', 'true').lower() == 'true'
+    LOG_TRACEBACK  = lib.os.getenv('LOG_TRACEBACK', 'false').lower() == 'true'
     LOG_PRINTS     = lib.os.getenv('LOG_PRINTS', 'false').lower() == 'true'
 
     SILENCE_MSG    = f'Call to print() silenced by {core.cfg.Constants.PACAKGE}.'
