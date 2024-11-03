@@ -1,7 +1,22 @@
 # CHANGELOG
 
 
+## v0.1.14 (2024-11-03)
+
+### Unknown
+
+* Merge branch 'main' of github.com:dan1hc/ft3 ([`7394ee7`](https://github.com/dan1hc/ft3/commit/7394ee741a069de38f79b09a307d349669be85a1))
+
+
 ## v0.1.13 (2024-11-02)
+
+### Bug Fixes
+
+* fix: do not log traceback by default ([`005fe7c`](https://github.com/dan1hc/ft3/commit/005fe7c5a8297ad69f95d592a424c3b817e600e4))
+
+### Documentation
+
+* docs: __v0.1.13__ [skip ci] ([`364df28`](https://github.com/dan1hc/ft3/commit/364df2897bbed842163e6127ba30b2e1fa6bca17))
 
 ### Unknown
 
