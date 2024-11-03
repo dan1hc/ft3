@@ -1,7 +1,18 @@
 # CHANGELOG
 
 
+## v0.1.15 (2024-11-03)
+
+### Bug Fixes
+
+* fix: request routing, pathing for sub objs, improved logging ([`afe82af`](https://github.com/dan1hc/ft3/commit/afe82af1072fa21ec5aae2ef27161b397fec7a9e))
+
+
 ## v0.1.14 (2024-11-03)
+
+### Documentation
+
+* docs: __v0.1.14__ [skip ci] ([`7fd1957`](https://github.com/dan1hc/ft3/commit/7fd1957e48e3231a45b45af90b3ddf421a9154ba))
 
 ### Unknown
 
