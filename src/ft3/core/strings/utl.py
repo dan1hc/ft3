@@ -262,7 +262,7 @@ def cname_for(
     '_id'
 
     cname_for(d, 'meaningOfLife')
-    42
+    '_meaning_of_life'
 
     ```
 

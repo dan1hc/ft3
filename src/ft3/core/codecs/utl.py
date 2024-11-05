@@ -2,6 +2,7 @@
 
 __all__ = (
     'encode',
+    'get_valid_tps',
     'parse',
     'serialize',
     'try_decode',
@@ -163,6 +164,241 @@ def _rank_type(tp: lib.t.Any) -> int:
         return 8
 
 
+VALID_TPS_CACHE: dict[lib.t.Any, tuple[lib.t.Any, ...]] = {}
+"""Cache for `get_valid_tps`."""
+
+
+def get_valid_tps(tp: lib.t.Any) -> tuple[lib.t.Any, ...]:
+    """
+    Return parsable types given a possible `Union`, `TypeVar`, `Alias`, \
+    etc.
+
+    """
+
+    if tp in VALID_TPS_CACHE:
+        return VALID_TPS_CACHE[tp]
+
+    tps = tuple(sorted(set(typ.utl.check.expand_types(tp)), key=_rank_type))  # type: ignore[arg-type]
+    VALID_TPS_CACHE[tp] = tps
+
+    return tps
+
+
+DECODER_CACHE: dict[
+    lib.t.Any,
+    tuple[
+        lib.t.Callable[
+            [lib.Unpack[tuple[lib.t.Any, ...]]],
+            lib.t.Any | enm.ParseErrorRef
+            ],
+        tuple[lib.t.Any, ...]
+        ]
+    ] = {}
+"""Cache used for `get_decoder`."""
+
+
+def get_decoder(
+    tp: type[typ.AnyType]
+    ) -> tuple[
+        lib.t.Callable[
+            [lib.Unpack[tuple[lib.t.Any, ...]]],
+            lib.t.Any | enm.ParseErrorRef
+            ],
+        tuple[lib.t.Any, ...]
+        ]:
+    """Return a corresponding decoder function given a valid `type`."""
+
+    if tp in DECODER_CACHE:
+        return DECODER_CACHE[tp]
+    elif typ.utl.check.is_typed(tp):
+        DECODER_CACHE[tp] = parse_typed_tp, ()
+    elif (generics := typ.utl.check.get_type_args(tp)):
+        if (typ.utl.check.is_variadic_array_type(tp)):
+            DECODER_CACHE[tp] = parse_variadic_array_tp, generics
+        elif typ.utl.check.is_array_type(tp):
+            DECODER_CACHE[tp] = parse_array_tp, generics
+        elif typ.utl.check.is_mapping_type(tp):
+            DECODER_CACHE[tp] = parse_mapping_tp, generics
+        else:  # pragma: no cover
+            DECODER_CACHE[tp] = try_decode, ()
+    else:
+        DECODER_CACHE[tp] = try_decode, ()
+
+    return DECODER_CACHE[tp]
+
+
+def parse_variadic_array_tp(
+    value: lib.t.Any,
+    generics: tuple[lib.t.Any, ...],
+    tp: type[typ.VariadicArrayType]
+    ) -> typ.VariadicArrayType | enm.ParseErrorRef:
+    """Parse a typed tuple."""
+
+    if not typ.utl.check.is_array(value):
+        return enm.ParseErrorRef.value_decode
+    elif typ.utl.check.is_ellipsis(generics[-1]):
+        parsed_variadic_unknown_len = [
+            parse(v, generics[0])
+            for v
+            in value
+            ]
+        if any(
+            (
+                isinstance(p, enm.ParseErrorRef)
+                or not isinstance(
+                    p,
+                    typ.utl.check.get_checkable_types(generics[0])
+                    )
+                )
+            for p
+            in parsed_variadic_unknown_len
+            ):
+            return enm.ParseErrorRef.invalid_arr_decode
+        else:
+            return try_decode(parsed_variadic_unknown_len, tp)
+    elif len(value) == len(generics):
+        parsed_variadic_known_len = [
+            parse(v, generics[i])
+            for i, v
+            in enumerate(value)
+            ]
+        if any(
+            (
+                isinstance(p, enm.ParseErrorRef)
+                or not isinstance(
+                    p,
+                    typ.utl.check.get_checkable_types(generics[i])
+                    )
+                )
+            for i, p
+            in enumerate(parsed_variadic_known_len)
+            ):
+            return enm.ParseErrorRef.invalid_arr_decode
+        else:
+            return try_decode(parsed_variadic_known_len, tp)
+    else:
+        return enm.ParseErrorRef.invalid_arr_len
+
+
+def parse_array_tp(
+    value: lib.t.Any,
+    generics: tuple[lib.t.Any, ...],
+    tp: type[typ.ArrayType]
+    ) -> typ.ArrayType | enm.ParseErrorRef:
+    """Parse a typed array."""
+
+    if typ.utl.check.is_array(value):
+        parsed_array = [
+            parse(v, generics[0])
+            for v
+            in value
+            ]
+        if any(
+            (
+                isinstance(p, enm.ParseErrorRef)
+                or not isinstance(
+                    p,
+                    typ.utl.check.get_checkable_types(generics[0])
+                    )
+                )
+            for p
+            in parsed_array
+            ):
+            return enm.ParseErrorRef.invalid_arr_decode
+        else:
+            return try_decode(parsed_array, tp)
+    else:
+        return enm.ParseErrorRef.value_decode
+
+
+def parse_mapping_tp(
+    value: lib.t.Any,
+    generics: tuple[lib.t.Any, ...],
+    tp: type[typ.MappingType]
+    ) -> typ.MappingType | enm.ParseErrorRef:
+    """Parse a typed mapping."""
+
+    if (
+        typ.utl.check.is_serialized_mapping(value)
+        or typ.utl.check.is_mapping(value)
+        ):
+        if len(generics) == 2:
+            key_type, value_type = generics
+            parsed_map = {
+                parse(k, key_type): parse(v, value_type)
+                for k, v
+                in value.items()
+                }
+            if any(
+                isinstance(k, enm.ParseErrorRef)
+                for k
+                in parsed_map.keys()
+                ):
+                return enm.ParseErrorRef.invalid_keys_decode
+            elif any(
+                isinstance(v, enm.ParseErrorRef)
+                for v
+                in parsed_map.values()
+                ):
+                return enm.ParseErrorRef.invalid_values_decode
+            else:
+                return try_decode(parsed_map, tp)
+        else:
+            return enm.ParseErrorRef.invalid_map_decode
+    else:
+        return enm.ParseErrorRef.value_decode
+
+
+ANNOTATIONS_CACHE: dict[lib.t.Any, dict[typ.AnyString, lib.t.Any]] = {}
+"""Cache for typed annotations."""
+
+
+def parse_typed_tp(
+    value: lib.t.Any,
+    tp: type[typ.Typed]
+    ) -> typ.Typed | enm.ParseErrorRef:
+    """Parse an annotated object."""
+
+    if tp in ANNOTATIONS_CACHE:
+        tp_annotations = ANNOTATIONS_CACHE[tp]
+    elif typ.utl.check.is_object(tp):
+        tp_annotations = {
+            k: typ.utl.hint.finalize_type(typ.utl.check.get_args(v)[0])  # Expand Field[Any] --> Any
+            for k, v
+            in typ.utl.hint.collect_annotations(tp).items()
+            }
+        ANNOTATIONS_CACHE[tp] = tp_annotations
+    else:
+        tp_annotations = {
+            k: typ.utl.hint.finalize_type(v)
+            for k, v
+            in typ.utl.hint.collect_annotations(tp).items()
+            }
+        ANNOTATIONS_CACHE[tp] = tp_annotations
+
+    if typ.utl.check.is_serialized_mapping(value):
+        tp_dict: dict[str, lib.t.Any] = {}
+        for k, val in value.items():
+            if (
+                isinstance(k, str)
+                and (
+                    ckey := strings.utl.cname_for(
+                        k,
+                        tuple(tp_annotations)
+                        )
+                    )
+                ):
+                tp_val = parse(val, tp_annotations[ckey])
+                if isinstance(tp_val, enm.ParseErrorRef):
+                    return enm.ParseErrorRef.invalid_map_decode
+                tp_dict[ckey] = tp_val
+            else:
+                return enm.ParseErrorRef.invalid_keys_decode
+        return tp(**tp_dict)
+    else:
+        return try_decode(value, tp)
+
+
 @lib.t.overload
 def parse(
     value: lib.t.Any,
@@ -219,7 +455,7 @@ def parse(
 
     """
 
-    valid_types = sorted(set(typ.utl.check.expand_types(tp)), key=_rank_type)
+    valid_types = get_valid_tps(tp)
 
     if len(valid_types) > 1:
         parsed_value_or_err_ref = enm.ParseErrorRef.value_decode
@@ -247,142 +483,10 @@ def parse(
                 return deserialized_as_dict
         else:
             return try_decode(value, tp)
-    elif typ.utl.check.is_typed(tp):
-        if typ.utl.check.is_object(tp):
-            tp_annotations = {
-                k: typ.utl.hint.finalize_type(typ.utl.check.get_args(v)[0])  # Expand Field[Any] --> Any
-                for k, v
-                in typ.utl.hint.collect_annotations(tp).items()
-                }
-        else:
-            tp_annotations = {
-                k: typ.utl.hint.finalize_type(v)
-                for k, v
-                in typ.utl.hint.collect_annotations(tp).items()
-                }
-        if typ.utl.check.is_serialized_mapping(value):
-            tp_dict: dict[str, lib.t.Any] = {}
-            for k, val in value.items():
-                if (
-                    isinstance(k, str)
-                    and (
-                        ckey := strings.utl.cname_for(
-                            k,
-                            tuple(tp_annotations)
-                            )
-                        )
-                    ):
-                    tp_val = parse(val, tp_annotations[ckey])
-                    if isinstance(tp_val, enm.ParseErrorRef):
-                        return enm.ParseErrorRef.invalid_map_decode
-                    tp_dict[ckey] = tp_val
-                else:
-                    return enm.ParseErrorRef.invalid_keys_decode
-            return tp(**tp_dict)
-        else:  # pragma: no cover
-            return try_decode(value, tp)
-    elif (generics := typ.utl.check.get_type_args(tp)):
-        if (typ.utl.check.is_variadic_array_type(tp)):
-            if not typ.utl.check.is_array(value):
-                return enm.ParseErrorRef.value_decode
-            elif typ.utl.check.is_ellipsis(generics[-1]):
-                parsed_variadic_unknown_len = [
-                    parse(v, generics[0])
-                    for v
-                    in value
-                    ]
-                if any(
-                    (
-                        isinstance(p, enm.ParseErrorRef)
-                        or not isinstance(
-                            p,
-                            typ.utl.check.get_checkable_types(generics[0])
-                            )
-                        )
-                    for p
-                    in parsed_variadic_unknown_len
-                    ):
-                    return enm.ParseErrorRef.invalid_arr_decode
-                else:
-                    return try_decode(parsed_variadic_unknown_len, tp)
-            elif len(value) == len(generics):
-                parsed_variadic_known_len = [
-                    parse(v, generics[i])
-                    for i, v
-                    in enumerate(value)
-                    ]
-                if any(
-                    (
-                        isinstance(p, enm.ParseErrorRef)
-                        or not isinstance(
-                            p,
-                            typ.utl.check.get_checkable_types(generics[i])
-                            )
-                        )
-                    for i, p
-                    in enumerate(parsed_variadic_known_len)
-                    ):
-                    return enm.ParseErrorRef.invalid_arr_decode
-                else:
-                    return try_decode(parsed_variadic_known_len, tp)
-            else:
-                return enm.ParseErrorRef.invalid_arr_len
-        elif typ.utl.check.is_array_type(tp):
-            if typ.utl.check.is_array(value):
-                parsed_array = [
-                    parse(v, generics[0])
-                    for v
-                    in value
-                    ]
-                if any(
-                    (
-                        isinstance(p, enm.ParseErrorRef)
-                        or not isinstance(
-                            p,
-                            typ.utl.check.get_checkable_types(generics[0])
-                            )
-                        )
-                    for p
-                    in parsed_array
-                    ):
-                    return enm.ParseErrorRef.invalid_arr_decode
-                else:
-                    return try_decode(parsed_array, tp)
-            else:
-                return try_decode(value, tp)
-        elif typ.utl.check.is_mapping_type(tp):
-            if (
-                typ.utl.check.is_serialized_mapping(value)
-                or typ.utl.check.is_mapping(value)
-                ):
-                if len(generics) == 2:
-                    key_type, value_type = generics
-                    parsed_map = {
-                        parse(k, key_type): parse(v, value_type)
-                        for k, v
-                        in value.items()
-                        }
-                    if any(
-                        isinstance(k, enm.ParseErrorRef)
-                        for k
-                        in parsed_map.keys()
-                        ):
-                        return enm.ParseErrorRef.invalid_keys_decode
-                    elif any(
-                        isinstance(v, enm.ParseErrorRef)
-                        for v
-                        in parsed_map.values()
-                        ):
-                        return enm.ParseErrorRef.invalid_values_decode
-                    else:
-                        return try_decode(parsed_map, tp)
-                else:
-                    return enm.ParseErrorRef.invalid_map_decode
-            else:
-                return try_decode(value, tp)
-        else:  # pragma: no cover
-            return try_decode(value, tp)
-    elif isinstance(value, typ.utl.check.get_checkable_types(tp)):
-        return value
+
+    decoder, generics = get_decoder(tp)
+
+    if generics:
+        return decoder(value, generics, tp)
     else:
-        return try_decode(value, tp)
+        return decoder(value, tp)
