@@ -1,11 +1,22 @@
 # CHANGELOG
 
 
+## v0.1.16 (2024-11-05)
+
+### Performance Improvements
+
+* perf: more improvements to type parsing ([`7aa733a`](https://github.com/dan1hc/ft3/commit/7aa733a57d460d73f04d996d7d9b7ddb723b1bd4))
+
+
 ## v0.1.15 (2024-11-03)
 
 ### Bug Fixes
 
 * fix: request routing, pathing for sub objs, improved logging ([`afe82af`](https://github.com/dan1hc/ft3/commit/afe82af1072fa21ec5aae2ef27161b397fec7a9e))
+
+### Documentation
+
+* docs: __v0.1.15__ [skip ci] ([`d7b090a`](https://github.com/dan1hc/ft3/commit/d7b090a1ad8426397a8105edc4b9c51fa0708ee3))
 
 
 ## v0.1.14 (2024-11-03)
