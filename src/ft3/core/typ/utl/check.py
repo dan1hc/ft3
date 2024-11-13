@@ -53,6 +53,10 @@ def get_args(tp: lib.t.Any) -> tuple[lib.t.Any, ...]:
     return lib.t.get_args(tp)
 
 
+GET_TYPE_ARGS_CACHE: dict[int, tuple[lib.t.Any, ...]] = {}
+"""Cache for `get_type_args`."""
+
+
 @lib.t.overload
 def get_type_args(
     tp: 'obj.SupportsParams[lib.Unpack[typ.ArgsType]]'
@@ -82,13 +86,18 @@ def get_type_args(
 
     """
 
-    return tuple(
-        type(arg)
-        if is_literal(tp)
-        else arg
-        for arg
-        in get_args(tp)
-        )
+    tp_key = hash(tp)
+
+    if tp_key not in GET_TYPE_ARGS_CACHE:
+        GET_TYPE_ARGS_CACHE[tp_key] = tuple(
+            type(arg)
+            if is_literal(tp)
+            else arg
+            for arg
+            in get_args(tp)
+            )
+
+    return GET_TYPE_ARGS_CACHE[tp_key]
 
 
 GET_CHECKABLE_TYPES_CACHE: dict[int, tuple[type, ...]] = {}
@@ -119,10 +128,10 @@ def get_checkable_types(
 
     """
 
-    if isinstance(any_tp, type):
-        tp_key = hash(any_tp)
+    if isinstance(any_tp, lib.t.ForwardRef):
+        tp_key = hash(any_tp.__forward_arg__)
     else:
-        tp_key = hash(repr(any_tp))
+        tp_key = hash(any_tp)
 
     if tp_key in GET_CHECKABLE_TYPES_CACHE:
         return GET_CHECKABLE_TYPES_CACHE[tp_key]
@@ -170,7 +179,9 @@ def expand_types(
 
     """
 
-    if isinstance(any_tp, type):
+    if isinstance(any_tp, lib.t.ForwardRef):
+        tp_key = hash(any_tp.__forward_arg__)
+    elif isinstance(any_tp, type):
         tp_key = hash(any_tp)
     else:
         tp_key = hash(repr(any_tp))
@@ -263,6 +274,10 @@ def is_typevar(
     return isinstance(obj, lib.t.TypeVar)
 
 
+IS_UNION_OF_LITERAL_CACHE: dict[int, bool] = {}
+"""Cache for `is_union_of_literal`."""
+
+
 def is_union_of_literal(
     obj: lib.t.Any
     ) -> lib.t.TypeGuard[lib.lib.types.UnionType]:
@@ -271,15 +286,24 @@ def is_union_of_literal(
 
     """
 
-    return (
-        is_union(obj)
-        and all(
-            is_literal(tp)
-            for tp
-            in get_args(obj)
+    tp_key = hash(obj)
+
+    if tp_key not in IS_UNION_OF_LITERAL_CACHE:
+        IS_UNION_OF_LITERAL_CACHE[tp_key] = (
+            is_union(obj)
+            and all(
+                is_literal(tp)
+                for tp
+                in get_args(obj)
+                )
+            and len(set(get_checkable_types(obj))) == 1
             )
-        and len(set(get_checkable_types(obj))) == 1
-        )
+
+    return IS_UNION_OF_LITERAL_CACHE[tp_key]
+
+
+IS_OPTIONAL_UNION_OF_LITERAL_CACHE: dict[int, bool] = {}
+"""Cache for `is_optional_union_of_literal`."""
 
 
 def is_optional_union_of_literal(
@@ -291,16 +315,25 @@ def is_optional_union_of_literal(
 
     """
 
-    return (
-        is_union(obj)
-        and all(
-            is_literal(tp) or is_none_type(tp)
-            for tp
-            in get_args(obj)
+    tp_key = hash(obj)
+
+    if tp_key not in IS_OPTIONAL_UNION_OF_LITERAL_CACHE:
+        IS_OPTIONAL_UNION_OF_LITERAL_CACHE[tp_key] = (
+            is_union(obj)
+            and len(tps := set(get_checkable_types(obj))) == 2
+            and all(
+                is_literal(tp) or is_none_type(tp)
+                for tp
+                in get_args(obj)
+                )
+            and any(is_none_type(tp) for tp in tps)
             )
-        and len(tps := set(get_checkable_types(obj))) == 2
-        and any(is_none_type(tp) for tp in tps)
-        )
+
+    return IS_OPTIONAL_UNION_OF_LITERAL_CACHE[tp_key]
+
+
+IS_UNION_CACHE: dict[int, bool] = {}
+"""Cache for `is_union`."""
 
 
 def is_union(
@@ -310,14 +343,24 @@ def is_union(
 
     from .. import typ
 
-    return isinstance(
-        obj,
-        (
-            typ.OptionalGenericAlias,
-            typ.UnionGenericAlias,
-            lib.types.UnionType
+    if isinstance(obj, lib.t.ForwardRef):
+        tp_key = hash(obj.__forward_arg__)
+    elif isinstance(obj, type):
+        tp_key = hash(obj)
+    else:
+        tp_key = hash(obj.__class__.__name__)
+
+    if tp_key not in IS_UNION_CACHE:
+        IS_UNION_CACHE[tp_key] = isinstance(
+            obj,
+            (
+                typ.OptionalGenericAlias,
+                typ.UnionGenericAlias,
+                lib.types.UnionType
+                )
             )
-        )
+
+    return IS_UNION_CACHE[tp_key]
 
 
 @lib.t.overload
@@ -375,14 +418,26 @@ def is_ellipsis(
         return False
 
 
+IS_LITERAL_CACHE: dict[int, bool] = {}
+"""Cache for `is_literal`."""
+
+
 def is_literal(
     tp: type[lib.t.Any] | lib.t.Any
     ) -> 'lib.t.TypeGuard[typ.Literal]':
     """Return `True` if `tp` is a `Literal`."""
 
-    otp = lib.t.get_origin(tp) or tp
+    if isinstance(tp, lib.t.ForwardRef):
+        tp_key = hash(tp.__forward_arg__)
+    else:
+        tp_key = hash(tp.__class__.__name__)
 
-    return getattr(otp, '__name__', '') == 'Literal'
+    if tp_key not in IS_LITERAL_CACHE:
+        otp = lib.t.get_origin(tp) or tp
+
+        IS_LITERAL_CACHE[tp_key] = getattr(otp, '__name__', '') == 'Literal'
+
+    return IS_LITERAL_CACHE[tp_key]
 
 
 def is_date_type(
@@ -411,17 +466,34 @@ def is_datetime_type(
         return False
 
 
+IS_NONE_CACHE: dict[int, bool] = {}
+"""Cache for `is_none_type`."""
+
+
 def is_none_type(
     tp: type[lib.t.Any] | lib.t.Any,
     ) -> 'lib.t.TypeGuard[type[typ.NoneType]]':
     """Return `True` if `tp` is `NoneType`."""
 
-    otps = get_checkable_types(tp)
-
-    if otps:
-        return issubclass(otps[0], None.__class__)
+    if isinstance(tp, type):
+        tp_key = hash(tp)
     else:
-        return False
+        tp_key = hash(tp.__class__.__name__)
+
+    if tp_key not in IS_NONE_CACHE:
+
+        otps = get_checkable_types(tp)
+
+        if otps:
+            IS_NONE_CACHE[tp_key] = issubclass(otps[0], None.__class__)
+        else:
+            IS_NONE_CACHE[tp_key] = False
+
+    return IS_NONE_CACHE[tp_key]
+
+
+IS_PRIMITIVE_CACHE: dict[int, bool] = {}
+"""Cache for `is_primitve`."""
 
 
 def is_primitive(
@@ -431,7 +503,21 @@ def is_primitive(
 
     from .. import typ
 
-    return isinstance(obj, get_checkable_types(typ.Primitive))
+    if isinstance(obj, type):
+        tp_key = hash(obj)
+    else:
+        tp_key = hash(obj.__class__.__name__)
+
+    if tp_key not in IS_PRIMITIVE_CACHE:
+        IS_PRIMITIVE_CACHE[tp_key] = (
+            isinstance(obj, get_checkable_types(typ.Primitive))
+            )
+
+    return IS_PRIMITIVE_CACHE[tp_key]
+
+
+IS_SERIALIZED_MAPPING_CACHE: dict[int, bool] = {}
+"""Cache for `is_serialized_mapping`."""
 
 
 def is_serialized_mapping(
@@ -444,17 +530,29 @@ def is_serialized_mapping(
 
     from .. import typ
 
-    return (
-        isinstance(obj, lib.t.Mapping)
-        and all(
-            (
-                is_primitive(k)
-                and isinstance(v, get_checkable_types(typ.Serial))
+    if is_mapping(obj):
+        tp_key = hash(str(v) for v in obj.values())
+    else:
+        tp_key = hash(obj.__class__.__name__)
+
+    if tp_key not in IS_SERIALIZED_MAPPING_CACHE:
+        IS_SERIALIZED_MAPPING_CACHE[tp_key] = (
+            isinstance(obj, lib.t.Mapping)
+            and all(
+                (
+                    is_primitive(k)
+                    and isinstance(v, get_checkable_types(typ.Serial))
+                    )
+                for k, v
+                in obj.items()
                 )
-            for k, v
-            in obj.items()
             )
-        )
+
+    return IS_SERIALIZED_MAPPING_CACHE[tp_key]
+
+
+IS_MAPPING_CACHE: dict[int, bool] = {}
+"""Cache for `is_mapping`."""
 
 
 def is_mapping(
@@ -464,7 +562,15 @@ def is_mapping(
         ]:
     """Return `True` if `obj` is `Mapping[lib.t.Any, lib.t.Any]`."""
 
-    return isinstance(obj, lib.t.Mapping)
+    if isinstance(obj, type):
+        tp_key = hash(obj)
+    else:
+        tp_key = hash(obj.__class__.__name__)
+
+    if tp_key not in IS_MAPPING_CACHE:
+        IS_MAPPING_CACHE[tp_key] = isinstance(obj, lib.t.Mapping)
+
+    return IS_MAPPING_CACHE[tp_key]
 
 
 def is_mapping_type(
@@ -480,6 +586,10 @@ def is_mapping_type(
         return False
 
 
+IS_ARRAY_CACHE: dict[int, bool] = {}
+"""Cache for `is_array`."""
+
+
 @lib.t.overload
 def is_array(
     obj: 'typ.Array[typ.AnyType]',
@@ -493,10 +603,18 @@ def is_array(
     ) -> 'lib.t.TypeGuard[typ.Array[typ.AnyType | lib.t.Any]]':
     """Return `True` if `obj` is `Array[lib.t.Any]`."""
 
-    return (
-        isinstance(obj, lib.t.Collection)
-        and not isinstance(obj, (str, lib.t.Mapping, lib.enum.EnumMeta))
-        )
+    if isinstance(obj, type):
+        tp_key = hash(obj)
+    else:
+        tp_key = hash(obj.__class__.__name__)
+
+    if tp_key not in IS_ARRAY_CACHE:
+        IS_ARRAY_CACHE[tp_key] = (
+            isinstance(obj, lib.t.Collection)
+            and not isinstance(obj, (str, lib.t.Mapping, lib.enum.EnumMeta))
+            )
+
+    return IS_ARRAY_CACHE[tp_key]
 
 
 def is_array_of_object(
@@ -516,14 +634,11 @@ def is_object(
     ) -> lib.t.TypeGuard['obj.ObjectLike']:
     """Return `True` if `obj_` is an `Object`."""
 
-    if isinstance(obj_, type):
-        otp = lib.t.get_origin(obj_) or obj_
-    else:
-        otp = type(obj_)
+    return is_object_type(obj_)
 
-    from .... import objects
 
-    return issubclass(otp, objects.Object)
+IS_OBJECT_TYPE_CACHE: dict[int, bool] = {}
+"""Cache for `is_object_type`."""
 
 
 def is_object_type(
@@ -532,13 +647,24 @@ def is_object_type(
     """Return `True` if `tp` is an `Object`."""
 
     if isinstance(tp, type):
-        otp = lib.t.get_origin(tp) or tp
+        tp_key = hash(tp)
+    elif is_mapping(tp):
+        tp_key = hash(str(v) for v in tp.values())
     else:
-        otp = type(tp)
+        tp_key = hash(tp.__class__.__name__)
 
-    from .... import objects
+    if tp_key not in IS_OBJECT_TYPE_CACHE:
 
-    return issubclass(otp, objects.Object)
+        if isinstance(tp, type):
+            otp = lib.t.get_origin(tp) or tp
+        else:
+            otp = type(tp)
+
+        from .... import objects
+
+        IS_OBJECT_TYPE_CACHE[tp_key] = issubclass(otp, objects.Object)
+
+    return IS_OBJECT_TYPE_CACHE[tp_key]
 
 
 def is_field(
@@ -553,6 +679,10 @@ def is_field(
     return is_field_type(obj_tp)
 
 
+IS_FIELD_TYPE_CACHE: dict[int, bool] = {}
+"""Cache for `is_field_type`."""
+
+
 def is_field_type(
     tp: 'type[typ.AnyField[typ.AnyType]] | lib.t.Any'
     ) -> lib.t.TypeGuard[
@@ -561,18 +691,32 @@ def is_field_type(
     """Return `True` if `tp` is `typ[AnyField[Any]]`."""
 
     if isinstance(tp, lib.t.ForwardRef):
-        return bool(obj.FieldPattern.match(tp.__forward_arg__))
-    elif isinstance(tp, str):
-        return bool(obj.FieldPattern.match(tp))
+        tp_key = hash(tp.__forward_arg__)
+    else:
+        tp_key = hash(tp)
 
-    otp = lib.t.get_origin(tp) or tp
+    if tp_key not in IS_FIELD_TYPE_CACHE:
+        if isinstance(tp, lib.t.ForwardRef):
+            IS_FIELD_TYPE_CACHE[tp_key] = (
+                bool(obj.FieldPattern.match(tp.__forward_arg__))
+                )
+        elif isinstance(tp, str):
+            IS_FIELD_TYPE_CACHE[tp_key] = bool(obj.FieldPattern.match(tp))
+        else:
+            otp = lib.t.get_origin(tp) or tp
 
-    from .... import objects
+            from .... import objects
 
-    return (
-        getattr(otp, '__name__', '') == 'Field'
-        and not issubclass(otp, objects.typ.Field)
-        )
+            IS_FIELD_TYPE_CACHE[tp_key] = (
+                getattr(otp, '__name__', '') == 'Field'
+                and not issubclass(otp, objects.typ.Field)
+                )
+
+    return IS_FIELD_TYPE_CACHE[tp_key]
+
+
+IS_WRAPPER_TYPE_CACHE: dict[int, bool] = {}
+"""Cache for `is_wrapper_type`."""
 
 
 def is_wrapper_type(
@@ -581,16 +725,28 @@ def is_wrapper_type(
     """Return `True` if `tp` is `Annotated | ClassVar | Final | InitVar`."""
 
     if isinstance(tp, lib.t.ForwardRef):
-        return bool(obj.WrapperPattern.match(tp.__forward_arg__))
-    elif isinstance(tp, str):  # pragma: no cover
-        return bool(obj.WrapperPattern.match(tp))
+        tp_key = hash(tp.__forward_arg__)
+    elif is_mapping(tp):
+        tp_key = hash(str(v) for v in tp.values())
+    else:
+        tp_key = hash(tp)
 
-    otp = lib.t.get_origin(tp) or tp
+    if tp_key not in IS_WRAPPER_TYPE_CACHE:
+        if isinstance(tp, lib.t.ForwardRef):
+            IS_WRAPPER_TYPE_CACHE[tp_key] = (
+                bool(obj.WrapperPattern.match(tp.__forward_arg__))
+                )
+        elif isinstance(tp, str):  # pragma: no cover
+            IS_WRAPPER_TYPE_CACHE[tp_key] = bool(obj.WrapperPattern.match(tp))
+        else:
+            otp = lib.t.get_origin(tp) or tp
 
-    return (
-        getattr(otp, '__name__', '')
-        in {'Annotated', 'ClassVar', 'Final', 'InitVar'}
-        )
+            IS_WRAPPER_TYPE_CACHE[tp_key] = (
+                getattr(otp, '__name__', '')
+                in {'Annotated', 'ClassVar', 'Final', 'InitVar'}
+                )
+
+    return IS_WRAPPER_TYPE_CACHE[tp_key]
 
 
 def is_uuid_type(
@@ -606,22 +762,34 @@ def is_uuid_type(
         return False
 
 
+IS_TYPED_CACHE: dict[int, bool] = {}
+"""Cache for `is_typed`."""
+
+
 def is_typed(
     any: 'type[typ.Typed] | type[lib.t.Any] | lib.t.Any'
     ) -> 'lib.t.TypeGuard[type[typ.Typed]]':
     """Return `True` if `any` is type-hinted."""
 
-    return (
-        getattr(any, '__annotations__', False)
-        and not isinstance(any, lib.t.ForwardRef)
-        and not isinstance(
-            any,
-            (
-                lib.types.FunctionType,
-                lib.types.MethodType
+    if isinstance(any, type):
+        tp_key = hash(any)
+    else:
+        tp_key = hash(any.__class__.__name__)
+
+    if tp_key not in IS_TYPED_CACHE:
+        IS_TYPED_CACHE[tp_key] = (
+            getattr(any, '__annotations__', False)
+            and not isinstance(any, lib.t.ForwardRef)
+            and not isinstance(
+                any,
+                (
+                    lib.types.FunctionType,
+                    lib.types.MethodType
+                    )
                 )
             )
-        )
+
+    return IS_TYPED_CACHE[tp_key]
 
 
 def is_array_of_obj_type(

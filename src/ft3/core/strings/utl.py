@@ -33,6 +33,7 @@ class Constants(cfg.Constants):
     CACHED_CNAMES: dict[tuple[typ.AnyString, tuple[typ.AnyString, ...]], typ.AnyString] = {}
 
 
+@lib.functools.cache
 def pluralize(string: str) -> str:
     """Pluralize a singular string."""
 

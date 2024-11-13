@@ -451,6 +451,9 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
                 )
             )
 
+    def __hash__(self) -> int:
+        return self.__field_hash__()
+
     @lib.t.overload
     def __eq__(
         self,
