@@ -345,8 +345,6 @@ def is_union(
 
     if isinstance(obj, lib.t.ForwardRef):
         tp_key = hash(obj.__forward_arg__)
-    elif isinstance(obj, type):
-        tp_key = hash(obj)
     else:
         tp_key = hash(obj.__class__.__name__)
 
