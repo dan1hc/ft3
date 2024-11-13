@@ -1,65 +1,85 @@
 # CHANGELOG
 
 
-## v0.1.16 (2024-11-05)
+## v0.1.17 (2024-11-13)
+
+### Bug Fixes
+
+- Update is_union caching
+  ([`92cc637`](https://github.com/dan1hc/ft3/commit/92cc6379bd373a938419fced0a143a30ea26ab49))
 
 ### Performance Improvements
 
-* perf: more improvements to type parsing ([`7aa733a`](https://github.com/dan1hc/ft3/commit/7aa733a57d460d73f04d996d7d9b7ddb723b1bd4))
+- More type caching speedups
+  ([`32913e7`](https://github.com/dan1hc/ft3/commit/32913e7e58ce4422e2c194a1abf7bca77e1c29a8))
+
+
+## v0.1.16 (2024-11-05)
+
+### Documentation
+
+- __v0.1.16__ [skip ci]
+  ([`74645a1`](https://github.com/dan1hc/ft3/commit/74645a1ff18d044efc892c753cbc6a4c6f0d328c))
+
+### Performance Improvements
+
+- More improvements to type parsing
+  ([`7aa733a`](https://github.com/dan1hc/ft3/commit/7aa733a57d460d73f04d996d7d9b7ddb723b1bd4))
 
 
 ## v0.1.15 (2024-11-03)
 
 ### Bug Fixes
 
-* fix: request routing, pathing for sub objs, improved logging ([`afe82af`](https://github.com/dan1hc/ft3/commit/afe82af1072fa21ec5aae2ef27161b397fec7a9e))
+- Request routing, pathing for sub objs, improved logging
+  ([`afe82af`](https://github.com/dan1hc/ft3/commit/afe82af1072fa21ec5aae2ef27161b397fec7a9e))
 
 ### Documentation
 
-* docs: __v0.1.15__ [skip ci] ([`d7b090a`](https://github.com/dan1hc/ft3/commit/d7b090a1ad8426397a8105edc4b9c51fa0708ee3))
+- __v0.1.15__ [skip ci]
+  ([`d7b090a`](https://github.com/dan1hc/ft3/commit/d7b090a1ad8426397a8105edc4b9c51fa0708ee3))
 
 
 ## v0.1.14 (2024-11-03)
 
 ### Documentation
 
-* docs: __v0.1.14__ [skip ci] ([`7fd1957`](https://github.com/dan1hc/ft3/commit/7fd1957e48e3231a45b45af90b3ddf421a9154ba))
-
-### Unknown
-
-* Merge branch 'main' of github.com:dan1hc/ft3 ([`7394ee7`](https://github.com/dan1hc/ft3/commit/7394ee741a069de38f79b09a307d349669be85a1))
+- __v0.1.14__ [skip ci]
+  ([`7fd1957`](https://github.com/dan1hc/ft3/commit/7fd1957e48e3231a45b45af90b3ddf421a9154ba))
 
 
 ## v0.1.13 (2024-11-02)
 
 ### Bug Fixes
 
-* fix: do not log traceback by default ([`005fe7c`](https://github.com/dan1hc/ft3/commit/005fe7c5a8297ad69f95d592a424c3b817e600e4))
+- Do not log traceback by default
+  ([`005fe7c`](https://github.com/dan1hc/ft3/commit/005fe7c5a8297ad69f95d592a424c3b817e600e4))
 
 ### Documentation
 
-* docs: __v0.1.13__ [skip ci] ([`364df28`](https://github.com/dan1hc/ft3/commit/364df2897bbed842163e6127ba30b2e1fa6bca17))
-
-### Unknown
-
-* Merge branch 'main' of github.com:dan1hc/ft3 ([`084c80d`](https://github.com/dan1hc/ft3/commit/084c80dd3b438aa8493eee2e55f3aec207affc2f))
+- __v0.1.13__ [skip ci]
+  ([`364df28`](https://github.com/dan1hc/ft3/commit/364df2897bbed842163e6127ba30b2e1fa6bca17))
 
 
 ## v0.1.12 (2024-11-02)
 
 ### Bug Fixes
 
-* fix: isolate api parse error logging and improve parse order for union tps ([`7138390`](https://github.com/dan1hc/ft3/commit/7138390d41dc642de333d180dbff43eb8a8a8c56))
+- Isolate api parse error logging and improve parse order for union tps
+  ([`7138390`](https://github.com/dan1hc/ft3/commit/7138390d41dc642de333d180dbff43eb8a8a8c56))
 
 ### Documentation
 
-* docs: __v0.1.12__ [skip ci] ([`4e0c264`](https://github.com/dan1hc/ft3/commit/4e0c264a543c96d3d64db0eb8b0966228fae4bfe))
+- __v0.1.12__ [skip ci]
+  ([`4e0c264`](https://github.com/dan1hc/ft3/commit/4e0c264a543c96d3d64db0eb8b0966228fae4bfe))
 
-* docs: update readme and trigger ci ([`3befe50`](https://github.com/dan1hc/ft3/commit/3befe50f076ebe4632e3508581ee37caed21c99a))
+- Update readme and trigger ci
+  ([`3befe50`](https://github.com/dan1hc/ft3/commit/3befe50f076ebe4632e3508581ee37caed21c99a))
 
 ### Performance Improvements
 
-* perf: cache improvements (#31)
+- Cache improvements ([#31](https://github.com/dan1hc/ft3/pull/31),
+  [`6258037`](https://github.com/dan1hc/ft3/commit/62580377c5005e7d8743f63cbbac839acdc00851))
 
 * perf: cache fixes, enum parse from literals, perf boost
 
@@ -69,84 +89,98 @@
 
 ---------
 
-Co-authored-by: github-actions <action@github.com> ([`6258037`](https://github.com/dan1hc/ft3/commit/62580377c5005e7d8743f63cbbac839acdc00851))
+Co-authored-by: github-actions <action@github.com>
 
 
 ## v0.1.11 (2024-10-28)
 
 ### Bug Fixes
 
-* fix: further improve error logging for api ([`58a2d0d`](https://github.com/dan1hc/ft3/commit/58a2d0d0aa7def9e5545d5250c9c277a2c7682f4))
+- Further improve error logging for api
+  ([`58a2d0d`](https://github.com/dan1hc/ft3/commit/58a2d0d0aa7def9e5545d5250c9c277a2c7682f4))
 
 ### Continuous Integration
 
-* ci: fix angular commit msg pattern [skip ci] ([`dc1d080`](https://github.com/dan1hc/ft3/commit/dc1d080bc42487ebcd8348754e27eb7a1f809604))
+- Fix angular commit msg pattern [skip ci]
+  ([`dc1d080`](https://github.com/dan1hc/ft3/commit/dc1d080bc42487ebcd8348754e27eb7a1f809604))
 
 ### Documentation
 
-* docs: __v0.1.11__ [skip ci] ([`0a2f64f`](https://github.com/dan1hc/ft3/commit/0a2f64f2e224ec101c9a3f982af1c9288e622ab0))
+- __v0.1.11__ [skip ci]
+  ([`0a2f64f`](https://github.com/dan1hc/ft3/commit/0a2f64f2e224ec101c9a3f982af1c9288e622ab0))
 
 
 ## v0.1.10 (2024-10-27)
 
 ### Documentation
 
-* docs: __v0.1.10__ [skip ci] ([`86f86d0`](https://github.com/dan1hc/ft3/commit/86f86d05585437aa7b0451a80100d6bc4169abcb))
+- __v0.1.10__ [skip ci]
+  ([`86f86d0`](https://github.com/dan1hc/ft3/commit/86f86d05585437aa7b0451a80100d6bc4169abcb))
 
 ### Performance Improvements
 
-* perf: cache type check functions for big speedup ([`78c6b9c`](https://github.com/dan1hc/ft3/commit/78c6b9c1cde8ae6b6613076b03b34e0f49e87d11))
+- Cache type check functions for big speedup
+  ([`78c6b9c`](https://github.com/dan1hc/ft3/commit/78c6b9c1cde8ae6b6613076b03b34e0f49e87d11))
 
 
 ## v0.1.9 (2024-10-27)
 
 ### Bug Fixes
 
-* fix: minimalize response objs and allow _id fields through ([`8b71b61`](https://github.com/dan1hc/ft3/commit/8b71b615767b99600e6a51da2ea5c7911b603206))
+- Minimalize response objs and allow _id fields through
+  ([`8b71b61`](https://github.com/dan1hc/ft3/commit/8b71b615767b99600e6a51da2ea5c7911b603206))
 
 ### Documentation
 
-* docs: __v0.1.9__ [skip ci] ([`c85b9ab`](https://github.com/dan1hc/ft3/commit/c85b9ab31b135e2c8bdb32daed40c029bc0e9dc6))
+- __v0.1.9__ [skip ci]
+  ([`c85b9ab`](https://github.com/dan1hc/ft3/commit/c85b9ab31b135e2c8bdb32daed40c029bc0e9dc6))
 
 
 ## v0.1.8 (2024-10-26)
 
 ### Bug Fixes
 
-* fix: allow for more robust logging of parse errors in api ([`7a296e4`](https://github.com/dan1hc/ft3/commit/7a296e45408f69b917aaeabd165af0409ca094e2))
+- Allow for more robust logging of parse errors in api
+  ([`7a296e4`](https://github.com/dan1hc/ft3/commit/7a296e45408f69b917aaeabd165af0409ca094e2))
 
 ### Documentation
 
-* docs: __v0.1.8__ [skip ci] ([`c82af31`](https://github.com/dan1hc/ft3/commit/c82af3117e6d27cf51e639f5e9e6508c8cbc098f))
+- __v0.1.8__ [skip ci]
+  ([`c82af31`](https://github.com/dan1hc/ft3/commit/c82af3117e6d27cf51e639f5e9e6508c8cbc098f))
 
 
 ## v0.1.7 (2024-10-26)
 
 ### Bug Fixes
 
-* fix: better api logging and error handling ([`ef6b5b0`](https://github.com/dan1hc/ft3/commit/ef6b5b097012c1de09bf47836203eeef33c761d7))
+- Better api logging and error handling
+  ([`ef6b5b0`](https://github.com/dan1hc/ft3/commit/ef6b5b097012c1de09bf47836203eeef33c761d7))
 
 ### Documentation
 
-* docs: __v0.1.7__ [skip ci] ([`96d8a9e`](https://github.com/dan1hc/ft3/commit/96d8a9eebc3c757fe7d45b491d11d0d075ef9c23))
+- __v0.1.7__ [skip ci]
+  ([`96d8a9e`](https://github.com/dan1hc/ft3/commit/96d8a9eebc3c757fe7d45b491d11d0d075ef9c23))
 
 
 ## v0.1.6 (2024-10-25)
 
 ### Bug Fixes
 
-* fix: traceback formatting and path param parsing ([`afbbb59`](https://github.com/dan1hc/ft3/commit/afbbb592bbfbdf9ae6e66afd7ea25a2de46777b1))
+- Traceback formatting and path param parsing
+  ([`afbbb59`](https://github.com/dan1hc/ft3/commit/afbbb592bbfbdf9ae6e66afd7ea25a2de46777b1))
 
 ### Documentation
 
-* docs: __v0.1.6__ [skip ci] ([`f0c6522`](https://github.com/dan1hc/ft3/commit/f0c6522bf6cce6deff9b0fb72cf0c17033e72988))
+- __v0.1.6__ [skip ci]
+  ([`f0c6522`](https://github.com/dan1hc/ft3/commit/f0c6522bf6cce6deff9b0fb72cf0c17033e72988))
 
 
 ## v0.1.5 (2024-10-25)
 
 ### Bug Fixes
 
-* fix: pluralizations aws key redaction api log exc (#29)
+- Pluralizations aws key redaction api log exc ([#29](https://github.com/dan1hc/ft3/pull/29),
+  [`22c78c9`](https://github.com/dan1hc/ft3/commit/22c78c9400b588ebcb5aeb50aab66283d0a6cf36))
 
 * fix: pluralizations aws key redaction api log exc
 
@@ -166,20 +200,24 @@ Co-authored-by: github-actions <action@github.com> ([`6258037`](https://github.c
 
 ---------
 
-Co-authored-by: github-actions <action@github.com> ([`22c78c9`](https://github.com/dan1hc/ft3/commit/22c78c9400b588ebcb5aeb50aab66283d0a6cf36))
+Co-authored-by: github-actions <action@github.com>
 
 ### Documentation
 
-* docs: __v0.1.5__ [skip ci] ([`9060cc6`](https://github.com/dan1hc/ft3/commit/9060cc6464937469c6f0db44be8bd5e7ab2c3192))
+- __v0.1.5__ [skip ci]
+  ([`9060cc6`](https://github.com/dan1hc/ft3/commit/9060cc6464937469c6f0db44be8bd5e7ab2c3192))
 
-* docs: update readme and trigger ci ([`76918f8`](https://github.com/dan1hc/ft3/commit/76918f84d5e595955afcca7574286c3dfd43d5f9))
+- Update readme and trigger ci
+  ([`76918f8`](https://github.com/dan1hc/ft3/commit/76918f84d5e595955afcca7574286c3dfd43d5f9))
 
 
 ## v0.1.4 (2024-10-22)
 
 ### Bug Fixes
 
-* fix: only allow endpoint hierarchy expansion if field is named same (#27)
+- Only allow endpoint hierarchy expansion if field is named same
+  ([#27](https://github.com/dan1hc/ft3/pull/27),
+  [`34b685a`](https://github.com/dan1hc/ft3/commit/34b685a2e73012b84b560576ba6afd7ffea24357))
 
 * fix: only allow endpoint hierarchy expansion if field is named same
 
@@ -195,24 +233,28 @@ Co-authored-by: github-actions <action@github.com> ([`22c78c9`](https://github.c
 
 ---------
 
-Co-authored-by: github-actions <action@github.com> ([`34b685a`](https://github.com/dan1hc/ft3/commit/34b685a2e73012b84b560576ba6afd7ffea24357))
+Co-authored-by: github-actions <action@github.com>
 
 ### Continuous Integration
 
-* ci: workaround sem release pr no trigger issue ([`9b6b82a`](https://github.com/dan1hc/ft3/commit/9b6b82aad9aa9e1132e6c78f75c30d8b83e1cae6))
+- Workaround sem release pr no trigger issue
+  ([`9b6b82a`](https://github.com/dan1hc/ft3/commit/9b6b82aad9aa9e1132e6c78f75c30d8b83e1cae6))
 
 ### Documentation
 
-* docs: __v0.1.4__ [skip ci] ([`1323cf2`](https://github.com/dan1hc/ft3/commit/1323cf220940311e8360ff616998899f42db4fb1))
+- __v0.1.4__ [skip ci]
+  ([`1323cf2`](https://github.com/dan1hc/ft3/commit/1323cf220940311e8360ff616998899f42db4fb1))
 
 
 ## v0.1.3 (2024-10-22)
 
 ### Bug Fixes
 
-* fix: syntax fix to trigger ci ([`84158f8`](https://github.com/dan1hc/ft3/commit/84158f81a3eb53742fe4f49322ef7a45543fd78e))
+- Syntax fix to trigger ci
+  ([`84158f8`](https://github.com/dan1hc/ft3/commit/84158f81a3eb53742fe4f49322ef7a45543fd78e))
 
-* fix: openapi headers and string types also py in md docs (#25)
+- Openapi headers and string types also py in md docs ([#25](https://github.com/dan1hc/ft3/pull/25),
+  [`87fcf5c`](https://github.com/dan1hc/ft3/commit/87fcf5c47925cccbe6fe4b5aa1e65b1224006c57))
 
 * fix: openapi headers and string types also py in md docs
 
@@ -220,18 +262,20 @@ Co-authored-by: github-actions <action@github.com> ([`34b685a`](https://github.c
 
 ---------
 
-Co-authored-by: github-actions <action@github.com> ([`87fcf5c`](https://github.com/dan1hc/ft3/commit/87fcf5c47925cccbe6fe4b5aa1e65b1224006c57))
+Co-authored-by: github-actions <action@github.com>
 
 ### Documentation
 
-* docs: __v0.1.3__ [skip ci] ([`0e61b95`](https://github.com/dan1hc/ft3/commit/0e61b9538c6c3efccd89710125760f7c01d7174b))
+- __v0.1.3__ [skip ci]
+  ([`0e61b95`](https://github.com/dan1hc/ft3/commit/0e61b9538c6c3efccd89710125760f7c01d7174b))
 
 
 ## v0.1.2 (2024-10-21)
 
 ### Bug Fixes
 
-* fix: allow for custom response headers (#23)
+- Allow for custom response headers ([#23](https://github.com/dan1hc/ft3/pull/23),
+  [`df84bb5`](https://github.com/dan1hc/ft3/commit/df84bb511edb60a69d4a2f876cf3983a2c04e2a7))
 
 * fix: allow for custom response headers
 
@@ -241,28 +285,20 @@ Co-authored-by: github-actions <action@github.com> ([`87fcf5c`](https://github.c
 
 ---------
 
-Co-authored-by: github-actions <action@github.com> ([`df84bb5`](https://github.com/dan1hc/ft3/commit/df84bb511edb60a69d4a2f876cf3983a2c04e2a7))
+Co-authored-by: github-actions <action@github.com>
 
 ### Documentation
 
-* docs: __v0.1.2__ [skip ci] ([`e890c2f`](https://github.com/dan1hc/ft3/commit/e890c2f2b22a1c0ba247f8df90c3ff9fdd2cf43e))
-
-### Unknown
-
-* Response headers   (#24)
-
-* fix: allow for custom response headers
-
-* style: escape template resp header asterisk
-
-* fix: allow use of custom response headers by injecting on request object ([`2d1b396`](https://github.com/dan1hc/ft3/commit/2d1b3968fbd398874c0c944815bfe96e6c997c66))
+- __v0.1.2__ [skip ci]
+  ([`e890c2f`](https://github.com/dan1hc/ft3/commit/e890c2f2b22a1c0ba247f8df90c3ff9fdd2cf43e))
 
 
 ## v0.1.1 (2024-10-20)
 
 ### Bug Fixes
 
-* fix: __multiple_fixes__ (#19)
+- __multiple_fixes__ ([#19](https://github.com/dan1hc/ft3/pull/19),
+  [`015dd74`](https://github.com/dan1hc/ft3/commit/015dd74cbc7316eaafb0b3416421f62fdee514ba))
 
 * fix: __multiple_fixes__
 
@@ -344,67 +380,67 @@ fixes #18
 
 ---------
 
-Co-authored-by: dan <dan@dans-MacBook-Air.local>
-Co-authored-by: github-actions <action@github.com> ([`015dd74`](https://github.com/dan1hc/ft3/commit/015dd74cbc7316eaafb0b3416421f62fdee514ba))
+Co-authored-by: dan <dan@dans-MacBook-Air.local> Co-authored-by: github-actions <action@github.com>
 
 ### Documentation
 
-* docs: __v0.1.1__ [skip ci] ([`4d3baf4`](https://github.com/dan1hc/ft3/commit/4d3baf45ad4bfa1c9eecdc8591be95231134bb93))
+- __v0.1.1__ [skip ci]
+  ([`4d3baf4`](https://github.com/dan1hc/ft3/commit/4d3baf45ad4bfa1c9eecdc8591be95231134bb93))
 
 ### Testing
 
-* test: simple case to expand coverage for security schemes (#22)
+- Simple case to expand coverage for security schemes ([#22](https://github.com/dan1hc/ft3/pull/22),
+  [`fd93e27`](https://github.com/dan1hc/ft3/commit/fd93e27cb74e061fe8448757e4da44798df34e42))
 
 * test: simple case to expand coverage for security schemes
 
-* feat: fix oas rendering with optional type on schema ([`fd93e27`](https://github.com/dan1hc/ft3/commit/fd93e27cb74e061fe8448757e4da44798df34e42))
+* feat: fix oas rendering with optional type on schema
 
 
 ## v0.1.0 (2024-09-18)
 
 ### Build System
 
-* build(deps): update sphinx requirement from ==7.* to >=7,<9 (#9)
+- **deps**: Update sphinx requirement from ==7.* to >=7,<9
+  ([#9](https://github.com/dan1hc/ft3/pull/9),
+  [`7b3ccce`](https://github.com/dan1hc/ft3/commit/7b3ccce705a7fef8a73ddf0b61972defc65b3c1c))
 
-Updates the requirements on [sphinx](https://github.com/sphinx-doc/sphinx) to permit the latest version.
-- [Release notes](https://github.com/sphinx-doc/sphinx/releases)
-- [Changelog](https://github.com/sphinx-doc/sphinx/blob/master/CHANGES.rst)
-- [Commits](https://github.com/sphinx-doc/sphinx/compare/v7.0.0rc1...v8.0.0)
+Updates the requirements on [sphinx](https://github.com/sphinx-doc/sphinx) to permit the latest
+  version. - [Release notes](https://github.com/sphinx-doc/sphinx/releases) -
+  [Changelog](https://github.com/sphinx-doc/sphinx/blob/master/CHANGES.rst) -
+  [Commits](https://github.com/sphinx-doc/sphinx/compare/v7.0.0rc1...v8.0.0)
 
----
-updated-dependencies:
-- dependency-name: sphinx
-  dependency-type: direct:production
-...
+--- updated-dependencies: - dependency-name: sphinx dependency-type: direct:production ...
 
-Signed-off-by: dependabot[bot] <support@github.com>
-Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com> ([`7b3ccce`](https://github.com/dan1hc/ft3/commit/7b3ccce705a7fef8a73ddf0b61972defc65b3c1c))
+Signed-off-by: dependabot[bot] <support@github.com> Co-authored-by: dependabot[bot]
+  <49699333+dependabot[bot]@users.noreply.github.com>
 
-* build(deps): update pre-commit requirement from ==3.7.* to >=3.7,<3.9 (#10)
+- **deps**: Update pre-commit requirement from ==3.7.* to >=3.7,<3.9
+  ([#10](https://github.com/dan1hc/ft3/pull/10),
+  [`f3e9fd1`](https://github.com/dan1hc/ft3/commit/f3e9fd1e52c6d5b54b6614914d9d733308fd71e8))
 
-Updates the requirements on [pre-commit](https://github.com/pre-commit/pre-commit) to permit the latest version.
-- [Release notes](https://github.com/pre-commit/pre-commit/releases)
-- [Changelog](https://github.com/pre-commit/pre-commit/blob/main/CHANGELOG.md)
-- [Commits](https://github.com/pre-commit/pre-commit/compare/v3.7.0...v3.8.0)
+Updates the requirements on [pre-commit](https://github.com/pre-commit/pre-commit) to permit the
+  latest version. - [Release notes](https://github.com/pre-commit/pre-commit/releases) -
+  [Changelog](https://github.com/pre-commit/pre-commit/blob/main/CHANGELOG.md) -
+  [Commits](https://github.com/pre-commit/pre-commit/compare/v3.7.0...v3.8.0)
 
----
-updated-dependencies:
-- dependency-name: pre-commit
-  dependency-type: direct:production
-...
+--- updated-dependencies: - dependency-name: pre-commit dependency-type: direct:production ...
 
-Signed-off-by: dependabot[bot] <support@github.com>
-Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com> ([`f3e9fd1`](https://github.com/dan1hc/ft3/commit/f3e9fd1e52c6d5b54b6614914d9d733308fd71e8))
+Signed-off-by: dependabot[bot] <support@github.com> Co-authored-by: dependabot[bot]
+  <49699333+dependabot[bot]@users.noreply.github.com>
 
 ### Documentation
 
-* docs: __v0.1.0__ [skip ci] ([`ee93236`](https://github.com/dan1hc/ft3/commit/ee93236193bbd4dc07e7bff225eba95169e1b8b7))
+- __v0.1.0__ [skip ci]
+  ([`ee93236`](https://github.com/dan1hc/ft3/commit/ee93236193bbd4dc07e7bff225eba95169e1b8b7))
 
-* docs: __get_funding__ ([`e39c69a`](https://github.com/dan1hc/ft3/commit/e39c69ad32b1462fb322a0b8b9d6028c30e58e78))
+- __get_funding__
+  ([`e39c69a`](https://github.com/dan1hc/ft3/commit/e39c69ad32b1462fb322a0b8b9d6028c30e58e78))
 
 ### Features
 
-* feat: progress toward full OAS integration (#14)
+- Progress toward full OAS integration ([#14](https://github.com/dan1hc/ft3/pull/14),
+  [`a36847e`](https://github.com/dan1hc/ft3/commit/a36847e01c6116e25cfc916e19ae8c83d23947c5))
 
 * feat: progress toward full OAS integration
 
@@ -440,19 +476,22 @@ closes #5
 
 ---------
 
-Co-authored-by: github-actions <action@github.com> ([`a36847e`](https://github.com/dan1hc/ft3/commit/a36847e01c6116e25cfc916e19ae8c83d23947c5))
+Co-authored-by: github-actions <action@github.com>
 
 ### Testing
 
-* test: re-test readme ([`3fa848f`](https://github.com/dan1hc/ft3/commit/3fa848f14d972a227a5b3cf34115728f198f779f))
+- Re-test readme
+  ([`3fa848f`](https://github.com/dan1hc/ft3/commit/3fa848f14d972a227a5b3cf34115728f198f779f))
 
 
 ## v0.0.1 (2024-07-28)
 
 ### Build System
 
-* build: dunder init ([`6ce6400`](https://github.com/dan1hc/ft3/commit/6ce6400aa6abbaa51865524108f3ecee65218c7c))
+- Dunder init
+  ([`6ce6400`](https://github.com/dan1hc/ft3/commit/6ce6400aa6abbaa51865524108f3ecee65218c7c))
 
 ### Documentation
 
-* docs: __v0.0.1__ ([`b1eeb3e`](https://github.com/dan1hc/ft3/commit/b1eeb3e7ac12eab17e5281673a6aee283ff9fc1e))
+- __v0.0.1__
+  ([`b1eeb3e`](https://github.com/dan1hc/ft3/commit/b1eeb3e7ac12eab17e5281673a6aee283ff9fc1e))
