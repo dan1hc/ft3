@@ -575,7 +575,11 @@ class ObjectBase(metaclass=metas.Meta):
         /,
         __default: typ.AnyType = Constants.UNDEFINED
         ) -> typ.AnyType | lib.t.Any | lib.Never:
-        """Return current value for key and reset instance value to field default."""
+        """
+        Return current value for key and reset instance value to field \
+        default.
+
+        """
 
         if (cname := core.strings.utl.cname_for(__key, self.fields)):
             value = self[cname]
@@ -854,8 +858,8 @@ class Object(ObjectBase):
     #### Underscore Prefix for Private Fields
     Fields that begin with an underscore '_' will be ignored on \
     conversion to / from DBO, REST, and JSON representations, \
-    unless the field ends with 'id' or 'id_' (case insensitive), \
-    in which case it will still be converted.
+    unless the field ends with 'id', 'name', or 'key' (case and \
+    underscore insensitive), in which case it will still be converted.
 
     * This follows the broader pattern of flagging methods and \
     attributes as private / internal to a system with a preceding \

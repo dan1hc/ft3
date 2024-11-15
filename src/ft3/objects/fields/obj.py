@@ -257,7 +257,6 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 
     """
 
-
     name: 'Field[str]' = None
     type_: 'Field[type[typ.AnyType]]' = None
     description: 'Field[str]' = None
