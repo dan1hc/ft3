@@ -75,14 +75,17 @@ class ObjectBase(metaclass=metas.Meta):
             ]:
         k: typ.string[typ.snake_case]
         tp = typ.utl.hint.finalize_type(fn.__annotations__['return'])
-        if any(
-            issubclass(tp_, list)
-            for tp_
-            in typ.utl.check.get_checkable_types(tp)
+        if (
+            any(
+                issubclass(tp_, list)
+                for tp_
+                in typ.utl.check.get_checkable_types(tp)
+                )
+            or (typ.utl.check.is_object_type(tp) and not tp.hash_fields)
             ):
             k = Constants.GET
         else:
-            k = '_'.join(
+            k = '_'.join(  # pragma: no cover
                 (
                     cls.__name__.lower(),
                     Constants.GET

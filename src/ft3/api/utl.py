@@ -322,6 +322,7 @@ def operation_from_object(
 
 
 def _is_operation_config_valid(
+    cls: type[Object],
     callback: lib.t.Callable[
         ['events.obj.Request', ],
         lib.t.Optional[typ.Object]
@@ -350,6 +351,7 @@ def _is_operation_config_valid(
                                     callback.__annotations__['return']
                                     )
                                 )
+                            or bool(cls.hash_fields)
                             )
                         )
                     or (
@@ -358,12 +360,15 @@ def _is_operation_config_valid(
                             method == Constants.POST
                             or (
                                 method == Constants.GET
-                                and any(
-                                    issubclass(tp, list)
-                                    for tp
-                                    in typ.utl.check.get_checkable_types(
-                                        callback.__annotations__['return']
+                                and (
+                                    any(
+                                        issubclass(tp, list)
+                                        for tp
+                                        in typ.utl.check.get_checkable_types(
+                                            callback.__annotations__['return']
+                                            )
                                         )
+                                    or not bool(cls.hash_fields)
                                     )
                                 )
                             )
@@ -386,6 +391,7 @@ def _is_operation_config_valid(
                                     callback.__annotations__['return']
                                     )
                                 )
+                            or bool(cls.hash_fields)
                             )
                         )
                     or (
@@ -394,12 +400,15 @@ def _is_operation_config_valid(
                             method == Constants.POST
                             or (
                                 method == Constants.GET
-                                and any(
-                                    issubclass(tp, list)
-                                    for tp
-                                    in typ.utl.check.get_checkable_types(
-                                        callback.__annotations__['return']
+                                and (
+                                    any(
+                                        issubclass(tp, list)
+                                        for tp
+                                        in typ.utl.check.get_checkable_types(
+                                            callback.__annotations__['return']
+                                            )
                                         )
+                                    or not bool(cls.hash_fields)
                                     )
                                 )
                             )
@@ -424,7 +433,7 @@ def paths_from_object(
     method: typ.ApiMethod
     for method_, callback in cls.__operations__.items():
         prefix, _, method = method_.rpartition('_')
-        if _is_operation_config_valid(callback, method, prefix, parent_tags):
+        if _is_operation_config_valid(cls, callback, method, prefix, parent_tags):
             operation = operation_from_object(
                 cls,
                 method,

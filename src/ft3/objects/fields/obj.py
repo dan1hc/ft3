@@ -833,10 +833,13 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
         tp = typ.utl.hint.finalize_type(fn.__annotations__['return'])
         obj_or_none = utl.get_obj_from_type(self.type_)  # type: ignore[arg-type]
         if obj_or_none is not None:
-            if any(
-                issubclass(tp_, list)
-                for tp_
-                in typ.utl.check.get_checkable_types(tp)
+            if (
+                any(
+                    issubclass(tp_, list)
+                    for tp_
+                    in typ.utl.check.get_checkable_types(tp)
+                    )
+                or (typ.utl.check.is_object_type(tp) and not tp.hash_fields)
                 ):
                 k = '_'.join(  # pragma: no cover
                     (
