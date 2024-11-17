@@ -1,9 +1,20 @@
 # CHANGELOG
 
 
+## v0.2.1 (2024-11-17)
+
+### Bug Fixes
+
+- Allow GET for Objects without hash_fields to return singular Object
+  ([`d4f79d1`](https://github.com/dan1hc/ft3/commit/d4f79d1e0d47755c236746ec8a0197513a147d9c))
+
+
 ## v0.2.0 (2024-11-17)
 
 ### Documentation
+
+- __v0.2.0__ [skip ci]
+  ([`73bb413`](https://github.com/dan1hc/ft3/commit/73bb4138596ed816a458ecf7615d81fdf3384ad0))
 
 - Minor documentation fixes [skip ci]
   ([`4a9f30c`](https://github.com/dan1hc/ft3/commit/4a9f30c5ec0bdbb77f9438ea48c19cf667bc08c9))
