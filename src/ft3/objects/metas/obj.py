@@ -141,7 +141,7 @@ class Meta(type):
             
             defaults, slots, fields = (
                 utl.parse_new_namespace(
-                    __namespace,
+                    __namespace,  # type: ignore[arg-type]
                     annotations,
                     module,
                     slots,
@@ -195,6 +195,7 @@ class Meta(type):
         docs = utl.get_attribute_docs(cls)
         for name, field in cls.__dataclass_fields__.items():
             field['description'] = docs.get(name)
+            field['object'] = cls
 
         return cls
 

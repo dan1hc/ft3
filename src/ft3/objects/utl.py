@@ -5,6 +5,7 @@ __all__ = (
     'get_attribute_docs',
     'get_enumerations_from_fields',
     'get_fields_for_hash',
+    'get_obj_from_type',
     'is_public_field',
     'is_valid_keyword',
     )
@@ -171,3 +172,41 @@ def get_fields_for_hash(
         fields_for_hash = tuple()
 
     return fields_for_hash
+
+
+@lib.functools.cache
+def get_obj_from_type(type_: lib.t.Any) -> lib.t.Optional[type['typ.Object']]:
+    """
+    Return valid `type[Object]` from a generic `type` or `None` \
+    otherwise.
+
+    """
+
+    tps: tuple[type['typ.Object'], ...]
+    if (
+        typ.utl.check.is_union(type_)
+        and len(u_tps := typ.utl.check.get_type_args(type_)) == 2
+        and any(typ.utl.check.is_none_type(tp) for tp in u_tps)
+        and any(
+            (
+                typ.utl.check.is_object_type(tp)
+                or typ.utl.check.is_array_of_obj_type(tp)
+                )
+            for tp
+            in u_tps
+            )
+        ):
+        for tp in u_tps:  # pragma: no cover
+            if typ.utl.check.is_object_type(tp):
+                return tp
+            elif typ.utl.check.is_array_of_obj_type(tp):
+                tps = typ.utl.check.get_type_args(tp)
+                return tps[0]
+        return None  # pragma: no cover
+    elif typ.utl.check.is_object_type(type_):
+        return type_
+    elif typ.utl.check.is_array_of_obj_type(type_):
+        tps = typ.utl.check.get_type_args(type_)
+        return tps[0]
+    else:
+        return None

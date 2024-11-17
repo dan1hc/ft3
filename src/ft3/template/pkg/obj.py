@@ -43,6 +43,7 @@ class Human(Object):
 
 
 @api.SecurityScheme.api_key('x-ft3-key', 'Optional API Key.', 'post', 'put')
+@Api.register
 class Pet(Object):
     """Pet of a pet."""
 

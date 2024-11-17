@@ -11,6 +11,7 @@ __all__ = (
     )
 
 from .. import core
+from .. import objects
 
 from .. import Object
 
@@ -21,6 +22,9 @@ from . import obj
 from . import typ
 
 from . obj import OBJECTS, REQUEST_HEADERS, RESPONSE_HEADERS, SECURITY
+
+if lib.t.TYPE_CHECKING:  # pragma: no cover
+    from . import events
 
 
 class Constants(cfg.Constants):
@@ -94,7 +98,7 @@ def response_type_from_object(
     elif typ.utl.check.is_object_type(tp):
         return Constants.ONE
     else:
-        return Constants.EMPTY
+        return Constants.EMPTY  # pragma: no cover
 
 
 def filter_to_unique_params(
@@ -124,9 +128,6 @@ def operation_from_object(
 
     parameters = parameters_from_object(cls)
 
-    if (request_headers := REQUEST_HEADERS.get(cls.__name__)):
-        parameters.extend(request_headers[method])
-
     response_headers: dict[str, obj.Header] = {}
     if include_default_response_headers:
         response_headers.update(obj.DEFAULT_RESPONSE_HEADERS)
@@ -152,6 +153,9 @@ def operation_from_object(
 
     if not cls.hash_fields:
         parameters.clear()
+
+    if (request_headers := REQUEST_HEADERS.get(cls.__name__)):
+        parameters.extend(request_headers[method])
 
     response_type = response_type_from_object(cls, method)
 
@@ -212,7 +216,10 @@ def operation_from_object(
                                 for k, v
                                 in parameter.items()
                                 if k != Constants.REQUIRED
-                                and k != Constants.IN
+                                and (
+                                    k != Constants.IN
+                                    or v != enm.ParameterLocation.path.value
+                                    )
                                 }
                             )
                         for parameter
@@ -314,6 +321,95 @@ def operation_from_object(
     return operation
 
 
+def _is_operation_config_valid(
+    callback: lib.t.Callable[
+        ['events.obj.Request', ],
+        lib.t.Optional[typ.Object]
+        | lib.t.Optional[list[typ.Object]]
+        | str
+        ],
+    method: typ.ApiMethod,
+    prefix: typ.string[typ.snake_case] | typ.AnyString,
+    parent_tags: list[str] | None,
+    ) -> bool:
+    return (
+        callback is not None
+        and (
+            (
+                parent_tags is None
+                and (
+                    (
+                        (len_ := len(prefix.split('_'))) == 1
+                        and method != Constants.POST
+                        and (
+                            method != Constants.GET
+                            or not any(
+                                issubclass(tp, list)
+                                for tp
+                                in typ.utl.check.get_checkable_types(
+                                    callback.__annotations__['return']
+                                    )
+                                )
+                            )
+                        )
+                    or (
+                        not bool(prefix)
+                        and (
+                            method == Constants.POST
+                            or (
+                                method == Constants.GET
+                                and any(
+                                    issubclass(tp, list)
+                                    for tp
+                                    in typ.utl.check.get_checkable_types(
+                                        callback.__annotations__['return']
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            or (
+                parent_tags is not None
+                and bool(prefix)
+                and (
+                    (
+                        (len_ := len(prefix.split('_'))) == 2
+                        and method != Constants.POST
+                        and (
+                            method != Constants.GET
+                            or not any(
+                                issubclass(tp, list)
+                                for tp
+                                in typ.utl.check.get_checkable_types(
+                                    callback.__annotations__['return']
+                                    )
+                                )
+                            )
+                        )
+                    or (
+                        len_ == 1
+                        and (
+                            method == Constants.POST
+                            or (
+                                method == Constants.GET
+                                and any(
+                                    issubclass(tp, list)
+                                    for tp
+                                    in typ.utl.check.get_checkable_types(
+                                        callback.__annotations__['return']
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+
+
 def paths_from_object(
     cls: type[Object],
     parent_tags: lib.t.Optional[list[str]] = None,
@@ -326,8 +422,9 @@ def paths_from_object(
 
     operations_by_uri: dict[str, dict[typ.ApiMethod, obj.Operation]] = {}
     method: typ.ApiMethod
-    for method, callback in cls.__operations__.items():
-        if callback is not None:
+    for method_, callback in cls.__operations__.items():
+        prefix, _, method = method_.rpartition('_')
+        if _is_operation_config_valid(callback, method, prefix, parent_tags):
             operation = operation_from_object(
                 cls,
                 method,
@@ -370,27 +467,14 @@ def paths_from_object(
 
     child_objs: list[type[Object]] = []
     for field in cls.__dataclass_fields__.values():
-        if (
-            typ.utl.check.is_union(field.type_)
-            and len(u_tps := typ.utl.check.get_type_args(field.type_)) == 2
-            and any(typ.utl.check.is_none_type(tp) for tp in u_tps)
-            and any(typ.utl.check.is_object_type(tp) for tp in u_tps)
-            ):
-            for tp in u_tps:  # pragma: no cover
-                if typ.utl.check.is_object_type(tp):
-                    child_objs.append(tp)
-        elif typ.utl.check.is_object_type(field.type_):
-            child_objs.append(field.type_)
-        elif typ.utl.check.is_array_of_obj_type(field.type_):
-            tps: tuple[type[Object], ...] = (
-                typ.utl.check.get_type_args(field.type_)
-                )
-            child_objs.append(tps[0])
+        obj_or_none = objects.utl.get_obj_from_type(field.type_)
+        if obj_or_none is not None:
+            child_objs.append(obj_or_none)
 
     for child_obj in child_objs:
         if (
             child_obj.hash_fields
-            and (name := child_obj.__name__) not in OBJECTS
+            and (name := child_obj.__name__)# not in OBJECTS
             and (
                 name.lower() in cls
                 or core.strings.utl.pluralize(name).lower() in cls

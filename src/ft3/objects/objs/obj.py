@@ -53,7 +53,13 @@ class ObjectBase(metaclass=metas.Meta):
         cls,
         fn: lib.t.Callable[['api.events.obj.Request'], None]
         ) -> lib.t.Callable[['api.events.obj.Request'], None]:
-        cls.__operations__[Constants.DELETE] = fn
+        k: typ.string[typ.snake_case] = '_'.join(
+            (
+                cls.__name__.lower(),
+                Constants.DELETE
+                )
+            )
+        cls.__operations__[k] = fn
         return fn
 
     @classmethod
@@ -67,7 +73,22 @@ class ObjectBase(metaclass=metas.Meta):
             ['api.events.obj.Request'],
             list[lib.Self] | lib.Self | str
             ]:
-        cls.__operations__[Constants.GET] = fn
+        k: typ.string[typ.snake_case]
+        tp = typ.utl.hint.finalize_type(fn.__annotations__['return'])
+        if any(
+            issubclass(tp_, list)
+            for tp_
+            in typ.utl.check.get_checkable_types(tp)
+            ):
+            k = Constants.GET
+        else:
+            k = '_'.join(
+                (
+                    cls.__name__.lower(),
+                    Constants.GET
+                    )
+                )
+        cls.__operations__[k] = fn
         return fn
 
     @classmethod
@@ -75,7 +96,14 @@ class ObjectBase(metaclass=metas.Meta):
         cls,
         fn: lib.t.Callable[['api.events.obj.Request'], None]
         ) -> lib.t.Callable[['api.events.obj.Request'], None]:  # pragma: no cover
-        cls.__operations__[Constants.OPTIONS] = fn
+        k: typ.string[typ.snake_case]
+        k = '_'.join(
+            (
+                cls.__name__.lower(),
+                Constants.OPTIONS
+                )
+            )
+        cls.__operations__[k] = fn
         return fn
 
     @classmethod
@@ -83,7 +111,14 @@ class ObjectBase(metaclass=metas.Meta):
         cls,
         fn: 'lib.t.Callable[[api.events.obj.Request], lib.Self]'
         ) -> 'lib.t.Callable[[api.events.obj.Request], lib.Self]':
-        cls.__operations__[Constants.PATCH] = fn
+        k: typ.string[typ.snake_case]
+        k = '_'.join(
+            (
+                cls.__name__.lower(),
+                Constants.PATCH
+                )
+            )
+        cls.__operations__[k] = fn
         return fn
 
     @classmethod
@@ -99,7 +134,14 @@ class ObjectBase(metaclass=metas.Meta):
         cls,
         fn: 'lib.t.Callable[[api.events.obj.Request], lib.Self]'
         ) -> 'lib.t.Callable[[api.events.obj.Request], lib.Self]':
-        cls.__operations__[Constants.PUT] = fn
+        k: typ.string[typ.snake_case]
+        k = '_'.join(
+            (
+                cls.__name__.lower(),
+                Constants.PUT
+                )
+            )
+        cls.__operations__[k] = fn
         return fn
 
     def __repr__(self) -> str:

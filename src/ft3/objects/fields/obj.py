@@ -12,8 +12,10 @@ from .. import exc
 from .. import lib
 from .. import objs
 from .. import typ
+from .. import utl
 
 if lib.t.TYPE_CHECKING:  # pragma: no cover
+    from ... import api
     from .. import queries
 
 
@@ -256,6 +258,8 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
     operations (like `PATCH`, `POST`, or `PUT` http calls).
 
     """
+
+    _object_: 'Field[type[typ.Object]]'
 
     name: 'Field[str]' = None
     type_: 'Field[type[typ.AnyType]]' = None
@@ -797,3 +801,123 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 
         value: lib.t.Callable[[], typ.AnyType] = Constants.FACTORY_CACHE[key]
         return value
+
+    def DELETE(  # type: ignore[override]
+        self,
+        fn: lib.t.Callable[['api.events.obj.Request'], None]
+        ) -> lib.t.Callable[['api.events.obj.Request'], None]:
+        k: typ.string[typ.snake_case]
+        obj_or_none = utl.get_obj_from_type(self.type_)  # type: ignore[arg-type]
+        if obj_or_none is not None:
+            k = '_'.join(
+                (
+                    self._object_.__name__.lower(),
+                    obj_or_none.__name__.lower(),
+                    Constants.DELETE
+                    )
+                )
+            obj_or_none.__operations__[k] = fn
+        return fn
+
+    def GET(  # type: ignore[override]
+        self,
+        fn: lib.t.Callable[
+            ['api.events.obj.Request'],
+            'list[typ.Object] | typ.Object | str'
+            ]
+        ) -> lib.t.Callable[
+            ['api.events.obj.Request'],
+            'list[typ.Object] | typ.Object | str'
+            ]:
+        k: typ.string[typ.snake_case]
+        tp = typ.utl.hint.finalize_type(fn.__annotations__['return'])
+        obj_or_none = utl.get_obj_from_type(self.type_)  # type: ignore[arg-type]
+        if obj_or_none is not None:
+            if any(
+                issubclass(tp_, list)
+                for tp_
+                in typ.utl.check.get_checkable_types(tp)
+                ):
+                k = '_'.join(  # pragma: no cover
+                    (
+                        self._object_.__name__.lower(),
+                        Constants.GET
+                        )
+                    )
+            else:
+                k = '_'.join(
+                    (
+                        self._object_.__name__.lower(),
+                        obj_or_none.__name__.lower(),
+                        Constants.GET
+                        )
+                    )
+            obj_or_none.__operations__[k] = fn
+        return fn
+
+    def OPTIONS(  # type: ignore[override]
+        self,
+        fn: lib.t.Callable[['api.events.obj.Request'], None]
+        ) -> lib.t.Callable[['api.events.obj.Request'], None]:  # pragma: no cover
+        k: typ.string[typ.snake_case]
+        obj_or_none = utl.get_obj_from_type(self.type_)  # type: ignore[arg-type]
+        if obj_or_none is not None:
+            k = '_'.join(
+                (
+                    self._object_.__name__.lower(),
+                    obj_or_none.__name__.lower(),
+                    Constants.OPTIONS
+                    )
+                )
+            obj_or_none.__operations__[k] = fn
+        return fn
+
+    def PATCH(  # type: ignore[override]
+        self,
+        fn: 'lib.t.Callable[[api.events.obj.Request], typ.Object]'
+        ) -> 'lib.t.Callable[[api.events.obj.Request], typ.Object]':
+        k: typ.string[typ.snake_case]
+        obj_or_none = utl.get_obj_from_type(self.type_)  # type: ignore[arg-type]
+        if obj_or_none is not None:
+            k = '_'.join(
+                (
+                    self._object_.__name__.lower(),
+                    obj_or_none.__name__.lower(),
+                    Constants.PATCH
+                    )
+                )
+            obj_or_none.__operations__[k] = fn
+        return fn
+
+    def POST(  # type: ignore[override]
+        self,
+        fn: 'lib.t.Callable[[api.events.obj.Request], typ.Object]'
+        ) -> 'lib.t.Callable[[api.events.obj.Request], typ.Object]':
+        k: typ.string[typ.snake_case]
+        obj_or_none = utl.get_obj_from_type(self.type_)  # type: ignore[arg-type]
+        if obj_or_none is not None:
+            k = '_'.join(
+                (
+                    self._object_.__name__.lower(),
+                    Constants.POST
+                    )
+                )
+            obj_or_none.__operations__[k] = fn
+        return fn
+
+    def PUT(  # type: ignore[override]
+        self,
+        fn: 'lib.t.Callable[[api.events.obj.Request], typ.Object]'
+        ) -> 'lib.t.Callable[[api.events.obj.Request], typ.Object]':
+        k: typ.string[typ.snake_case]
+        obj_or_none = utl.get_obj_from_type(self.type_)  # type: ignore[arg-type]
+        if obj_or_none is not None:
+            k = '_'.join(
+                (
+                    self._object_.__name__.lower(),
+                    obj_or_none.__name__.lower(),
+                    Constants.PUT
+                    )
+                )
+            obj_or_none.__operations__[k] = fn
+        return fn

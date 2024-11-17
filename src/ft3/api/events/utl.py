@@ -103,7 +103,7 @@ def handle_request(
                 ]
             break
 
-    path_name = request.path
+    request_path = request.path
     status_code: typ.HttpStatusCode
     response_body: typ.CamelDict | list[typ.CamelDict] | str | bytes
     response_headers: dict[str, obj.Header] = {}
@@ -118,14 +118,25 @@ def handle_request(
     from ... import log
     from .. import FILES
 
-    if (file := FILES.get(path_name)) is not None:
+    if (file := FILES.get(request_path)) is not None:
         content_type = file.content_type
         status_code = 200
         response_body = file.content
     elif path is not None:
         method: typ.string[typ.snake_case] = request.method.lower()
         obj_ = path._resource_
-        callback = obj_.__operations__.get(method)
+        path_obj_names = '_'.join(
+            [
+                path_element.lstrip('{').rstrip('Id}').lower()
+                for path_element
+                in path_name.split('/')
+                if bool(obj.Pattern.PathId.match(path_element))
+                ][-2:]
+            )
+        op_name: typ.string[typ.snake_case] = (
+            '_'.join((path_obj_names, method)).lstrip('_')
+            )
+        callback = obj_.__operations__.get(op_name)
         if callback is not None:
             operation: obj.Operation = path[method]
             try:

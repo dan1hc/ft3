@@ -13,7 +13,7 @@ from ... api import Request
 from .. import pkg
 
 
-@pkg.obj.Pet.DELETE
+@pkg.obj.PetWithPet.pets.DELETE
 def delete(request: Request) -> None:
     """Delete a single record."""
 
@@ -39,7 +39,7 @@ def delete(request: Request) -> None:
     return None
 
 
-@pkg.obj.Pet.GET
+@pkg.obj.PetWithPet.pets.GET
 def read(request: Request) -> pkg.obj.Pet:
     """Read a single record."""
 
@@ -60,7 +60,7 @@ def read(request: Request) -> pkg.obj.Pet:
     raise FileNotFoundError('No pet could be found for that `petId`.')
 
 
-@pkg.obj.Pet.PATCH
+@pkg.obj.PetWithPet.pets.PATCH
 def update(request: Request) -> pkg.obj.Pet:
     """Update a single record."""
 
@@ -83,7 +83,7 @@ def update(request: Request) -> pkg.obj.Pet:
     raise FileNotFoundError  # pragma: no cover
 
 
-@pkg.obj.Pet.POST
+@pkg.obj.PetWithPet.pets.POST
 def insert(request: Request) -> pkg.obj.Pet:
     """Insert single record."""
 
@@ -106,7 +106,7 @@ def insert(request: Request) -> pkg.obj.Pet:
         raise SyntaxError  # pragma: no cover
 
 
-@pkg.obj.Pet.PUT
+@pkg.obj.PetWithPet.pets.PUT
 def replace(request: Request) -> pkg.obj.Pet:
     """Replace a single record."""
 

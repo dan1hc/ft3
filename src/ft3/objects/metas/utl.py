@@ -101,7 +101,7 @@ def parse_new_annotations(
 
 
 def parse_new_namespace(
-    __namespace: dict[typ.AnyString, lib.t.Any],
+    __namespace: dict[typ.string[typ.snake_case], lib.t.Any],
     __annotations: typ.SnakeDict,
     __module: str,
     __slots: list[typ.string[typ.snake_case]],
@@ -133,6 +133,8 @@ def parse_new_namespace(
                 )
             ):
             dtype = __annotations.get(name)
+        elif __module == Constants.FIELDS_MODULE:
+            pass
         elif not is_snake_case:
             raise exc.IncorrectCasingError(tuple(__namespace))
         else:
