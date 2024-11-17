@@ -1,12 +1,35 @@
 # CHANGELOG
 
 
+## v0.2.0 (2024-11-17)
+
+### Documentation
+
+- Minor documentation fixes [skip ci]
+  ([`4a9f30c`](https://github.com/dan1hc/ft3/commit/4a9f30c5ec0bdbb77f9438ea48c19cf667bc08c9))
+
+### Refactoring
+
+- Repattern api decorators
+  ([`2f57b2a`](https://github.com/dan1hc/ft3/commit/2f57b2aa82f836b2ef56d27e3563b2189b398432))
+
+Re-implements api method decorators to allow for decoration from fields.
+
+BREAKING CHANGE: Applications which had decorated directly from Objects will need to re-decorate
+  from Fields.
+
+
 ## v0.1.17 (2024-11-13)
 
 ### Bug Fixes
 
 - Update is_union caching
   ([`92cc637`](https://github.com/dan1hc/ft3/commit/92cc6379bd373a938419fced0a143a30ea26ab49))
+
+### Documentation
+
+- __v0.1.17__ [skip ci]
+  ([`f1d8ffb`](https://github.com/dan1hc/ft3/commit/f1d8ffbb7fda13099674a445a365f16a585d4d80))
 
 ### Performance Improvements
 
