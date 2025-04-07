@@ -127,7 +127,7 @@ def handle_request(
         obj_ = path._resource_
         path_obj_names = '_'.join(
             [
-                path_element.lstrip('{').rstrip('Id}').lower()
+                path_element.lstrip('{').replace('Id}', '').lower()
                 for path_element
                 in path_name.split('/')
                 if bool(obj.Pattern.PathId.match(path_element))
