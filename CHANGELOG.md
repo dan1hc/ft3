@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.2.2 (2025-04-07)
+
+### Bug Fixes
+
+- Correct obscure error where trailing d would get replaced.
+  ([`1406091`](https://github.com/dan1hc/ft3/commit/14060911c5c223d6dfdc9d305529a826a7b0deb0))
+
+
 ## v0.2.1 (2024-11-17)
 
 ### Bug Fixes
@@ -12,9 +20,6 @@
 ## v0.2.0 (2024-11-17)
 
 ### Documentation
-
-- __v0.2.0__ [skip ci]
-  ([`73bb413`](https://github.com/dan1hc/ft3/commit/73bb4138596ed816a458ecf7615d81fdf3384ad0))
 
 - Minor documentation fixes [skip ci]
   ([`4a9f30c`](https://github.com/dan1hc/ft3/commit/4a9f30c5ec0bdbb77f9438ea48c19cf667bc08c9))
@@ -29,6 +34,10 @@ Re-implements api method decorators to allow for decoration from fields.
 BREAKING CHANGE: Applications which had decorated directly from Objects will need to re-decorate
   from Fields.
 
+### Breaking Changes
+
+- Applications which had decorated directly from Objects will need to re-decorate from Fields.
+
 
 ## v0.1.17 (2024-11-13)
 
@@ -37,11 +46,6 @@ BREAKING CHANGE: Applications which had decorated directly from Objects will nee
 - Update is_union caching
   ([`92cc637`](https://github.com/dan1hc/ft3/commit/92cc6379bd373a938419fced0a143a30ea26ab49))
 
-### Documentation
-
-- __v0.1.17__ [skip ci]
-  ([`f1d8ffb`](https://github.com/dan1hc/ft3/commit/f1d8ffbb7fda13099674a445a365f16a585d4d80))
-
 ### Performance Improvements
 
 - More type caching speedups
@@ -49,11 +53,6 @@ BREAKING CHANGE: Applications which had decorated directly from Objects will nee
 
 
 ## v0.1.16 (2024-11-05)
-
-### Documentation
-
-- __v0.1.16__ [skip ci]
-  ([`74645a1`](https://github.com/dan1hc/ft3/commit/74645a1ff18d044efc892c753cbc6a4c6f0d328c))
 
 ### Performance Improvements
 
@@ -68,18 +67,8 @@ BREAKING CHANGE: Applications which had decorated directly from Objects will nee
 - Request routing, pathing for sub objs, improved logging
   ([`afe82af`](https://github.com/dan1hc/ft3/commit/afe82af1072fa21ec5aae2ef27161b397fec7a9e))
 
-### Documentation
-
-- __v0.1.15__ [skip ci]
-  ([`d7b090a`](https://github.com/dan1hc/ft3/commit/d7b090a1ad8426397a8105edc4b9c51fa0708ee3))
-
 
 ## v0.1.14 (2024-11-03)
-
-### Documentation
-
-- __v0.1.14__ [skip ci]
-  ([`7fd1957`](https://github.com/dan1hc/ft3/commit/7fd1957e48e3231a45b45af90b3ddf421a9154ba))
 
 
 ## v0.1.13 (2024-11-02)
@@ -88,11 +77,6 @@ BREAKING CHANGE: Applications which had decorated directly from Objects will nee
 
 - Do not log traceback by default
   ([`005fe7c`](https://github.com/dan1hc/ft3/commit/005fe7c5a8297ad69f95d592a424c3b817e600e4))
-
-### Documentation
-
-- __v0.1.13__ [skip ci]
-  ([`364df28`](https://github.com/dan1hc/ft3/commit/364df2897bbed842163e6127ba30b2e1fa6bca17))
 
 
 ## v0.1.12 (2024-11-02)
@@ -103,9 +87,6 @@ BREAKING CHANGE: Applications which had decorated directly from Objects will nee
   ([`7138390`](https://github.com/dan1hc/ft3/commit/7138390d41dc642de333d180dbff43eb8a8a8c56))
 
 ### Documentation
-
-- __v0.1.12__ [skip ci]
-  ([`4e0c264`](https://github.com/dan1hc/ft3/commit/4e0c264a543c96d3d64db0eb8b0966228fae4bfe))
 
 - Update readme and trigger ci
   ([`3befe50`](https://github.com/dan1hc/ft3/commit/3befe50f076ebe4632e3508581ee37caed21c99a))
@@ -138,18 +119,8 @@ Co-authored-by: github-actions <action@github.com>
 - Fix angular commit msg pattern [skip ci]
   ([`dc1d080`](https://github.com/dan1hc/ft3/commit/dc1d080bc42487ebcd8348754e27eb7a1f809604))
 
-### Documentation
-
-- __v0.1.11__ [skip ci]
-  ([`0a2f64f`](https://github.com/dan1hc/ft3/commit/0a2f64f2e224ec101c9a3f982af1c9288e622ab0))
-
 
 ## v0.1.10 (2024-10-27)
-
-### Documentation
-
-- __v0.1.10__ [skip ci]
-  ([`86f86d0`](https://github.com/dan1hc/ft3/commit/86f86d05585437aa7b0451a80100d6bc4169abcb))
 
 ### Performance Improvements
 
@@ -164,11 +135,6 @@ Co-authored-by: github-actions <action@github.com>
 - Minimalize response objs and allow _id fields through
   ([`8b71b61`](https://github.com/dan1hc/ft3/commit/8b71b615767b99600e6a51da2ea5c7911b603206))
 
-### Documentation
-
-- __v0.1.9__ [skip ci]
-  ([`c85b9ab`](https://github.com/dan1hc/ft3/commit/c85b9ab31b135e2c8bdb32daed40c029bc0e9dc6))
-
 
 ## v0.1.8 (2024-10-26)
 
@@ -176,11 +142,6 @@ Co-authored-by: github-actions <action@github.com>
 
 - Allow for more robust logging of parse errors in api
   ([`7a296e4`](https://github.com/dan1hc/ft3/commit/7a296e45408f69b917aaeabd165af0409ca094e2))
-
-### Documentation
-
-- __v0.1.8__ [skip ci]
-  ([`c82af31`](https://github.com/dan1hc/ft3/commit/c82af3117e6d27cf51e639f5e9e6508c8cbc098f))
 
 
 ## v0.1.7 (2024-10-26)
@@ -190,11 +151,6 @@ Co-authored-by: github-actions <action@github.com>
 - Better api logging and error handling
   ([`ef6b5b0`](https://github.com/dan1hc/ft3/commit/ef6b5b097012c1de09bf47836203eeef33c761d7))
 
-### Documentation
-
-- __v0.1.7__ [skip ci]
-  ([`96d8a9e`](https://github.com/dan1hc/ft3/commit/96d8a9eebc3c757fe7d45b491d11d0d075ef9c23))
-
 
 ## v0.1.6 (2024-10-25)
 
@@ -202,11 +158,6 @@ Co-authored-by: github-actions <action@github.com>
 
 - Traceback formatting and path param parsing
   ([`afbbb59`](https://github.com/dan1hc/ft3/commit/afbbb592bbfbdf9ae6e66afd7ea25a2de46777b1))
-
-### Documentation
-
-- __v0.1.6__ [skip ci]
-  ([`f0c6522`](https://github.com/dan1hc/ft3/commit/f0c6522bf6cce6deff9b0fb72cf0c17033e72988))
 
 
 ## v0.1.5 (2024-10-25)
@@ -237,9 +188,6 @@ Co-authored-by: github-actions <action@github.com>
 Co-authored-by: github-actions <action@github.com>
 
 ### Documentation
-
-- __v0.1.5__ [skip ci]
-  ([`9060cc6`](https://github.com/dan1hc/ft3/commit/9060cc6464937469c6f0db44be8bd5e7ab2c3192))
 
 - Update readme and trigger ci
   ([`76918f8`](https://github.com/dan1hc/ft3/commit/76918f84d5e595955afcca7574286c3dfd43d5f9))
@@ -274,18 +222,10 @@ Co-authored-by: github-actions <action@github.com>
 - Workaround sem release pr no trigger issue
   ([`9b6b82a`](https://github.com/dan1hc/ft3/commit/9b6b82aad9aa9e1132e6c78f75c30d8b83e1cae6))
 
-### Documentation
-
-- __v0.1.4__ [skip ci]
-  ([`1323cf2`](https://github.com/dan1hc/ft3/commit/1323cf220940311e8360ff616998899f42db4fb1))
-
 
 ## v0.1.3 (2024-10-22)
 
 ### Bug Fixes
-
-- Syntax fix to trigger ci
-  ([`84158f8`](https://github.com/dan1hc/ft3/commit/84158f81a3eb53742fe4f49322ef7a45543fd78e))
 
 - Openapi headers and string types also py in md docs ([#25](https://github.com/dan1hc/ft3/pull/25),
   [`87fcf5c`](https://github.com/dan1hc/ft3/commit/87fcf5c47925cccbe6fe4b5aa1e65b1224006c57))
@@ -298,10 +238,8 @@ Co-authored-by: github-actions <action@github.com>
 
 Co-authored-by: github-actions <action@github.com>
 
-### Documentation
-
-- __v0.1.3__ [skip ci]
-  ([`0e61b95`](https://github.com/dan1hc/ft3/commit/0e61b9538c6c3efccd89710125760f7c01d7174b))
+- Syntax fix to trigger ci
+  ([`84158f8`](https://github.com/dan1hc/ft3/commit/84158f81a3eb53742fe4f49322ef7a45543fd78e))
 
 
 ## v0.1.2 (2024-10-21)
@@ -320,11 +258,6 @@ Co-authored-by: github-actions <action@github.com>
 ---------
 
 Co-authored-by: github-actions <action@github.com>
-
-### Documentation
-
-- __v0.1.2__ [skip ci]
-  ([`e890c2f`](https://github.com/dan1hc/ft3/commit/e890c2f2b22a1c0ba247f8df90c3ff9fdd2cf43e))
 
 
 ## v0.1.1 (2024-10-20)
@@ -414,12 +347,9 @@ fixes #18
 
 ---------
 
-Co-authored-by: dan <dan@dans-MacBook-Air.local> Co-authored-by: github-actions <action@github.com>
+Co-authored-by: dan <dan@dans-MacBook-Air.local>
 
-### Documentation
-
-- __v0.1.1__ [skip ci]
-  ([`4d3baf4`](https://github.com/dan1hc/ft3/commit/4d3baf45ad4bfa1c9eecdc8591be95231134bb93))
+Co-authored-by: github-actions <action@github.com>
 
 ### Testing
 
@@ -435,20 +365,6 @@ Co-authored-by: dan <dan@dans-MacBook-Air.local> Co-authored-by: github-actions 
 
 ### Build System
 
-- **deps**: Update sphinx requirement from ==7.* to >=7,<9
-  ([#9](https://github.com/dan1hc/ft3/pull/9),
-  [`7b3ccce`](https://github.com/dan1hc/ft3/commit/7b3ccce705a7fef8a73ddf0b61972defc65b3c1c))
-
-Updates the requirements on [sphinx](https://github.com/sphinx-doc/sphinx) to permit the latest
-  version. - [Release notes](https://github.com/sphinx-doc/sphinx/releases) -
-  [Changelog](https://github.com/sphinx-doc/sphinx/blob/master/CHANGES.rst) -
-  [Commits](https://github.com/sphinx-doc/sphinx/compare/v7.0.0rc1...v8.0.0)
-
---- updated-dependencies: - dependency-name: sphinx dependency-type: direct:production ...
-
-Signed-off-by: dependabot[bot] <support@github.com> Co-authored-by: dependabot[bot]
-  <49699333+dependabot[bot]@users.noreply.github.com>
-
 - **deps**: Update pre-commit requirement from ==3.7.* to >=3.7,<3.9
   ([#10](https://github.com/dan1hc/ft3/pull/10),
   [`f3e9fd1`](https://github.com/dan1hc/ft3/commit/f3e9fd1e52c6d5b54b6614914d9d733308fd71e8))
@@ -460,13 +376,26 @@ Updates the requirements on [pre-commit](https://github.com/pre-commit/pre-commi
 
 --- updated-dependencies: - dependency-name: pre-commit dependency-type: direct:production ...
 
-Signed-off-by: dependabot[bot] <support@github.com> Co-authored-by: dependabot[bot]
-  <49699333+dependabot[bot]@users.noreply.github.com>
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+- **deps**: Update sphinx requirement from ==7.* to >=7,<9
+  ([#9](https://github.com/dan1hc/ft3/pull/9),
+  [`7b3ccce`](https://github.com/dan1hc/ft3/commit/7b3ccce705a7fef8a73ddf0b61972defc65b3c1c))
+
+Updates the requirements on [sphinx](https://github.com/sphinx-doc/sphinx) to permit the latest
+  version. - [Release notes](https://github.com/sphinx-doc/sphinx/releases) -
+  [Changelog](https://github.com/sphinx-doc/sphinx/blob/master/CHANGES.rst) -
+  [Commits](https://github.com/sphinx-doc/sphinx/compare/v7.0.0rc1...v8.0.0)
+
+--- updated-dependencies: - dependency-name: sphinx dependency-type: direct:production ...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
 
 ### Documentation
-
-- __v0.1.0__ [skip ci]
-  ([`ee93236`](https://github.com/dan1hc/ft3/commit/ee93236193bbd4dc07e7bff225eba95169e1b8b7))
 
 - __get_funding__
   ([`e39c69a`](https://github.com/dan1hc/ft3/commit/e39c69ad32b1462fb322a0b8b9d6028c30e58e78))
