@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.2.3 (2025-04-15)
+
+### Bug Fixes
+
+- __redundancy_for_id_as_query_param__
+  ([`9570ada`](https://github.com/dan1hc/ft3/commit/9570ada35a41f470405bb8ee0804ac68093bebba))
+
+### Continuous Integration
+
+- __skip_broken_311_temporarily__
+  ([`9f39aaf`](https://github.com/dan1hc/ft3/commit/9f39aaf6a4ca142df4bf0010add2e0b4c88ac799))
+
+
 ## v0.2.2 (2025-04-07)
 
 ### Bug Fixes
