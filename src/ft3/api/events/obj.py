@@ -237,11 +237,22 @@ class Request(Object):
                     ) != Constants.UNDEFINED
                 and param.schema is not None
                 and (
-                    cname := core.strings.utl.cname_for(
-                        param.name,
-                        obj_.fields
+                    (
+                        cname := core.strings.utl.cname_for(
+                            param.name,
+                            obj_.fields
+                            )
+                        ) is not None
+                    or (
+                        obj_.__name__.lower() + 'Id' == param.name
+                        and (
+                            cname := core.strings.utl.cname_for(
+                                'id',
+                                obj_.fields
+                                )
+                            ) is not None
                         )
-                    ) is not None
+                    )
                 and param.in_ == enm.ParameterLocation.query.value
                 and (
                     method == Constants.PATCH
