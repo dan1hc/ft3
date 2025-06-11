@@ -799,6 +799,7 @@ def is_array_of_obj_type(
         bool(otps := get_checkable_types(tp))
         and issubclass(otps[0], lib.t.Collection)
         and not issubclass(otps[0], lib.t.Mapping)
+        and not is_object_type(otps[0])
         and bool(argtps := get_type_args(tp))
         and is_object_type(argtps[0])
         )
@@ -815,6 +816,7 @@ def is_array_type(
         return (
             issubclass(otps[0], lib.t.Collection)
             and not issubclass(otps[0], (str, lib.t.Mapping))
+            and not is_object_type(otps[0])
             )
     else:
         return False
