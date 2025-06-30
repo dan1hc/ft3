@@ -761,6 +761,18 @@ class ObjectBase(metaclass=metas.Meta):
                             include_read_only
                             )
                         if isinstance(v, Object)
+                        else [
+                            e.to_dict(
+                                camel_case,
+                                include_null,
+                                include_private,
+                                include_write_only,
+                                include_read_only
+                            )
+                            for e
+                            in v
+                        ]
+                        if typ.utl.check.is_array_of_object(v)
                         else v
                         for v
                         in value
