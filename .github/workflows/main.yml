@@ -22,7 +22,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - id: install-npm-deps
         run: npm i @actions/core @actions/github
       - id: validate-commit-message
@@ -43,9 +43,9 @@ jobs:
     needs: [validate, setup]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up Python Latest
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ fromJson(env.PY_VERSIONS)[0] }}
       - uses: actions/cache@v4
@@ -72,11 +72,11 @@ jobs:
         python-version: ${{ fromJson(needs.setup.outputs.python-versions) }}
         os: [macos-latest, ubuntu-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: setup python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - name: setup dependencies
@@ -102,7 +102,7 @@ jobs:
       id-token: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
           ref: ${{ github.event_name == 'push' && github.ref_name || github.head_ref }}
