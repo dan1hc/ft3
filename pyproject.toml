@@ -48,7 +48,7 @@ develop = [
     "pre-commit>=3.7,<3.9",
     "coverage==7.6.*",
     "pytest==8.3.*",
-    "pytest-cov==5.0.*",
+    "pytest-cov>=5.0,<7.1",
     "ruff==0.5.*",
     "commonmark==0.9.*",
     "sphinx>=7,<9"
