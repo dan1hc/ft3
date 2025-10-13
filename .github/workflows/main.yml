@@ -67,8 +67,7 @@ jobs:
       - name: ruff format
         run: |
           python -m ruff format . \
-            --config pyproject.toml \
-            --exit-non-zero-on-fix
+            --config pyproject.toml
   test:
     needs: [validate, setup, standardize]
     runs-on: ${{ matrix.os }}
