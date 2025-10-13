@@ -34,20 +34,20 @@ Install from command line, with pip:
 """
 
 __all__ = (
-    'api',
-    'cli',
-    'core',
-    'docs',
-    'log',
-    'loggers',
-    'objects',
-    'Api',
-    'Field',
-    'File',
-    'Object'
-    )
+	'api',
+	'cli',
+	'core',
+	'docs',
+	'log',
+	'loggers',
+	'objects',
+	'Api',
+	'Field',
+	'File',
+	'Object',
+)
 
-__version__ = '1.0.1'
+__version__ = '1.0.2-rc.1'
 
 from . import core
 from . import cli
@@ -55,9 +55,9 @@ from . import docs
 from . import loggers
 from . import objects
 
-from . loggers import log
-from . objects import Field, Object
+from .loggers import log
+from .objects import Field, Object
 
 from . import api
 
-from . api import Api, File
+from .api import Api, File

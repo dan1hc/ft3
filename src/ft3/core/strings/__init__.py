@@ -1,14 +1,14 @@
 """Modules for handling strings."""
 
 __all__ = (
-    'cfg',
-    'enm',
-    'exc',
-    'lib',
-    'obj',
-    'typ',
-    'utl',
-    )
+	'cfg',
+	'enm',
+	'exc',
+	'lib',
+	'obj',
+	'typ',
+	'utl',
+)
 
 from . import cfg
 from . import enm

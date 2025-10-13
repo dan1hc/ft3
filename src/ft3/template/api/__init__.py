@@ -7,9 +7,9 @@ A simple python API that can be copy / pasted / replaced.
 """
 
 __all__ = (
-    'pets',
-    'petwithpets',
-    )
+	'pets',
+	'petwithpets',
+)
 
 from . import pets
 from . import petwithpets

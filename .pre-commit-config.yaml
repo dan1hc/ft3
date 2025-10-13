@@ -2,7 +2,7 @@ default_install_hook_types: [pre-commit, commit-msg]
 fail_fast: true
 repos:
 
-  # Commit messages + Tests
+  # Validate Commit Message
   - repo: local
     hooks:
       - id: validate-commit-msg
@@ -11,15 +11,8 @@ repos:
         language: pygrep
         entry: '((^[mM]erge .*$)|(^((build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.+\))?!?: .+)((\n\n(.+)\n\n)((BREAKING CHANGE|DEPRECATED)(: )(.+)\n\n(.+))?(\n\n\nresolve[ds]? \#[A-Z0-9\-]+|fix(ed|es)? \#[A-Z0-9\-]+|close[ds]? \#[A-Z0-9\-]+)((, )(resolve[ds]? \#[A-Z0-9\-]+|fix(ed|es)? \#[A-Z0-9\-]+|close[ds]? \#[A-Z0-9\-]+))?)?)?$)|(^revert: ((build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.+\))?!?: .+)(\n\n(This reverts commit [a-z0-9]{40}\..*))(\n\n(fix(ed|es)? \#[A-Z0-9\-]+)((, )(fix(ed|es)? \#[A-Z0-9\-]+))?)?$)'
         args: [--negate]
-      - id: pytest
-        stages: [pre-commit]
-        name: pytest
-        entry: pytest
-        language: system
-        pass_filenames: false
-        always_run: true
 
-  # Auto-format
+  # Format 1
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
@@ -29,6 +22,17 @@ repos:
       - id: trailing-whitespace
         pass_filenames: false
         stages: [pre-commit]
+
+  # Format 2
+  - repo: local
+    hooks:
+      - id: format
+        stages: [pre-commit]
+        name: ruff (format)
+        entry: ruff format .
+        language: system
+        pass_filenames: false
+        always_run: true
 
   # Lint
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -40,9 +44,23 @@ repos:
         pass_filenames: false
 
   # Type
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.11.2"
+  - repo: local
     hooks:
       - id: mypy
-        pass_filenames: false
         stages: [pre-commit]
+        name: mypy
+        entry: python -m mypy
+        language: system
+        pass_filenames: false
+        always_run: true
+
+  # Test
+  - repo: local
+    hooks:
+      - id: pytest
+        stages: [pre-commit]
+        name: pytest
+        entry: pytest
+        language: system
+        pass_filenames: false
+        always_run: true

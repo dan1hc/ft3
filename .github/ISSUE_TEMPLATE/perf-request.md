@@ -1,8 +1,8 @@
 ---
-name: feature request
-about: suggest a new feature
-title: 'feat: __short_feature_description__'
-labels: feat
+name: performance request
+about: suggest a way to improve performance
+title: 'perf: __short_improvement_description__'
+labels: perf
 assignees: 'dan1hc'
 
 ---

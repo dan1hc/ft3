@@ -2,12 +2,9 @@
 
 from .. import typ
 
-__all__ = (
-    'ErrorRef',
-    *typ.__all__
-    )
+__all__ = ('ErrorRef', *typ.__all__)
 
-from .. typ import *
+from ..typ import *
 
 from . import lib
 

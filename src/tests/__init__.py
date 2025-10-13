@@ -1,7 +1,5 @@
 """Testing modules."""
 
-__all__ = (
-    'mocking',
-    )
+__all__ = ('mocking',)
 
 from . import mocking

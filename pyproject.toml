@@ -24,13 +24,14 @@ keywords = [
     "swagger",
     ]
 readme = "README.md"
-version = "1.0.1"
+version = "1.0.2-rc.1"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
     "Typing :: Typed",
     ]
@@ -89,7 +90,7 @@ testpaths = ["src/tests"]
 exclude = ["tests"]
 files = ["./src/ft3"]
 pretty = true
-python_version = "3.12"
+python_version = "3.13"
 disable_error_code = [
     "assignment",
     ]
@@ -114,7 +115,7 @@ exclude = [
     "docs",
     "htmlcov"
     ]
-target-version = "py312"
+target-version = "py313"
 
 # Standard Py
 line-length = 79

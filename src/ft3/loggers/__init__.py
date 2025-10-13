@@ -36,14 +36,14 @@ LOG_TRACEBACK = os.getenv('LOG_TRACEBACK', 'false').lower() == 'true'
 """
 
 __all__ = (
-    'cfg',
-    'exc',
-    'lib',
-    'log',
-    'obj',
-    'typ',
-    'utl',
-    )
+	'cfg',
+	'exc',
+	'lib',
+	'log',
+	'obj',
+	'typ',
+	'utl',
+)
 
 from . import cfg
 from . import exc
@@ -52,4 +52,4 @@ from . import obj
 from . import typ
 from . import utl
 
-from . obj import log
+from .obj import log

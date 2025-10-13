@@ -2,9 +2,6 @@
 
 from . import obj
 
-__all__ = (
-    'obj',
-    *obj.__all__
-    )
+__all__ = ('obj', *obj.__all__)
 
-from . obj import *
+from .obj import *

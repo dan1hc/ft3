@@ -9,10 +9,7 @@ level `__init__.py` file of the `ft3.template` subpackage._
 
 """
 
-__all__ = (
-    'api',
-    'pkg'
-    )
+__all__ = ('api', 'pkg')
 
 from . import api
 from . import pkg

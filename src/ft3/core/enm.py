@@ -1,23 +1,23 @@
 """Core enumerations."""
 
 __all__ = (
-    'Boolean',
-    'NoneAlias',
-    )
+	'Boolean',
+	'NoneAlias',
+)
 
 from . import lib
 
 
 class Boolean(lib.enum.Enum):
-    """Boolean Enumeration."""
+	"""Boolean Enumeration."""
 
-    true  = True
-    false = False
+	true = True
+	false = False
 
 
 class NoneAlias(lib.enum.Enum):
-    """Nones Enumeration."""
+	"""Nones Enumeration."""
 
-    null = None
-    none = None
-    nan  = None
+	null = None
+	none = None
+	nan = None

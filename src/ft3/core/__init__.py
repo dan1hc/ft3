@@ -19,14 +19,14 @@ import ft3
 """
 
 __all__ = (
-    'cfg',
-    'codecs',
-    'enm',
-    'exc',
-    'lib',
-    'strings',
-    'typ',
-    )
+	'cfg',
+	'codecs',
+	'enm',
+	'exc',
+	'lib',
+	'strings',
+	'typ',
+)
 
 from . import cfg
 from . import codecs
