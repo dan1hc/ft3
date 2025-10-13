@@ -11,7 +11,7 @@ if lib.t.TYPE_CHECKING:  # pragma: no cover
 class Constants:
 	"""Constant values shared across all of ft3."""
 
-	PACAKGE = 'ft3'
+	PACKAGE = 'ft3'
 	"""Reference to package name."""
 
 	CLASS_AS_DICT: 'typ.string[typ.snake_case]' = 'class_as_dict'
@@ -30,7 +30,7 @@ class Constants:
 
     """
 
-	UNDEFINED = f'[[{PACAKGE.upper()}_DEFAULT_PLACEHOLDER]]'
+	UNDEFINED = f'[[{PACKAGE.upper()}_DEFAULT_PLACEHOLDER]]'
 	"""Placeholder for undefined values that should not be `None`."""
 
 	ENV = lib.os.getenv('ENV', 'local').lower()

@@ -513,7 +513,7 @@ def api_from_package(
 			return obj.Healthz()  # pragma: no cover
 
 	if not name.startswith(
-		'.'.join((Constants.PACAKGE, 'template'))
+		'.'.join((Constants.PACKAGE, 'template'))
 	):  # pragma: no cover
 		OBJECTS.pop('PetWithPet', None)
 		REQUEST_HEADERS.pop('PetWithPet', None)

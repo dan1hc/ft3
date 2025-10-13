@@ -22,7 +22,7 @@ class Constants(core.cfg.Constants):
 	LOG_TRACEBACK = lib.os.getenv('LOG_TRACEBACK', 'true').lower() == 'true'
 	LOG_PRINTS = lib.os.getenv('LOG_PRINTS', 'false').lower() == 'true'
 
-	SILENCE_MSG = f'Call to print() silenced by {core.cfg.Constants.PACAKGE}.'
+	SILENCE_MSG = f'Call to print() silenced by {core.cfg.Constants.PACKAGE}.'
 	WARN_MSG = (
-		f'Calls to print() will be silenced by {core.cfg.Constants.PACAKGE}.'
+		f'Calls to print() will be silenced by {core.cfg.Constants.PACKAGE}.'
 	)

@@ -234,7 +234,7 @@ class ReservedKeywordError(BasePackageException[str]):
 			' '.join(
 				(
 					'The following keyword is reserved for special',
-					f'purposes within {Constants.PACAKGE} and may',
+					f'purposes within {Constants.PACKAGE} and may',
 					'not be used / overwritten in class definitions.',
 					f'\nKEYWORD: {name}',
 					f'\nSUGGESTION: {name}_',
