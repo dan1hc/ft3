@@ -4,4 +4,4 @@ from .. import lib
 
 __all__ = lib.__all__
 
-from .. lib import *
+from ..lib import *

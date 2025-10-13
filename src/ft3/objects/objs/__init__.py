@@ -1,11 +1,11 @@
 """Object modules."""
 
 __all__ = (
-    'obj',
-    'Object',
-    'ObjectBase',
-    )
+	'obj',
+	'Object',
+	'ObjectBase',
+)
 
 from . import obj
 
-from . obj import Object, ObjectBase
+from .obj import Object, ObjectBase

@@ -1,8 +1,8 @@
 ---
-name: feature request
-about: suggest a new feature
-title: 'feat: __short_feature_description__'
-labels: feat
+name: style request
+about: suggest a way to improve style
+title: 'style: __short_improvement_description__'
+labels: style
 assignees: 'dan1hc'
 
 ---

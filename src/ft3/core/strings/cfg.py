@@ -1,8 +1,6 @@
 """Strings constants."""
 
-__all__ = (
-    'Constants',
-    )
+__all__ = ('Constants',)
 
 from .. import cfg
 
@@ -10,10 +8,10 @@ from . import lib
 
 
 class Constants(cfg.Constants):
-    """Constant values shared across core strings modules."""
+	"""Constant values shared across core strings modules."""
 
-    MAX_CHARS = int(lib.os.getenv('MAX_CHARS', 384))
-    """
+	MAX_CHARS = int(lib.os.getenv('MAX_CHARS', 384))
+	"""
     Default, package-wide maximum string length [before it is wrapped \
     into a multi-line string].
 
@@ -23,8 +21,8 @@ class Constants(cfg.Constants):
 
     """
 
-    CUTOFF_LEN = int(lib.os.getenv('CUTOFF_LEN', 12))
-    """
+	CUTOFF_LEN = int(lib.os.getenv('CUTOFF_LEN', 12))
+	"""
     Default, package-wide maximum multi-line string line count [before \
     `list[str]` is trimmed and an ellipsis (...) is appended as its \
     final item].
@@ -35,8 +33,8 @@ class Constants(cfg.Constants):
 
     """
 
-    WRAP_WIDTH = int(lib.os.getenv('WRAP_WIDTH', 64))
-    """
+	WRAP_WIDTH = int(lib.os.getenv('WRAP_WIDTH', 64))
+	"""
     Default, package-wide maximum multi-line string line count [before \
     `list[str]` is trimmed and an ellipsis (...) is appended as its \
     final item].
@@ -47,8 +45,8 @@ class Constants(cfg.Constants):
 
     """
 
-    M_LINE_TOKEN = '[[MULTI_LINE_STRING_AS_ARRAY]]'
-    """
+	M_LINE_TOKEN = '[[MULTI_LINE_STRING_AS_ARRAY]]'
+	"""
     Token pre-pended to a wrapped, multi-line string to indicate that \
     the value was originally a string.
 

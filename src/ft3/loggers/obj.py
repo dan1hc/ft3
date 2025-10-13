@@ -1,8 +1,6 @@
 """Loggers objects."""
 
-__all__ = (
-    'log',
-    )
+__all__ = ('log',)
 
 from .. import core
 
@@ -13,23 +11,23 @@ from . import utl
 
 
 class Constants(cfg.Constants):
-    """Constant values specific to this file."""
+	"""Constant values specific to this file."""
 
 
 lib.logging.Formatter.converter = lib.time.gmtime
 lib.logging.Formatter.default_time_format = Constants.FTIME_LOG
 lib.logging.Formatter.default_msec_format = Constants.FTIME_LOG_MSEC
 lib.logging.basicConfig(
-    format=(' ' * Constants.INDENT).join(
-        (
-            '{\n',
-            '"level": %(levelname)s,\n',
-            '"timestamp": %(asctime)s,\n',
-            '"logger": ft3,\n',
-            '"message": %(message)s\n}',
-            )
-        ),
-    )
+	format=(' ' * Constants.INDENT).join(
+		(
+			'{\n',
+			'"level": %(levelname)s,\n',
+			'"timestamp": %(asctime)s,\n',
+			'"logger": ft3,\n',
+			'"message": %(message)s\n}',
+		)
+	),
+)
 
 log = lib.logging.getLogger(__name__)
 """
@@ -186,106 +184,107 @@ lib.logging.captureWarnings(True)
 lib.logging.Logger.manager.loggerDict['py.warnings'] = log
 
 if not Constants.LOG_PRINTS:
+	_print = __builtins__['print']  # type: ignore[index]
 
-    _print = __builtins__['print']  # type: ignore[index]
+	def _reprint(*args: lib.t.Any, **kwargs: lib.t.Any) -> None:
+		if (
+			Constants.ENV in Constants.DEPLOY_ENVS
+		):  # pragma: no cover (still covered)
+			lib.warnings.warn(
+				'\n'.join(
+					(
+						Constants.SILENCE_MSG,
+						*[str(a) for a in args],
+					)
+				)
+			)
+		else:
+			lib.warnings.warn(Constants.WARN_MSG, stacklevel=1)
+			_print(*args, **kwargs)
 
-    def _reprint(*args: lib.t.Any, **kwargs: lib.t.Any) -> None:
-        if Constants.ENV in Constants.DEPLOY_ENVS:  # pragma: no cover (still covered)
-            lib.warnings.warn(
-                '\n'.join(
-                    (
-                        Constants.SILENCE_MSG,
-                        *[str(a) for a in args],
-                        )
-                    )
-                )
-        else:
-            lib.warnings.warn(Constants.WARN_MSG, stacklevel=1)
-            _print(*args, **kwargs)
-
-    __builtins__['print'] = _reprint
+	__builtins__['print'] = _reprint
 
 
 def _monkey_log(
-    level: (
-        lib.t.Literal[0]
-        | lib.t.Literal[10]
-        | lib.t.Literal[20]
-        | lib.t.Literal[30]
-        | lib.t.Literal[40]
-        | lib.t.Literal[50]
-        ),
-    msg: lib.t.Any,
-    args: 'lib.logging._ArgsType',
-    exc_info: 'lib.logging._ExcInfoType' = True,
-    extra: lib.t.Union[lib.t.Mapping[str, object], None] = None,
-    stack_info: bool = False,
-    stacklevel: int = 1,
-    **kwargs: lib.t.Any
-    ) -> None:
-    """Monkey patch for `logger._log`."""
+	level: (
+		lib.t.Literal[0]
+		| lib.t.Literal[10]
+		| lib.t.Literal[20]
+		| lib.t.Literal[30]
+		| lib.t.Literal[40]
+		| lib.t.Literal[50]
+	),
+	msg: lib.t.Any,
+	args: 'lib.logging._ArgsType',
+	exc_info: 'lib.logging._ExcInfoType' = True,
+	extra: lib.t.Union[lib.t.Mapping[str, object], None] = None,
+	stack_info: bool = False,
+	stacklevel: int = 1,
+	**kwargs: lib.t.Any,
+) -> None:
+	"""Monkey patch for `logger._log`."""
 
-    sinfo = None
-    if lib.logging._srcfile:  # pragma: no cover
-        try:
-            fn, lno, func, sinfo = log.findCaller(stack_info, stacklevel)
-        except ValueError:
-            fn, lno, func = "(unknown file)", 0, "(unknown function)"
-    else:  # pragma: no cover
-        fn, lno, func = "(unknown file)", 0, "(unknown function)"
+	sinfo = None
+	if lib.logging._srcfile:  # pragma: no cover
+		try:
+			fn, lno, func, sinfo = log.findCaller(stack_info, stacklevel)
+		except ValueError:
+			fn, lno, func = '(unknown file)', 0, '(unknown function)'
+	else:  # pragma: no cover
+		fn, lno, func = '(unknown file)', 0, '(unknown function)'
 
-    if msg == '%s' and args and isinstance(args, tuple):  # pragma: no cover
-        msg_ = args[0]
-    else:
-        msg_ = msg
+	if msg == '%s' and args and isinstance(args, tuple):  # pragma: no cover
+		msg_ = args[0]
+	else:
+		msg_ = msg
 
-    msg_dict = utl.parse_incoming_log_message(msg_, level)
+	msg_dict = utl.parse_incoming_log_message(msg_, level)
 
-    if isinstance(exc_info, BaseException):
-        exc_info = (type(exc_info), exc_info, exc_info.__traceback__)
-    elif not isinstance(exc_info, tuple):
-        exc_info = lib.sys.exc_info()
-    if (
-        Constants.LOG_TRACEBACK
-        and level >= lib.logging.ERROR
-        and any(exc_info)
-        and not isinstance(exc_info[1], KeyboardInterrupt)
-        ):
-        if 'printed' in msg_dict:  # pragma: no cover (still covered)
-            msg_final = typ.LogRecordWithPrintAndTraceBack(
-                content=msg_dict['content'],
-                printed=msg_dict['printed'],  # type: ignore[typeddict-item]
-                traceback=''.join(lib.traceback.format_exception(*exc_info))
-                )
-        else:  # pragma: no cover (still covered)
-            msg_final = typ.LogRecordWithTraceBack(
-                content=msg_dict['content'],
-                traceback=''.join(lib.traceback.format_exception(*exc_info))
-                )
-    else:
-        msg_final = msg_dict
+	if isinstance(exc_info, BaseException):
+		exc_info = (type(exc_info), exc_info, exc_info.__traceback__)
+	elif not isinstance(exc_info, tuple):
+		exc_info = lib.sys.exc_info()
+	if (
+		Constants.LOG_TRACEBACK
+		and level >= lib.logging.ERROR
+		and any(exc_info)
+		and not isinstance(exc_info[1], KeyboardInterrupt)
+	):
+		if 'printed' in msg_dict:  # pragma: no cover (still covered)
+			msg_final = typ.LogRecordWithPrintAndTraceBack(
+				content=msg_dict['content'],
+				printed=msg_dict['printed'],  # type: ignore[typeddict-item]
+				traceback=''.join(lib.traceback.format_exception(*exc_info)),
+			)
+		else:  # pragma: no cover (still covered)
+			msg_final = typ.LogRecordWithTraceBack(
+				content=msg_dict['content'],
+				traceback=''.join(lib.traceback.format_exception(*exc_info)),
+			)
+	else:
+		msg_final = msg_dict
 
-    record = log.makeRecord(
-        log.name,
-        level,
-        fn,
-        lno,
-        lib.textwrap.indent(
-            lib.json.dumps(
-                core.strings.utl.convert_for_repr(msg_final),
-                default=core.strings.utl.convert_for_repr,
-                indent=Constants.INDENT,
-                sort_keys=True
-                ),
-            Constants.INDENT * ' '
-            ).lstrip(),
-        tuple(),
-        None,
-        func,
-        extra,
-        sinfo
-        )
-    log.handle(record)
+	record = log.makeRecord(
+		log.name,
+		level,
+		fn,
+		lno,
+		lib.textwrap.indent(
+			lib.json.dumps(
+				core.strings.utl.convert_for_repr(msg_final),
+				default=core.strings.utl.convert_for_repr,
+				indent=Constants.INDENT,
+				sort_keys=True,
+			),
+			Constants.INDENT * ' ',
+		).lstrip(),
+		tuple(),
+		None,
+		func,
+		extra,
+		sinfo,
+	)
+	log.handle(record)
 
 
 log._log = _monkey_log

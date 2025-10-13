@@ -1,12 +1,12 @@
 """Core codec modules."""
 
 __all__ = (
-    'cfg',
-    'enm',
-    'lib',
-    'typ',
-    'utl',
-    )
+	'cfg',
+	'enm',
+	'lib',
+	'typ',
+	'utl',
+)
 
 from . import cfg
 from . import enm

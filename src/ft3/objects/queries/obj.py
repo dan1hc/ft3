@@ -1,20 +1,20 @@
 """Query module."""
 
 __all__ = (
-    'AndQuery',
-    'ContainsQueryCondition',
-    'EqQueryCondition',
-    'GeQueryCondition',
-    'GtQueryCondition',
-    'InvertQuery',
-    'LeQueryCondition',
-    'LtQueryCondition',
-    'NeQueryCondition',
-    'OrQuery',
-    'Query',
-    'QuerySortBy',
-    'SimilarQueryCondition',
-    )
+	'AndQuery',
+	'ContainsQueryCondition',
+	'EqQueryCondition',
+	'GeQueryCondition',
+	'GtQueryCondition',
+	'InvertQuery',
+	'LeQueryCondition',
+	'LtQueryCondition',
+	'NeQueryCondition',
+	'OrQuery',
+	'Query',
+	'QuerySortBy',
+	'SimilarQueryCondition',
+)
 
 from .. import cfg
 from .. import enm
@@ -25,21 +25,21 @@ from .. import typ
 
 
 class Constants(cfg.Constants):
-    """Constant values specific to this file."""
+	"""Constant values specific to this file."""
 
 
 class QuerySortBy(objs.Object):
-    """Simple specification for sorting Query results by field."""
+	"""Simple specification for sorting Query results by field."""
 
-    field: fields.Field[str]
-    direction: fields.Field[str] = fields.Field(
-        default=enm.SortDirection.asc.value,
-        enum=enm.SortDirection,
-        )
+	field: fields.Field[str]
+	direction: fields.Field[str] = fields.Field(
+		default=enm.SortDirection.asc.value,
+		enum=enm.SortDirection,
+	)
 
 
 class Query(objs.Object):
-    """
+	"""
     Database agnostic query object.
 
     ---
@@ -99,115 +99,115 @@ class Query(objs.Object):
 
     """
 
-    sorting: fields.Field[list[QuerySortBy]] = []
-    limit: fields.Field[lib.t.Optional[int]] = None
+	sorting: fields.Field[list[QuerySortBy]] = []
+	limit: fields.Field[lib.t.Optional[int]] = None
 
-    def __iadd__(self, field: str) -> lib.Self:
-        """Add an ascending sort to the selected `Query`."""
+	def __iadd__(self, field: str) -> lib.Self:
+		"""Add an ascending sort to the selected `Query`."""
 
-        self._sort_by(field)
-        return self
+		self._sort_by(field)
+		return self
 
-    def __isub__(self, field: str) -> lib.Self:  # type: ignore[misc, override]
-        """Add a descending sort to the selected `Query`."""
+	def __isub__(self, field: str) -> lib.Self:  # type: ignore[misc, override]
+		"""Add a descending sort to the selected `Query`."""
 
-        self._sort_by(field, direction=enm.SortDirection.desc.value)
-        return self
+		self._sort_by(field, direction=enm.SortDirection.desc.value)
+		return self
 
-    def __and__(self, other: 'Query') -> 'AndQuery':
-        return AndQuery(and_=[self, other])
+	def __and__(self, other: 'Query') -> 'AndQuery':
+		return AndQuery(and_=[self, other])
 
-    def __or__(self, other: 'Query') -> 'OrQuery':
-        return OrQuery(or_=[self, other])
+	def __or__(self, other: 'Query') -> 'OrQuery':
+		return OrQuery(or_=[self, other])
 
-    def __invert__(self) -> 'InvertQuery':
-        return InvertQuery(invert=self)
+	def __invert__(self) -> 'InvertQuery':
+		return InvertQuery(invert=self)
 
-    def _sort_by(
-        self,
-        field: str,
-        direction: typ.SortDirection = enm.SortDirection.asc.value
-        ) -> None:
-        """
-        Sort the selected `Query` by `field` and `direction`.
+	def _sort_by(
+		self,
+		field: str,
+		direction: typ.SortDirection = enm.SortDirection.asc.value,
+	) -> None:
+		"""
+		Sort the selected `Query` by `field` and `direction`.
 
-        Direction may be either `'asc'` or `'desc'`.
+		Direction may be either `'asc'` or `'desc'`.
 
-        The `field` should correspond to an existing field for the `Object`.
+		The `field` should correspond to an existing field for the `Object`.
 
-        """
+		"""
 
-        self.sorting.append(QuerySortBy(field=field, direction=direction))
+		self.sorting.append(QuerySortBy(field=field, direction=direction))
 
 
 class QueryCondition(Query):
-    """Base query filter."""
+	"""Base query filter."""
 
-    field: fields.Field[str]
+	field: fields.Field[str]
 
 
 class SimilarQueryCondition(QueryCondition):
-    """Filters where field is similar to value."""
+	"""Filters where field is similar to value."""
 
-    like: fields.Field[typ.Primitive | lib.t.Any]
-    threshold: fields.Field[lib.t.Optional[float]] = None
+	like: fields.Field[typ.Primitive | lib.t.Any]
+	threshold: fields.Field[lib.t.Optional[float]] = None
 
 
 class ContainsQueryCondition(QueryCondition):
-    """Filters where field contains value."""
+	"""Filters where field contains value."""
 
-    contains: fields.Field[typ.Primitive | lib.t.Any]
+	contains: fields.Field[typ.Primitive | lib.t.Any]
 
 
 class EqQueryCondition(QueryCondition):
-    """Filters where == value."""
+	"""Filters where == value."""
 
-    eq: fields.Field[typ.Primitive | lib.t.Any]
+	eq: fields.Field[typ.Primitive | lib.t.Any]
 
 
 class NeQueryCondition(QueryCondition):
-    """Filters where != value."""
+	"""Filters where != value."""
 
-    ne: fields.Field[typ.Primitive | lib.t.Any]
+	ne: fields.Field[typ.Primitive | lib.t.Any]
 
 
 class LeQueryCondition(QueryCondition):
-    """Filters where <= value."""
+	"""Filters where <= value."""
 
-    le: fields.Field[typ.Primitive | lib.t.Any]
+	le: fields.Field[typ.Primitive | lib.t.Any]
 
 
 class LtQueryCondition(QueryCondition):
-    """Filters where < value."""
+	"""Filters where < value."""
 
-    lt: fields.Field[typ.Primitive | lib.t.Any]
+	lt: fields.Field[typ.Primitive | lib.t.Any]
 
 
 class GeQueryCondition(QueryCondition):
-    """Filters where >= value."""
+	"""Filters where >= value."""
 
-    ge: fields.Field[typ.Primitive | lib.t.Any]
+	ge: fields.Field[typ.Primitive | lib.t.Any]
 
 
 class GtQueryCondition(QueryCondition):
-    """Filters where > value."""
+	"""Filters where > value."""
 
-    gt: fields.Field[typ.Primitive | lib.t.Any]
+	gt: fields.Field[typ.Primitive | lib.t.Any]
 
 
 class AndQuery(Query):
-    """Filters on all conditions."""
+	"""Filters on all conditions."""
 
-    and_: fields.Field[list[Query]]
+	and_: fields.Field[list[Query]]
 
 
 class OrQuery(Query):
-    """Filters on any condition."""
+	"""Filters on any condition."""
 
-    or_: fields.Field[list[Query]]
+	or_: fields.Field[list[Query]]
 
 
 class InvertQuery(Query):
-    """Inverts the filter."""
+	"""Inverts the filter."""
 
-    invert: fields.Field[Query]
+	invert: fields.Field[Query]

@@ -2,9 +2,6 @@
 
 from .. import core
 
-__all__ = (
-    'BasePackageException',
-    *core.exc.__all__
-    )
+__all__ = ('BasePackageException', *core.exc.__all__)
 
-from .. core . exc import *
+from ..core.exc import *

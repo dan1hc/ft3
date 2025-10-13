@@ -2,11 +2,8 @@
 
 from .. import lib
 
-__all__ = (
-    'traceback',
-    *lib.__all__
-    )
+__all__ = ('traceback', *lib.__all__)
 
 import traceback
 
-from .. lib import *
+from ..lib import *

@@ -1,9 +1,6 @@
 """Template objects."""
 
-__all__ = (
-    'Pet',
-    'PetWithPet'
-    )
+__all__ = ('Pet', 'PetWithPet')
 
 from ... import api, Api, Field, Object
 
@@ -12,7 +9,7 @@ from . import lib
 
 
 class Human(Object):
-    """
+	"""
     A human, may or may not be owned by a pet.
 
     ---
@@ -38,23 +35,23 @@ class Human(Object):
 
     """
 
-    name: Field[str] = 'Dale'
-    """The human's name."""
+	name: Field[str] = 'Dale'
+	"""The human's name."""
 
 
 @api.SecurityScheme.api_key('x-ft3-key', 'Optional API Key.', 'post', 'put')
 @Api.register
 class Pet(Object):
-    """Pet of a pet."""
+	"""Pet of a pet."""
 
-    pet_with_pet_id: Field[str]
-    """The unique identifier of the parent pet."""
+	pet_with_pet_id: Field[str]
+	"""The unique identifier of the parent pet."""
 
-    id_: Field[str] = Field(
-        default=lambda: lib.uuid.uuid4().hex,  # type: ignore[arg-type]
-        read_only=True
-        )
-    """
+	id_: Field[str] = Field(
+		default=lambda: lib.uuid.uuid4().hex,  # type: ignore[arg-type]
+		read_only=True,
+	)
+	"""
     Unique identifier for the [sub] pet.
 
     ---
@@ -67,25 +64,23 @@ class Pet(Object):
 
     """
 
-    name: Field[str]
-    """Name of the [sub] pet."""
+	name: Field[str]
+	"""Name of the [sub] pet."""
 
-    type_: Field[str] = Field(
-        default=enm.PetType.dog.value,
-        required=True,
-        enum=enm.PetType
-        )
-    """Type of [sub] pet. Allowed values: `'Cat', 'Dog'`."""
+	type_: Field[str] = Field(
+		default=enm.PetType.dog.value, required=True, enum=enm.PetType
+	)
+	"""Type of [sub] pet. Allowed values: `'Cat', 'Dog'`."""
 
-    in_: Field[str] = {
-        'default': enm.PetLocation.outside.value,
-        'required': False,
-        'enum': enm.PetLocation
-        }
-    """Locations in which the [sub] pet can be."""
+	in_: Field[str] = {
+		'default': enm.PetLocation.outside.value,
+		'required': False,
+		'enum': enm.PetLocation,
+	}
+	"""Locations in which the [sub] pet can be."""
 
-    is_tail_wagging: Field[bool] = True
-    """Whether the [sub] pet's tail is currently wagging."""
+	is_tail_wagging: Field[bool] = True
+	"""Whether the [sub] pet's tail is currently wagging."""
 
 
 @api.SecurityScheme.api_key('x-ft3-key', 'Optional API Key.')
@@ -95,7 +90,7 @@ class Pet(Object):
 @api.Header.request('x-ft3-user-agent', 'Optional device metadata.')
 @Api.register
 class PetWithPet(Object):
-    """
+	"""
     A simple pet that makes for a good example.
 
     * This python docstring will be parsed as the default description \
@@ -108,11 +103,11 @@ class PetWithPet(Object):
 
     """
 
-    id_: Field[str] = Field(
-        default=lambda: lib.uuid.uuid4().hex,  # type: ignore[arg-type]
-        read_only=True
-        )
-    """
+	id_: Field[str] = Field(
+		default=lambda: lib.uuid.uuid4().hex,  # type: ignore[arg-type]
+		read_only=True,
+	)
+	"""
     Unique identifier for the pet.
 
     ---
@@ -125,45 +120,38 @@ class PetWithPet(Object):
 
     """
 
-    name: Field[str]
-    """Name of the pet."""
+	name: Field[str]
+	"""Name of the pet."""
 
-    type_: Field[str] = Field(
-        default=enm.PetType.dog.value,
-        required=True,
-        enum=enm.PetType
-        )
-    """Type of pet. Allowed values: `'Cat', 'Dog'`."""
+	type_: Field[str] = Field(
+		default=enm.PetType.dog.value, required=True, enum=enm.PetType
+	)
+	"""Type of pet. Allowed values: `'Cat', 'Dog'`."""
 
-    in_: Field[str] = Field(
-        default=enm.PetLocation.outside.value,
-        required=False,
-        enum=enm.PetLocation
-        )
-    """Locations in which the pet can be."""
+	in_: Field[str] = Field(
+		default=enm.PetLocation.outside.value,
+		required=False,
+		enum=enm.PetLocation,
+	)
+	"""Locations in which the pet can be."""
 
-    is_tail_wagging: Field[bool] = True
-    """Whether the pet's tail is currently wagging."""
+	is_tail_wagging: Field[bool] = True
+	"""Whether the pet's tail is currently wagging."""
 
-    pets: Field[list[Pet]] = (
-        lambda: [
-            Pet(  # type: ignore[call-arg]
-                name='Fido',
-                type_='dog',
-                in_='timeout',
-                is_tail_wagging=False
-                )
-            ]
-        )
-    """The pet(s) of a pet."""
+	pets: Field[list[Pet]] = lambda: [
+		Pet(  # type: ignore[call-arg]
+			name='Fido', type_='dog', in_='timeout', is_tail_wagging=False
+		)
+	]
+	"""The pet(s) of a pet."""
 
-    human: Field[Human] = Human
-    """Sometimes pets also own humans."""
+	human: Field[Human] = Human
+	"""Sometimes pets also own humans."""
 
-    def __post_init__(self) -> None:
-        """Automatically set pets' parent ids on instantiation."""
+	def __post_init__(self) -> None:
+		"""Automatically set pets' parent ids on instantiation."""
 
-        for pet in self.pets:  # pragma: no cover
-            pet.pet_with_pet_id = self.id_
+		for pet in self.pets:  # pragma: no cover
+			pet.pet_with_pet_id = self.id_
 
-        return super().__post_init__()
+		return super().__post_init__()
