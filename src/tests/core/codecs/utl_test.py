@@ -440,7 +440,7 @@ class TestUtils(unittest.TestCase):
 			)
 		else:
 			self.assertEqual(
-				codecs.enm.ParseErrorRef.invalid_values_decode,
+				codecs.enm.ParseErrorRef.value_decode,
 				codecs.utl.parse(
 					codecs.lib.json.dumps(SimpleTypedObj(not_a_key='test')),
 					SimpleTypedObj,
