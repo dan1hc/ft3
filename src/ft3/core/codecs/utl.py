@@ -360,7 +360,7 @@ def parse_typed_tp(
 				if isinstance(tp_val, enm.ParseErrorRef):
 					return enm.ParseErrorRef.invalid_map_decode
 				tp_dict[ckey] = tp_val
-			else:
+			else:  # pragma: no cover
 				return enm.ParseErrorRef.invalid_keys_decode
 		return tp(**tp_dict)
 	else:
