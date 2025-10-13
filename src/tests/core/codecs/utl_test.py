@@ -1,6 +1,7 @@
 """Module utils unit tests."""
 
 import unittest
+import sys
 
 import ft3
 
@@ -429,13 +430,22 @@ class TestUtils(unittest.TestCase):
 	def test_39_anti_parse_typed_obj(self):
 		"""Test `parse` on `TypedDict`."""
 
-		self.assertEqual(
-			codecs.enm.ParseErrorRef.invalid_keys_decode,
-			codecs.utl.parse(
-				codecs.lib.json.dumps(SimpleTypedObj(not_a_key='test')),
-				SimpleTypedObj,
-			),
-		)
+		if sys.version_info < (3, 13):
+			self.assertEqual(
+				codecs.enm.ParseErrorRef.invalid_keys_decode,
+				codecs.utl.parse(
+					codecs.lib.json.dumps(SimpleTypedObj(not_a_key='test')),
+					SimpleTypedObj,
+				),
+			)
+		else:
+			self.assertEqual(
+				codecs.enm.ParseErrorRef.invalid_values_decode,
+				codecs.utl.parse(
+					codecs.lib.json.dumps(SimpleTypedObj(not_a_key='test')),
+					SimpleTypedObj,
+				),
+			)
 
 	def test_40_encode_subclass(self):
 		"""Test `encode` on `SubDecimal(Decimal)`."""
