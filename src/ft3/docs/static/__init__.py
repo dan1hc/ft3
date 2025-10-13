@@ -1,8 +1,6 @@
 """Static files for docs gen."""
 
-__all__ = (
-    'config_template',
-    )
+__all__ = ('config_template', )
 
 from .. import lib
 
