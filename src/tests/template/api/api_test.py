@@ -19,7 +19,7 @@ class TestEndpoint(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls) -> None:
 		cls.api = ft3.api.api_from_package(
-			f'{Constants.PACAKGE}.template',
+			f'{Constants.PACKAGE}.template',
 			Constants.DEFAULT_VERSION,
 			Constants.API_PATH,
 			include_version_prefix=True,
