@@ -47,7 +47,7 @@ Changelog = "https://github.com/dan1hc/ft3/blob/main/CHANGELOG.md"
 develop = [
     "mypy==1.11.*",
     "pre-commit>=3.7,<3.9",
-    "coverage==7.6.*",
+    "coverage>=7.6,<7.12",
     "pytest==8.3.*",
     "pytest-cov==5.0.*",
     "ruff==0.5.*",
