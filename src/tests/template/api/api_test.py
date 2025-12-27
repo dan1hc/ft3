@@ -600,15 +600,15 @@ class TestEndpoint(unittest.TestCase):
 		"""Test GET file."""
 
 		request = ft3.api.Request(
-			url=Constants.PATH_ROOT,
-			path=Constants.PATH_ROOT,
+			url=Constants.SWAGGER_PATH,
+			path=Constants.SWAGGER_PATH,
 			method=Constants.GET,
 		)
 
 		response = self.handler(request)
 
 		self.assertEqual(
-			response.body, ft3.api.FILES[Constants.PATH_ROOT].content
+			response.body, ft3.api.FILES[Constants.SWAGGER_PATH].content
 		)
 
 	def test_15_get_file_unexpected_error(self):

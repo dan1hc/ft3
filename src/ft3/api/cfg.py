@@ -11,6 +11,7 @@ class Constants(core.cfg.Constants):
 	DEFAULT_VERSION = 'v1'
 	VERSION = '3.1.0'
 	API_PATH = '/'
+	SWAGGER_PATH = '/swagger'
 	DEFAULT_PORT = 80
 	METHODS = (
 		'delete',

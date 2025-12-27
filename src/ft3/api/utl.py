@@ -610,9 +610,10 @@ def api_from_package(
 	from . import static
 
 	path_root = '/'.join((api_path.strip('/'), version))
+	swagger_path = Constants.SWAGGER_PATH
 
 	obj.File(
-		path=path_root if include_version_prefix else api_path,
+		path=swagger_path,
 		content=(
 			lib.string.Template(static.swagger_template).safe_substitute(
 				{'TITLE': name, 'PATH': '/'.join((path_root, 'openapi.json'))}
@@ -684,7 +685,7 @@ def serve(
 
     You may specify a port as a positional argument following \
     the package name. By default, your application will be served \
-    on port 80, accessible at http://localhost in your browser.
+    on port 80, accessible at http://localhost/swagger in your browser.
 
     ---
 
