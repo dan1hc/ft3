@@ -1,5 +1,12 @@
+import importlib.util
+import os
+import sys
+import tempfile
+import textwrap
 import typing
+import types
 import unittest
+from unittest import mock
 
 import ft3
 
@@ -24,6 +31,29 @@ class TestMeta(unittest.TestCase):
 			type_=str,
 		)
 		return super().setUp()
+
+	def _load_module_from_source(self, source_file: str) -> types.ModuleType:
+		module_name = f'_ft3_attribute_docs_test_{id(self)}'
+		spec = importlib.util.spec_from_file_location(module_name, source_file)
+		if spec is None or spec.loader is None:  # pragma: no cover
+			raise RuntimeError('Unable to create module spec.')
+		module = importlib.util.module_from_spec(spec)
+		sys.modules[module_name] = module
+		try:
+			spec.loader.exec_module(module)
+		except Exception:
+			sys.modules.pop(module_name, None)
+			raise
+		else:
+			self.addCleanup(sys.modules.pop, module_name, None)
+			return module
+
+	def _load_module_from_text(self, source: str) -> types.ModuleType:
+		with tempfile.TemporaryDirectory() as temp_dir:
+			source_file = os.path.join(temp_dir, 'attribute_docs_module.py')
+			with open(source_file, 'w', encoding='utf-8') as module_file:
+				module_file.write(textwrap.dedent(source))
+			return self._load_module_from_source(source_file)
 
 	def test_01_dict_functionality(self):
 		"""Test Meta __getitem__."""
@@ -205,6 +235,183 @@ class TestMeta(unittest.TestCase):
 				notSnakeCase: ft3.Field[str] = 'test'
 
 		self.assertRaises(ft3.objects.exc.IncorrectCasingError, _fn)
+
+	def test_19_attribute_docs_preserved(self):
+		"""Test attribute docs are preserved and fields point to owner."""
+
+		ft3.objects.utl._get_attribute_docs_for_source.cache_clear()
+		module = self._load_module_from_text(
+			'''
+			import ft3
+
+
+			class Documented(ft3.Object):
+			    """Documented test object."""
+
+			    first_field: ft3.Field[str]
+			    """First field docs."""
+			    second_field: ft3.Field[int] = 1
+			    """Second field docs."""
+			'''
+		)
+
+		self.assertEqual(
+			module.Documented.first_field.description, 'First field docs.'
+		)
+		self.assertEqual(
+			module.Documented.second_field.description, 'Second field docs.'
+		)
+		self.assertIs(
+			module.Documented.__dataclass_fields__['first_field']['object'],
+			module.Documented,
+		)
+
+	def test_20_attribute_docs_parse_source_once(self):
+		"""Test multiple classes in one file share one source parse."""
+
+		ft3.objects.utl._get_attribute_docs_for_source.cache_clear()
+		calls = 0
+		original_parse = ft3.objects.utl.lib.ast.parse
+
+		def counting_parse(*args, **kwargs):
+			nonlocal calls
+
+			calls += 1
+			return original_parse(*args, **kwargs)
+
+		with mock.patch.object(
+			ft3.objects.utl.lib.ast, 'parse', counting_parse
+		):
+			module = self._load_module_from_text(
+				'''
+				import ft3
+
+
+				class FirstObject(ft3.Object):
+				    """First test object."""
+
+				    first_field: ft3.Field[str]
+				    """First field docs."""
+
+
+				class SecondObject(ft3.Object):
+				    """Second test object."""
+
+				    second_field: ft3.Field[str]
+				    """Second field docs."""
+				'''
+			)
+
+		self.assertEqual(calls, 1)
+		self.assertEqual(
+			module.FirstObject.first_field.description, 'First field docs.'
+		)
+		self.assertEqual(
+			module.SecondObject.second_field.description, 'Second field docs.'
+		)
+
+	def test_21_attribute_docs_source_unavailable(self):
+		"""Test source-unavailable classes return empty docs."""
+
+		self.assertDictEqual(ft3.objects.utl.get_attribute_docs(int), {})
+
+	def test_22_attribute_docs_can_be_disabled(self):
+		"""Test environment flag disables attribute doc extraction."""
+
+		ft3.objects.utl._get_attribute_docs_for_source.cache_clear()
+		with (
+			mock.patch.dict(os.environ, {'FT3_EXTRACT_ATTRIBUTE_DOCS': '0'}),
+			mock.patch.object(
+				ft3.objects.utl, '_get_attribute_docs_for_source'
+			) as get_docs,
+		):
+
+			class DisabledDocs(ft3.Object):
+				disabled_field: ft3.Field[str]
+				"""Disabled field docs."""
+
+			self.assertDictEqual(
+				ft3.objects.utl.get_attribute_docs(DisabledDocs), {}
+			)
+			self.assertIsNone(DisabledDocs.disabled_field.description)
+			get_docs.assert_not_called()
+
+	def test_23_ast_find_classdef(self):
+		"""Test finding a class definition from an AST."""
+
+		tree = ft3.objects.utl.lib.ast.parse('class Sample:\n\tpass')
+		self.assertEqual(
+			ft3.objects.utl.ast_find_classdef(tree).name, 'Sample'
+		)
+
+	def test_24_attribute_docs_missing_source_key(self):
+		"""Test missing source files return a stable empty cache key."""
+
+		missing_source = os.path.join('missing', 'source.py')
+		self.assertEqual(
+			ft3.objects.utl._source_file_cache_key(missing_source),
+			(os.path.abspath(missing_source), 0, 0),
+		)
+
+	def test_25_attribute_docs_parse_failure(self):
+		"""Test source parse failures return empty docs."""
+
+		ft3.objects.utl._get_attribute_docs_for_source.cache_clear()
+		with tempfile.TemporaryDirectory() as temp_dir:
+			source_file = os.path.join(temp_dir, 'broken.py')
+			with open(source_file, 'w', encoding='utf-8') as module_file:
+				module_file.write('class Broken(')
+
+			self.assertDictEqual(
+				ft3.objects.utl._get_attribute_docs_for_source(
+					*ft3.objects.utl._source_file_cache_key(source_file)
+				),
+				{},
+			)
+
+	def test_26_attribute_docs_empty_source_file(self):
+		"""Test empty source lookup returns empty docs."""
+
+		with (
+			mock.patch.object(
+				ft3.objects.utl.lib.inspect, 'getsourcefile', return_value=''
+			),
+			mock.patch.object(
+				ft3.objects.utl.lib.inspect, 'getfile', return_value=''
+			),
+		):
+			self.assertDictEqual(
+				ft3.objects.utl.get_attribute_docs(mocking.Derivative), {}
+			)
+
+	def test_27_attribute_docs_nested_duplicate_names(self):
+		"""Test qualnames disambiguate duplicate short class names."""
+
+		ft3.objects.utl._get_attribute_docs_for_source.cache_clear()
+		module = self._load_module_from_text(
+			'''
+			import ft3
+
+
+			class Outer:
+
+			    class Duplicate(ft3.Object):
+			        nested_field: ft3.Field[str]
+			        """Nested docs."""
+
+
+			class Duplicate(ft3.Object):
+			    top_field: ft3.Field[str]
+			    """Top-level docs."""
+			'''
+		)
+
+		self.assertEqual(
+			module.Outer.Duplicate.nested_field.description, 'Nested docs.'
+		)
+		self.assertEqual(
+			module.Duplicate.top_field.description, 'Top-level docs.'
+		)
 
 
 class TestExceptions(unittest.TestCase):

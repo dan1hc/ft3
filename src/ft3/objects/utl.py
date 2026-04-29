@@ -8,6 +8,7 @@ __all__ = (
 	'get_obj_from_type',
 	'is_public_field',
 	'is_valid_keyword',
+	'should_extract_attribute_docs',
 )
 
 from . import cfg
@@ -29,36 +30,154 @@ def ast_find_classdef(tree: lib.ast.AST) -> lib.ast.ClassDef:
 	return defs[0]
 
 
+def should_extract_attribute_docs() -> bool:
+	"""Return if source-backed attribute docs should be extracted."""
+
+	if (raw := lib.os.getenv(Constants.EXTRACT_ATTRIBUTE_DOCS_ENV)) is None:
+		return Constants.EXTRACT_ATTRIBUTE_DOCS
+	else:
+		return (
+			raw.strip().lower()
+			not in Constants.EXTRACT_ATTRIBUTE_DOCS_FALSE_VALUES
+		)
+
+
+def _source_file_cache_key(source_file: str) -> tuple[str, int, int]:
+	"""Return stable cache inputs for a source file."""
+
+	absolute_source_file = lib.os.path.abspath(source_file)
+	try:
+		source_stat = lib.os.stat(absolute_source_file)
+	except OSError:
+		return absolute_source_file, 0, 0
+	else:
+		return (
+			absolute_source_file,
+			source_stat.st_mtime_ns,
+			source_stat.st_size,
+		)
+
+
+def _string_expr_value(stmt: lib.ast.stmt) -> lib.t.Optional[str]:
+	"""Return the string value for an expression statement."""
+
+	if isinstance(stmt, lib.ast.Expr):
+		value = getattr(stmt.value, 'value', None)
+		if isinstance(value, str):
+			return value
+
+	return None
+
+
+def _class_body_without_docstring(
+	class_def: lib.ast.ClassDef,
+) -> list[lib.ast.stmt]:
+	"""Return class body excluding the class docstring when present."""
+
+	if class_def.body and _string_expr_value(class_def.body[0]) is not None:
+		return class_def.body[1:]
+	else:
+		return class_def.body
+
+
+def _attribute_docs_from_class_def(
+	class_def: lib.ast.ClassDef,
+) -> dict[str, str]:
+	"""Return attribute docs from one class definition."""
+
+	attribute_docs: dict[str, str] = {}
+	body = _class_body_without_docstring(class_def)
+	for index, stmt in enumerate(body[:-1]):
+		if (
+			isinstance(stmt, lib.ast.AnnAssign)
+			and (doc_raw := _string_expr_value(body[index + 1])) is not None
+		):
+			name = lib.ast.unparse(stmt.target)
+			attribute_docs[name] = lib.textwrap.dedent(doc_raw)
+
+	return attribute_docs
+
+
+def _collect_attribute_docs_from_body(
+	body: list[lib.ast.stmt],
+	qualname_prefix: tuple[str, ...],
+	result: dict[str, dict[str, str]],
+	short_names: dict[str, lib.t.Optional[dict[str, str]]],
+) -> None:
+	"""Collect attribute docs for all class definitions in a body."""
+
+	for stmt in body:
+		if isinstance(stmt, lib.ast.ClassDef):
+			qualname = '.'.join((*qualname_prefix, stmt.name))
+			docs = _attribute_docs_from_class_def(stmt)
+			result[qualname] = docs
+			if stmt.name not in short_names:
+				short_names[stmt.name] = docs
+			else:
+				short_names[stmt.name] = None
+			_collect_attribute_docs_from_body(
+				stmt.body, (*qualname_prefix, stmt.name), result, short_names
+			)
+		elif isinstance(stmt, (lib.ast.AsyncFunctionDef, lib.ast.FunctionDef)):
+			_collect_attribute_docs_from_body(
+				stmt.body,
+				(*qualname_prefix, stmt.name, '<locals>'),
+				result,
+				short_names,
+			)
+
+	return None
+
+
+@lib.functools.cache
+def _get_attribute_docs_for_source(
+	source_file: str,
+	source_mtime_ns: int,
+	source_size: int,
+) -> dict[str, dict[str, str]]:
+	"""Return attribute docs for every class in a source file."""
+
+	try:
+		with open(source_file, encoding='utf-8') as source:
+			tree = lib.ast.parse(source.read(), filename=source_file)
+	except (OSError, SyntaxError, UnicodeDecodeError):
+		return {}
+
+	result: dict[str, dict[str, str]] = {}
+	short_names: dict[str, lib.t.Optional[dict[str, str]]] = {}
+	_collect_attribute_docs_from_body(tree.body, (), result, short_names)
+	for name, docs in short_names.items():
+		if docs is not None:
+			result.setdefault(name, docs)
+
+	return result
+
+
 def get_attribute_docs(
 	cls: 'metas.Meta',
 ) -> dict[typ.string[typ.snake_case], str]:
 	"""Get class attribute docstrings."""
 
-	attribute_docs: dict[typ.string[typ.snake_case], str] = {}
+	if not should_extract_attribute_docs():
+		return {}
 
 	try:
-		src = lib.inspect.getsource(cls)
-		tree = lib.ast.parse(src)
-		tree = ast_find_classdef(tree)
-	except (IndentationError, IndexError, OSError):
-		pass
-	else:
-		tree_slice = tree.body[1:]
-		for i, expr in enumerate(tree_slice):
-			if isinstance(expr, lib.ast.AnnAssign) and (i + 1) < len(
-				tree_slice
-			):
-				name: typ.string[typ.snake_case] = lib.ast.unparse(expr.target)
-				stmt = tree_slice[i + 1]
-				if isinstance(stmt, lib.ast.Expr) and stmt.value is not None:
-					doc_raw: lib.t.Optional[str] = getattr(
-						stmt.value, 'value', None
-					)
-					if doc_raw is not None:
-						doc = lib.textwrap.dedent(doc_raw)
-						attribute_docs[name] = doc
+		source_file = lib.inspect.getsourcefile(cls) or lib.inspect.getfile(
+			cls
+		)
+	except (OSError, TypeError):
+		return {}
 
-	return attribute_docs
+	if not source_file:
+		return {}
+
+	docs_by_class = _get_attribute_docs_for_source(
+		*_source_file_cache_key(source_file)
+	)
+	docs = docs_by_class.get(
+		cls.__qualname__, docs_by_class.get(cls.__name__, {})
+	)
+	return lib.t.cast(dict[typ.string[typ.snake_case], str], dict(docs))
 
 
 @lib.functools.cache

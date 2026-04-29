@@ -16,6 +16,9 @@ class Constants(core.cfg.Constants):
 		'fields',
 		'hash_fields',
 	)
+	EXTRACT_ATTRIBUTE_DOCS = True
+	EXTRACT_ATTRIBUTE_DOCS_ENV = 'FT3_EXTRACT_ATTRIBUTE_DOCS'
+	EXTRACT_ATTRIBUTE_DOCS_FALSE_VALUES = ('0', 'false', 'no', 'off')
 	FIELD_KEYS = (
 		'name',
 		'type',
