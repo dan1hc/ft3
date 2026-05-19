@@ -597,7 +597,13 @@ class TestEndpoint(unittest.TestCase):
 		self.assertEqual(response.body, response.serialize())
 
 	def test_14_get_file(self):
-		"""Test GET file."""
+		"""Test default API skips generated docs files."""
+
+		self.assertNotIn(Constants.SWAGGER_PATH, ft3.api.FILES)
+		self.assertNotIn(
+			'/'.join((Constants.PATH_ROOT, 'openapi.json')),
+			ft3.api.FILES,
+		)
 
 		request = ft3.api.Request(
 			url=Constants.SWAGGER_PATH,
@@ -607,9 +613,7 @@ class TestEndpoint(unittest.TestCase):
 
 		response = self.handler(request)
 
-		self.assertEqual(
-			response.body, ft3.api.FILES[Constants.SWAGGER_PATH].content
-		)
+		self.assertEqual(response.status_code, 500)
 
 	def test_15_get_file_unexpected_error(self):
 		"""Test GET file raises unexpected error."""
@@ -661,6 +665,49 @@ class TestEndpoint(unittest.TestCase):
 		response = self.handler(request)
 
 		self.assertEqual(response.status_code, 500)
+
+
+class TestGeneratedDocsEndpoint(unittest.TestCase):
+	"""Fixture for testing generated API documentation files."""
+
+	@classmethod
+	def setUpClass(cls) -> None:
+		cls._files = dict(ft3.api.FILES)
+		cls._paths = list(ft3.api.events.utl.PATHS)
+		ft3.api.FILES.clear()
+		ft3.api.events.utl.PATHS.clear()
+		cls.api = ft3.api.api_from_package(
+			f'{Constants.PACKAGE}.template',
+			Constants.DEFAULT_VERSION,
+			Constants.API_PATH,
+			include_version_prefix=True,
+			lazy_docs=False,
+		)
+		cls.handler = ft3.api.Handler(api=cls.api)
+		return super().setUpClass()
+
+	@classmethod
+	def tearDownClass(cls) -> None:
+		ft3.api.FILES.clear()
+		ft3.api.FILES.update(cls._files)
+		ft3.api.events.utl.PATHS.clear()
+		ft3.api.events.utl.PATHS.extend(cls._paths)
+		return super().tearDownClass()
+
+	def test_01_get_file(self):
+		"""Test GET generated docs file."""
+
+		request = ft3.api.Request(
+			url=Constants.SWAGGER_PATH,
+			path=Constants.SWAGGER_PATH,
+			method=Constants.GET,
+		)
+
+		response = self.handler(request)
+
+		self.assertEqual(
+			response.body, ft3.api.FILES[Constants.SWAGGER_PATH].content
+		)
 
 
 class TestRuntimeEndpoint(unittest.TestCase):

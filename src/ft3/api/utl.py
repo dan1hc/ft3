@@ -568,7 +568,7 @@ def api_from_package(
 	include_heartbeat: bool = True,
 	include_version_prefix: bool = False,
 	include_default_response_headers: bool = True,
-	lazy_docs: bool = False,
+	lazy_docs: bool = True,
 ) -> obj.Api:
 	"""Generate a RESTful API from passed python package name."""
 
