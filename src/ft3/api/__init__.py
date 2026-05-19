@@ -20,6 +20,7 @@ $ ft3 api ${PACKAGE_NAME}
 
 __all__ = (
 	'api_from_package',
+	'runtime_api_from_package',
 	'cfg',
 	'enm',
 	'exc',
@@ -52,4 +53,4 @@ from . import utl
 
 from .events import Handler, Request, Response
 from .obj import Api, File, Header, SecurityScheme, FILES, OBJECTS
-from .utl import api_from_package
+from .utl import api_from_package, runtime_api_from_package

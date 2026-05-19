@@ -734,3 +734,11 @@ api_parser.add_argument(
 	help='set to disinclude default response headers',
 	dest='include_default_response_headers',
 )
+api_parser.add_argument(
+	'--generate-docs',
+	'--no-lazy-docs',
+	action='store_false',
+	default=True,
+	help='generate Swagger/OpenAPI docs during API startup',
+	dest='lazy_docs',
+)

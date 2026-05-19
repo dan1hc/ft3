@@ -661,3 +661,89 @@ class TestEndpoint(unittest.TestCase):
 		response = self.handler(request)
 
 		self.assertEqual(response.status_code, 500)
+
+
+class TestRuntimeEndpoint(unittest.TestCase):
+	"""Fixture for testing runtime-only API construction."""
+
+	@classmethod
+	def setUpClass(cls) -> None:
+		cls._files = dict(ft3.api.FILES)
+		cls._paths = list(ft3.api.events.utl.PATHS)
+		ft3.api.events.utl.PATHS.clear()
+		cls.api = ft3.api.runtime_api_from_package(
+			f'{Constants.PACKAGE}.template',
+			Constants.DEFAULT_VERSION,
+			Constants.API_PATH,
+			include_version_prefix=True,
+		)
+		cls.handler = ft3.api.Handler(api=cls.api)
+		return super().setUpClass()
+
+	@classmethod
+	def tearDownClass(cls) -> None:
+		ft3.api.FILES.clear()
+		ft3.api.FILES.update(cls._files)
+		ft3.api.events.utl.PATHS.clear()
+		ft3.api.events.utl.PATHS.extend(cls._paths)
+		return super().tearDownClass()
+
+	def test_01_runtime_api_skips_generated_docs(self):
+		"""Test runtime API skips generated docs files."""
+
+		self.assertNotIn(Constants.SWAGGER_PATH, ft3.api.FILES)
+		self.assertNotIn(
+			'/'.join((Constants.PATH_ROOT, 'openapi.json')),
+			ft3.api.FILES,
+		)
+
+		request = ft3.api.Request(
+			url=Constants.SWAGGER_PATH,
+			path=Constants.SWAGGER_PATH,
+			method=Constants.GET,
+		)
+
+		response = self.handler(request)
+
+		self.assertEqual(response.status_code, 500)
+
+	def test_02_runtime_api_dispatches_requests(self):
+		"""Test runtime API can dispatch and parse requests."""
+
+		url = '/'.join(
+			(
+				Constants.PATH_ROOT,
+				ft3.core.strings.utl.pluralize(
+					template.pkg.obj.PetWithPet.__name__[0].lower()
+					+ template.pkg.obj.PetWithPet.__name__[1:]
+				),
+			)
+		)
+
+		request = ft3.api.Request(
+			url=url,
+			path=url,
+			method=Constants.POST,
+			body=template.pkg.obj.PetWithPet(name='Runtime', pets=[]).to_dict(
+				camel_case=True,
+				include_null=False,
+				include_private=False,
+				include_write_only=True,
+				include_read_only=False,
+			),
+		)
+
+		response = self.handler(request)
+
+		self.assertEqual(response.status_code, 201)
+
+		url += '/' + response.body['id']
+		url += '?in=' + template.pkg.enm.PetLocation.inside.value
+
+		request = ft3.api.Request(url=url, path=url, method=Constants.PATCH)
+
+		response = self.handler(request)
+
+		self.assertEqual(
+			response.body['in'], template.pkg.enm.PetLocation.inside.value
+		)

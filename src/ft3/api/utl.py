@@ -7,6 +7,7 @@ __all__ = (
 	'parameters_from_object',
 	'paths_from_object',
 	'response_type_from_object',
+	'runtime_api_from_package',
 	'serve',
 )
 
@@ -41,7 +42,50 @@ class Constants(cfg.Constants):
 	EMPTY: lib.t.Literal['EMPTY'] = 'EMPTY'
 
 
-def parameters_from_object(cls: type[Object]) -> list[obj.Parameter]:
+def _runtime_schema_from_field(field: lib.t.Any) -> obj.Schema:
+	"""Return the schema details needed by request dispatch."""
+
+	return obj.Schema(
+		read_only=field.get('read_only'),
+		write_only=field.get('write_only'),
+	)
+
+
+def _runtime_schema_from_object(cls: type[Object]) -> obj.Schema:
+	"""Return the object schema details needed by request dispatch."""
+
+	oname: typ.string[typ.PascalCase] = cls.__name__
+	properties = {
+		(
+			fname := core.strings.utl.snake_case_to_camel_case(field_name)
+		): obj.Schema(
+			_ref_=fname + oname,
+			read_only=field.get('read_only'),
+			write_only=field.get('write_only'),
+		)
+		for field_name, field in cls.__dataclass_fields__.items()
+	}
+
+	return obj.Schema(properties=properties, type_=[enm.Type.object.value])
+
+
+def _discard_generated_doc_files(path_root: str) -> None:
+	"""Remove generated docs files from the API file registry."""
+
+	for file_path in (
+		Constants.SWAGGER_PATH,
+		'/'.join((path_root, 'openapi.json')),
+		'/favicon.ico',
+	):
+		obj.FILES.pop(file_path, None)
+
+	return None
+
+
+def parameters_from_object(
+	cls: type[Object],
+	include_schema_details: bool = True,
+) -> list[obj.Parameter]:
 	"""Generate RESTful API `Paremeter` Objects from an `Object`."""
 
 	parameters: list[obj.Parameter] = []
@@ -66,12 +110,16 @@ def parameters_from_object(cls: type[Object]) -> list[obj.Parameter]:
 			name=name_,
 			description=field.description,
 			in_=paramater_location,
-			schema=obj.Schema.from_type(
-				**{
-					k: v
-					for k, v in field.items()
-					if k not in Constants.SKIP_FIELDS
-				}
+			schema=(
+				obj.Schema.from_type(
+					**{
+						k: v
+						for k, v in field.items()
+						if k not in Constants.SKIP_FIELDS
+					}
+				)
+				if include_schema_details
+				else _runtime_schema_from_field(field)
 			),
 			required=required or field.required,
 		)
@@ -121,10 +169,11 @@ def operation_from_object(
 	parent_tags: lib.t.Optional[list[str]] = None,
 	parent_path_parameters: lib.t.Optional[list[obj.Parameter]] = None,
 	include_default_response_headers: bool = True,
+	include_docs: bool = True,
 ) -> lib.t.Optional[obj.Operation]:
 	"""Generate RESTful API `Operation` from an `Object`."""
 
-	parameters = parameters_from_object(cls)
+	parameters = parameters_from_object(cls, include_docs)
 
 	response_headers: dict[str, obj.Header] = {}
 	if include_default_response_headers:
@@ -153,31 +202,41 @@ def operation_from_object(
 
 	response_type = response_type_from_object(cls, method)
 
-	match response_type:
-		case Constants.MANY:
-			response_obj = obj.ResponseObject(
-				description='Success response.',
-				headers=response_headers,
-				content={
-					enm.ContentType.json.value: obj.Content(
-						schema=obj.Schema.from_type(type_=list[cls])  # type: ignore[valid-type]
-					)
-				},
-			)
-		case Constants.ONE:
-			response_obj = obj.ResponseObject(
-				description='Success response.',
-				headers=response_headers,
-				content={
-					enm.ContentType.json.value: obj.Content(
-						schema=obj.Schema.from_obj(cls)
-					)
-				},
-			)
-		case _:
-			response_obj = obj.ResponseObject(
-				description='Empty response.', headers=response_headers
-			)
+	if include_docs:
+		match response_type:
+			case Constants.MANY:
+				response_obj = obj.ResponseObject(
+					description='Success response.',
+					headers=response_headers,
+					content={
+						enm.ContentType.json.value: obj.Content(
+							schema=obj.Schema.from_type(type_=list[cls])  # type: ignore[valid-type]
+						)
+					},
+				)
+			case Constants.ONE:
+				response_obj = obj.ResponseObject(
+					description='Success response.',
+					headers=response_headers,
+					content={
+						enm.ContentType.json.value: obj.Content(
+							schema=obj.Schema.from_obj(cls)
+						)
+					},
+				)
+			case _:
+				response_obj = obj.ResponseObject(
+					description='Empty response.', headers=response_headers
+				)
+	else:
+		response_obj = obj.ResponseObject(
+			description=(
+				'Empty response.'
+				if response_type == Constants.EMPTY
+				else 'Success response.'
+			),
+			headers=response_headers,
+		)
 
 	match method:
 		case Constants.DELETE:
@@ -267,7 +326,11 @@ def operation_from_object(
 				request_body=obj.RequestBody(
 					content={
 						enm.ContentType.json.value: obj.Content(
-							schema=obj.Schema.from_obj(cls)
+							schema=(
+								obj.Schema.from_obj(cls)
+								if include_docs
+								else _runtime_schema_from_object(cls)
+							)
 						)
 					}
 				),
@@ -290,7 +353,11 @@ def operation_from_object(
 				request_body=obj.RequestBody(
 					content={
 						enm.ContentType.json.value: obj.Content(
-							schema=obj.Schema.from_obj(cls)
+							schema=(
+								obj.Schema.from_obj(cls)
+								if include_docs
+								else _runtime_schema_from_object(cls)
+							)
 						)
 					}
 				),
@@ -408,6 +475,7 @@ def paths_from_object(
 	parent_tags: lib.t.Optional[list[str]] = None,
 	parent_path_parameters: lib.t.Optional[list[obj.Parameter]] = None,
 	include_default_response_headers: bool = True,
+	include_docs: bool = True,
 ) -> list[obj.Path]:
 	"""Generate RESTful API `Path` Objects from an `Object`."""
 
@@ -426,6 +494,7 @@ def paths_from_object(
 				parent_tags,
 				parent_path_parameters,
 				include_default_response_headers,
+				include_docs,
 			)
 			if operation is not None:
 				operations_by_uri.setdefault(operation.path_uri, {})
@@ -440,9 +509,11 @@ def paths_from_object(
 			_ref_=path_uri,
 			_resource_=cls,
 			summary=cls.__name__,
-			description=lib.textwrap.dedent(cls.__doc__)
-			if cls.__doc__
-			else None,
+			description=(
+				lib.textwrap.dedent(cls.__doc__)
+				if include_docs and cls.__doc__
+				else None
+			),
 			**operations,  # type: ignore[arg-type]
 		)
 
@@ -483,6 +554,7 @@ def paths_from_object(
 					tags,
 					path_parameters or None,
 					include_default_response_headers,
+					include_docs,
 				)
 			)
 
@@ -496,9 +568,11 @@ def api_from_package(
 	include_heartbeat: bool = True,
 	include_version_prefix: bool = False,
 	include_default_response_headers: bool = True,
+	lazy_docs: bool = False,
 ) -> obj.Api:
 	"""Generate a RESTful API from passed python package name."""
 
+	include_docs = not lazy_docs
 	package = lib.importlib.import_module(name)
 
 	if include_heartbeat:
@@ -529,6 +603,7 @@ def api_from_package(
 				include_default_response_headers=(
 					include_default_response_headers
 				),
+				include_docs=include_docs,
 			)
 		)
 
@@ -540,29 +615,34 @@ def api_from_package(
 			if operation is not None:
 				if operation.tags is not None:
 					operation.tags = [':'.join(operation.tags)]
-					for tag in operation.tags:
-						if tag not in tagged:
-							_, _, obj_tag = tag.rpartition(':')
-							pascal_tag = obj_tag[0].upper() + obj_tag[1:]
-							if obj_ := OBJECTS.get(pascal_tag):
-								tagged.append(tag)
-								tags.append(
-									obj.Tag(
-										name=tag,
-										description=(
-											lib.textwrap.dedent(obj_.__doc__)
-											if obj_.__doc__
-											else None
-										),
+					if include_docs:
+						for tag in operation.tags:
+							if tag not in tagged:
+								_, _, obj_tag = tag.rpartition(':')
+								pascal_tag = obj_tag[0].upper() + obj_tag[1:]
+								if obj_ := OBJECTS.get(pascal_tag):
+									tagged.append(tag)
+									tags.append(
+										obj.Tag(
+											name=tag,
+											description=(
+												lib.textwrap.dedent(
+													obj_.__doc__
+												)
+												if obj_.__doc__
+												else None
+											),
+										)
 									)
-								)
 
 	info = obj.Info(
 		title=name,
 		version=version,
 		summary='API created with ft3.',
 		description=(
-			lib.textwrap.dedent(package.__doc__) if package.__doc__ else None
+			lib.textwrap.dedent(package.__doc__)
+			if include_docs and package.__doc__
+			else None
 		),
 	)
 
@@ -607,9 +687,13 @@ def api_from_package(
 		components=components,
 	)
 
+	path_root = '/'.join((api_path.strip('/'), version))
+	if lazy_docs:
+		_discard_generated_doc_files(path_root)
+		return api
+
 	from . import static
 
-	path_root = '/'.join((api_path.strip('/'), version))
 	swagger_path = Constants.SWAGGER_PATH
 
 	obj.File(
@@ -660,6 +744,27 @@ def api_from_package(
 	return api
 
 
+def runtime_api_from_package(
+	name: str,
+	version: str,
+	api_path: str,
+	include_heartbeat: bool = True,
+	include_version_prefix: bool = False,
+	include_default_response_headers: bool = True,
+) -> obj.Api:
+	"""Generate a RESTful API with only runtime dispatch metadata."""
+
+	return api_from_package(
+		name,
+		version,
+		api_path,
+		include_heartbeat,
+		include_version_prefix,
+		include_default_response_headers,
+		lazy_docs=True,
+	)
+
+
 def serve(
 	package: str,
 	port: int,
@@ -668,6 +773,7 @@ def serve(
 	include_heartbeat: bool,
 	include_version_prefix: bool,
 	include_default_response_headers: bool,
+	lazy_docs: bool = True,
 ) -> None:  # pragma: no cover
 	"""
     CLI entrypoint for serving an application.
@@ -683,9 +789,10 @@ def serve(
 
     ---
 
-    You may specify a port as a positional argument following \
-    the package name. By default, your application will be served \
-    on port 80, accessible at http://localhost/swagger in your browser.
+	You may specify a port as a positional argument following \
+	the package name. By default, your application will be served \
+	on port 80 without generated docs for faster startup. Use \
+	`--generate-docs` to serve Swagger at http://localhost/swagger.
 
     ---
 
@@ -710,6 +817,7 @@ def serve(
 			include_heartbeat,
 			include_version_prefix,
 			include_default_response_headers,
+			lazy_docs,
 		)
 	)
 
