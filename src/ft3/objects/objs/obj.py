@@ -22,6 +22,9 @@ if lib.t.TYPE_CHECKING:  # pragma: no cover
 class Constants(cfg.Constants):
 	"""Constant values specific to this file."""
 
+	HANDLED: dict[str, type] = {}
+	"""Every Object class that has had an HTTP handler attached."""
+
 
 @lib.dataclass_transform(field_specifiers=(typ.Field,))
 class ObjectBase(metaclass=metas.Meta):
@@ -49,13 +52,24 @@ class ObjectBase(metaclass=metas.Meta):
 	hash_fields: lib.t.ClassVar[typ.FieldsTuple]
 
 	@classmethod
+	def _add_operation(
+		cls,
+		k: 'typ.string[typ.snake_case]',
+		fn: lib.t.Callable[..., lib.t.Any],
+	) -> None:
+		"""Attach an HTTP handler and remember that this class has one."""
+
+		cls.__operations__[k] = fn
+		Constants.HANDLED['.'.join((cls.__module__, cls.__qualname__))] = cls
+
+	@classmethod
 	def DELETE(
 		cls, fn: lib.t.Callable[['api.events.obj.Request'], None]
 	) -> lib.t.Callable[['api.events.obj.Request'], None]:
 		k: typ.string[typ.snake_case] = '_'.join(
 			(cls.__name__.lower(), Constants.DELETE)
 		)
-		cls.__operations__[k] = fn
+		cls._add_operation(k, fn)
 		return fn
 
 	@classmethod
@@ -78,7 +92,7 @@ class ObjectBase(metaclass=metas.Meta):
 			k = '_'.join(  # pragma: no cover
 				(cls.__name__.lower(), Constants.GET)
 			)
-		cls.__operations__[k] = fn
+		cls._add_operation(k, fn)
 		return fn
 
 	@classmethod
@@ -87,7 +101,7 @@ class ObjectBase(metaclass=metas.Meta):
 	) -> lib.t.Callable[['api.events.obj.Request'], None]:  # pragma: no cover
 		k: typ.string[typ.snake_case]
 		k = '_'.join((cls.__name__.lower(), Constants.OPTIONS))
-		cls.__operations__[k] = fn
+		cls._add_operation(k, fn)
 		return fn
 
 	@classmethod
@@ -96,14 +110,14 @@ class ObjectBase(metaclass=metas.Meta):
 	) -> 'lib.t.Callable[[api.events.obj.Request], lib.Self]':
 		k: typ.string[typ.snake_case]
 		k = '_'.join((cls.__name__.lower(), Constants.PATCH))
-		cls.__operations__[k] = fn
+		cls._add_operation(k, fn)
 		return fn
 
 	@classmethod
 	def POST(
 		cls, fn: 'lib.t.Callable[[api.events.obj.Request], lib.Self]'
 	) -> 'lib.t.Callable[[api.events.obj.Request], lib.Self]':
-		cls.__operations__[Constants.POST] = fn
+		cls._add_operation(Constants.POST, fn)
 		return fn
 
 	@classmethod
@@ -112,7 +126,7 @@ class ObjectBase(metaclass=metas.Meta):
 	) -> 'lib.t.Callable[[api.events.obj.Request], lib.Self]':
 		k: typ.string[typ.snake_case]
 		k = '_'.join((cls.__name__.lower(), Constants.PUT))
-		cls.__operations__[k] = fn
+		cls._add_operation(k, fn)
 		return fn
 
 	def __repr__(self) -> str:

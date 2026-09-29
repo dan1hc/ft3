@@ -69,6 +69,7 @@ class Constants(core.cfg.Constants):
 		'__instancecheck__',
 		'__subclasscheck__',
 		'_object_',
+		'_add_operation',
 		'class_as_dict',
 		'copy',
 		'enumerations',

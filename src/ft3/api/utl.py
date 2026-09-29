@@ -42,6 +42,44 @@ class Constants(cfg.Constants):
 	EMPTY: lib.t.Literal['EMPTY'] = 'EMPTY'
 
 
+def _join_root(api_path: str, *segments: str) -> str:
+	"""Join an api path and segments into an absolute, slash-led url."""
+
+	parts = [p for p in (api_path.strip('/'), *segments) if p]
+	return '/' + '/'.join(parts)
+
+
+def _warn_unregistered_handlers(paths: list[obj.Path]) -> None:
+	"""
+    Warn once per Object that has HTTP handlers but is served by no \
+    path, the usual sign of a missing `@Api.register`.
+
+    """
+
+	from .. import loggers
+
+	served = {path._resource_ for path in paths}
+	template = '.'.join((Constants.PACKAGE, 'template'))
+	for qualname, handled in objects.objs.obj.Constants.HANDLED.items():
+		if (
+			handled in served
+			or handled.__name__ in OBJECTS
+			or handled.__module__.startswith(template)
+		):
+			continue
+		loggers.utl.warn_once(
+			('api', 'unregistered_handlers', qualname),
+			{
+				'unregistered.handlers': {
+					'object': qualname,
+					'outcome': 'its routes are not served',
+					'fix': 'decorate the class with @Api.register',
+				}
+			},
+		)
+	return None
+
+
 def _runtime_schema_from_field(field: lib.t.Any) -> obj.Schema:
 	"""Return the schema details needed by request dispatch."""
 
@@ -607,6 +645,8 @@ def api_from_package(
 			)
 		)
 
+	_warn_unregistered_handlers(paths)
+
 	tags: list[obj.Tag] = []
 	tagged: list[str] = []
 	for path in paths:
@@ -648,11 +688,11 @@ def api_from_package(
 
 	if include_version_prefix:
 		server = obj.ServerObject(
-			url='/'.join((api_path.strip('/'), '{version}')),
+			url=_join_root(api_path, '{version}'),
 			variables={'version': obj.ServerVariable(default=version)},
 		)
-	else:  # pragma: no cover
-		server = obj.ServerObject(url=api_path)
+	else:
+		server = obj.ServerObject(url=_join_root(api_path))
 
 	security: dict[str, obj.SecurityScheme] = {}
 	for obj_security_requirements in SECURITY.values():
@@ -687,7 +727,7 @@ def api_from_package(
 		components=components,
 	)
 
-	path_root = '/'.join((api_path.strip('/'), version))
+	path_root = _join_root(api_path, version)
 	if lazy_docs:
 		_discard_generated_doc_files(path_root)
 		return api

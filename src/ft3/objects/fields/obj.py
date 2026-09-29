@@ -917,7 +917,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 					Constants.DELETE,
 				)
 			)
-			obj_or_none.__operations__[k] = fn
+			obj_or_none._add_operation(k, fn)
 		return fn
 
 	def GET(  # type: ignore[override]
@@ -947,7 +947,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 						Constants.GET,
 					)
 				)
-			obj_or_none.__operations__[k] = fn
+			obj_or_none._add_operation(k, fn)
 		return fn
 
 	def OPTIONS(  # type: ignore[override]
@@ -963,7 +963,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 					Constants.OPTIONS,
 				)
 			)
-			obj_or_none.__operations__[k] = fn
+			obj_or_none._add_operation(k, fn)
 		return fn
 
 	def PATCH(  # type: ignore[override]
@@ -979,7 +979,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 					Constants.PATCH,
 				)
 			)
-			obj_or_none.__operations__[k] = fn
+			obj_or_none._add_operation(k, fn)
 		return fn
 
 	def POST(  # type: ignore[override]
@@ -989,7 +989,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 		obj_or_none = utl.get_obj_from_type(self.type_)  # type: ignore[arg-type]
 		if obj_or_none is not None:
 			k = '_'.join((self._object_.__name__.lower(), Constants.POST))
-			obj_or_none.__operations__[k] = fn
+			obj_or_none._add_operation(k, fn)
 		return fn
 
 	def PUT(  # type: ignore[override]
@@ -1005,5 +1005,5 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 					Constants.PUT,
 				)
 			)
-			obj_or_none.__operations__[k] = fn
+			obj_or_none._add_operation(k, fn)
 		return fn
