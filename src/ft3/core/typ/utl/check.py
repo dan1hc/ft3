@@ -313,7 +313,7 @@ def is_union(obj: lib.t.Any) -> lib.t.TypeGuard[lib.lib.types.UnionType]:
 	if isinstance(obj, lib.t.ForwardRef):
 		tp_key = hash(obj.__forward_arg__)
 	else:
-		tp_key = hash(obj.__class__.__name__)
+		tp_key = hash(('instance', obj.__class__))
 
 	if tp_key not in IS_UNION_CACHE:
 		IS_UNION_CACHE[tp_key] = isinstance(
@@ -395,7 +395,7 @@ def is_literal(
 	if isinstance(tp, lib.t.ForwardRef):
 		tp_key = hash(tp.__forward_arg__)
 	else:
-		tp_key = hash(tp.__class__.__name__)
+		tp_key = hash(('instance', tp.__class__))
 
 	if tp_key not in IS_LITERAL_CACHE:
 		otp = lib.t.get_origin(tp) or tp
@@ -443,7 +443,7 @@ def is_none_type(
 	if isinstance(tp, type):
 		tp_key = hash(tp)
 	else:
-		tp_key = hash(tp.__class__.__name__)
+		tp_key = hash(('instance', tp.__class__))
 
 	if tp_key not in IS_NONE_CACHE:
 		otps = get_checkable_types(tp)
@@ -468,7 +468,7 @@ def is_primitive(obj: lib.t.Any) -> 'lib.t.TypeGuard[typ.Primitive]':
 	if isinstance(obj, type):
 		tp_key = hash(obj)
 	else:
-		tp_key = hash(obj.__class__.__name__)
+		tp_key = hash(('instance', obj.__class__))
 
 	if tp_key not in IS_PRIMITIVE_CACHE:
 		IS_PRIMITIVE_CACHE[tp_key] = isinstance(
@@ -493,20 +493,18 @@ def is_serialized_mapping(
 	from .. import typ
 
 	if is_mapping(obj):
-		tp_key = hash(str(v) for v in obj.values())
-	else:
-		tp_key = hash(obj.__class__.__name__)
-
-	if tp_key not in IS_SERIALIZED_MAPPING_CACHE:
-		IS_SERIALIZED_MAPPING_CACHE[tp_key] = isinstance(
-			obj, lib.t.Mapping
-		) and all(
+		# A mapping's answer depends on its contents: never cached.
+		return all(
 			(
 				is_primitive(k)
 				and isinstance(v, get_checkable_types(typ.Serial))
 			)
 			for k, v in obj.items()
 		)
+
+	tp_key = hash(('instance', obj.__class__))
+	if tp_key not in IS_SERIALIZED_MAPPING_CACHE:
+		IS_SERIALIZED_MAPPING_CACHE[tp_key] = isinstance(obj, lib.t.Mapping)
 
 	return IS_SERIALIZED_MAPPING_CACHE[tp_key]
 
@@ -523,7 +521,7 @@ def is_mapping(
 	if isinstance(obj, type):
 		tp_key = hash(obj)
 	else:
-		tp_key = hash(obj.__class__.__name__)
+		tp_key = hash(('instance', obj.__class__))
 
 	if tp_key not in IS_MAPPING_CACHE:
 		IS_MAPPING_CACHE[tp_key] = isinstance(obj, lib.t.Mapping)
@@ -564,7 +562,7 @@ def is_array(
 	if isinstance(obj, type):
 		tp_key = hash(obj)
 	else:
-		tp_key = hash(obj.__class__.__name__)
+		tp_key = hash(('instance', obj.__class__))
 
 	if tp_key not in IS_ARRAY_CACHE:
 		IS_ARRAY_CACHE[tp_key] = isinstance(
@@ -599,10 +597,8 @@ def is_object_type(tp: lib.t.Any) -> lib.t.TypeGuard[type['objects.Object']]:
 
 	if isinstance(tp, type):
 		tp_key = hash(tp)
-	elif is_mapping(tp):
-		tp_key = hash(str(v) for v in tp.values())
 	else:
-		tp_key = hash(tp.__class__.__name__)
+		tp_key = hash(('instance', tp.__class__))
 
 	if tp_key not in IS_OBJECT_TYPE_CACHE:
 		if isinstance(tp, type):
@@ -674,7 +670,7 @@ def is_wrapper_type(
 	if isinstance(tp, lib.t.ForwardRef):
 		tp_key = hash(tp.__forward_arg__)
 	elif is_mapping(tp):
-		tp_key = hash(str(v) for v in tp.values())
+		tp_key = hash(('instance', tp.__class__))
 	else:
 		tp_key = hash(tp)
 
@@ -723,7 +719,7 @@ def is_typed(
 	if isinstance(any, type):
 		tp_key = hash(any)
 	else:
-		tp_key = hash(any.__class__.__name__)
+		tp_key = hash(('instance', any.__class__))
 
 	if tp_key not in IS_TYPED_CACHE:
 		IS_TYPED_CACHE[tp_key] = (

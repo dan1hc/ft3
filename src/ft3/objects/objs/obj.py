@@ -22,6 +22,9 @@ if lib.t.TYPE_CHECKING:  # pragma: no cover
 class Constants(cfg.Constants):
 	"""Constant values specific to this file."""
 
+	HANDLED: dict[str, type] = {}
+	"""Every Object class that has had an HTTP handler attached."""
+
 
 @lib.dataclass_transform(field_specifiers=(typ.Field,))
 class ObjectBase(metaclass=metas.Meta):
@@ -49,13 +52,24 @@ class ObjectBase(metaclass=metas.Meta):
 	hash_fields: lib.t.ClassVar[typ.FieldsTuple]
 
 	@classmethod
+	def _add_operation(
+		cls,
+		k: 'typ.string[typ.snake_case]',
+		fn: lib.t.Callable[..., lib.t.Any],
+	) -> None:
+		"""Attach an HTTP handler and remember that this class has one."""
+
+		cls.__operations__[k] = fn
+		Constants.HANDLED['.'.join((cls.__module__, cls.__qualname__))] = cls
+
+	@classmethod
 	def DELETE(
 		cls, fn: lib.t.Callable[['api.events.obj.Request'], None]
 	) -> lib.t.Callable[['api.events.obj.Request'], None]:
 		k: typ.string[typ.snake_case] = '_'.join(
 			(cls.__name__.lower(), Constants.DELETE)
 		)
-		cls.__operations__[k] = fn
+		cls._add_operation(k, fn)
 		return fn
 
 	@classmethod
@@ -78,7 +92,7 @@ class ObjectBase(metaclass=metas.Meta):
 			k = '_'.join(  # pragma: no cover
 				(cls.__name__.lower(), Constants.GET)
 			)
-		cls.__operations__[k] = fn
+		cls._add_operation(k, fn)
 		return fn
 
 	@classmethod
@@ -87,7 +101,7 @@ class ObjectBase(metaclass=metas.Meta):
 	) -> lib.t.Callable[['api.events.obj.Request'], None]:  # pragma: no cover
 		k: typ.string[typ.snake_case]
 		k = '_'.join((cls.__name__.lower(), Constants.OPTIONS))
-		cls.__operations__[k] = fn
+		cls._add_operation(k, fn)
 		return fn
 
 	@classmethod
@@ -96,14 +110,14 @@ class ObjectBase(metaclass=metas.Meta):
 	) -> 'lib.t.Callable[[api.events.obj.Request], lib.Self]':
 		k: typ.string[typ.snake_case]
 		k = '_'.join((cls.__name__.lower(), Constants.PATCH))
-		cls.__operations__[k] = fn
+		cls._add_operation(k, fn)
 		return fn
 
 	@classmethod
 	def POST(
 		cls, fn: 'lib.t.Callable[[api.events.obj.Request], lib.Self]'
 	) -> 'lib.t.Callable[[api.events.obj.Request], lib.Self]':
-		cls.__operations__[Constants.POST] = fn
+		cls._add_operation(Constants.POST, fn)
 		return fn
 
 	@classmethod
@@ -112,7 +126,7 @@ class ObjectBase(metaclass=metas.Meta):
 	) -> 'lib.t.Callable[[api.events.obj.Request], lib.Self]':
 		k: typ.string[typ.snake_case]
 		k = '_'.join((cls.__name__.lower(), Constants.PUT))
-		cls.__operations__[k] = fn
+		cls._add_operation(k, fn)
 		return fn
 
 	def __repr__(self) -> str:
@@ -129,23 +143,42 @@ class ObjectBase(metaclass=metas.Meta):
 		/,
 		**kwargs: lib.t.Any,
 	):
-		ckwargs = {
-			cname: value
-			for name, value in kwargs.items()
-			if (cname := core.strings.utl.cname_for(name, self.fields))
-		}
-
+		ckwargs: dict[str, lib.t.Any] = {}
+		unknown: list[str] = []
+		supplied: list[tuple[lib.t.Any, lib.t.Any]] = list(kwargs.items())
 		if isinstance(class_as_dict, lib.t.Mapping):
-			class_as_cdict = {
-				cname: value
-				for name, value in class_as_dict.items()
-				if (cname := core.strings.utl.cname_for(name, self.fields))
-			}
-			ckwargs |= class_as_cdict
+			supplied.extend(class_as_dict.items())
+		for name, value in supplied:
+			if cname := core.strings.utl.cname_for(name, self.fields):
+				ckwargs[cname] = value
+			else:
+				unknown.append(str(name))
+
+		for name in unknown:
+			from ... import loggers
+
+			loggers.utl.warn_once(
+				(type(self).__name__, 'unknown_key', name),
+				{
+					'unknown.key': {
+						'object': type(self).__name__,
+						'key': name,
+						'outcome': 'dropped',
+						'fix': 'declare a Field for it or stop sending it',
+					}
+				},
+			)
 
 		for cname, field in self.__dataclass_fields__.items():
 			if cname not in ckwargs:
 				ckwargs[cname] = field.factory()
+
+		if getattr(type(self), Constants.__STRICT__, False):
+			for cname, field in self.__dataclass_fields__.items():
+				if field.required and ckwargs.get(cname) is None:
+					raise exc.MissingRequiredFieldError(
+						type(self).__name__, cname
+					)
 
 		for cname, value in ckwargs.items():
 			setattr(self, cname, value)
@@ -177,85 +210,29 @@ class ObjectBase(metaclass=metas.Meta):
 			raise KeyError(__key)
 
 	def __getitem__(self, __key: lib.t.Any, /) -> lib.t.Any:
-		"""Return field value dict style."""
+		"""
+		Return a field value dict style, exactly as stored.
+
+		---
+
+		Nested Objects are returned as Objects. Use `to_dict()` for a \
+		plain-data tree.
+
+		"""
 
 		if isinstance(__key, str) and (
 			k := core.strings.utl.cname_for(__key, self.fields)
 		):
-			value = getattr(
+			field_ = self.__dataclass_fields__[k]
+			return getattr(
 				self,
 				k,
 				(
 					field_.factory()
-					if typ.utl.check.is_field(
-						field_ := self.__dataclass_fields__[k]
-					)
+					if typ.utl.check.is_field(field_)
 					else field_['default']
 				),
 			)
-			if (
-				isinstance(value, Object)
-				and (
-					callers := lib.t.cast(
-						lib.types.FrameType,
-						lib.t.cast(
-							lib.types.FrameType, lib.inspect.currentframe()
-						).f_back,
-					).f_code.co_names
-				)
-				and 'dict' in callers
-				and (
-					callers[0] == 'dict'
-					or (callers[callers.index('dict') - 1] != 'to_dict')
-				)
-			):
-				return value.to_dict()
-			elif (
-				typ.utl.check.is_array(value)
-				and (
-					callers := lib.t.cast(
-						lib.types.FrameType,
-						lib.t.cast(
-							lib.types.FrameType, lib.inspect.currentframe()
-						).f_back,
-					).f_code.co_names
-				)
-				and 'dict' in callers
-				and (
-					callers[0] == 'dict'
-					or (callers[callers.index('dict') - 1] != 'to_dict')
-				)
-			):
-				return value.__class__(
-					item.to_dict() if typ.utl.check.is_object(item) else item
-					for item in value
-				)
-			elif (
-				typ.utl.check.is_mapping(value)
-				and (
-					callers := lib.t.cast(
-						lib.types.FrameType,
-						lib.t.cast(
-							lib.types.FrameType, lib.inspect.currentframe()
-						).f_back,
-					).f_code.co_names
-				)
-				and 'dict' in callers
-				and (
-					callers[0] == 'dict'
-					or (callers[callers.index('dict') - 1] != 'to_dict')
-				)
-			):
-				return value.__class__(
-					{
-						(k.to_dict() if typ.utl.check.is_object(k) else k): (
-							v.to_dict() if typ.utl.check.is_object(v) else v
-						)
-						for k, v in value.items()
-					}
-				)
-			else:
-				return value
 		else:
 			raise KeyError(__key)
 
@@ -292,9 +269,22 @@ class ObjectBase(metaclass=metas.Meta):
 		)
 
 	def __bool__(self) -> bool:
-		"""Determine truthiness by diff with default field values."""
+		"""
+		True if any field differs from its default.
 
-		return bool(self - self.__class__())
+		---
+
+		Never constructs a default instance, so it cannot raise for \
+		classes with required or constrained fields.
+
+		"""
+
+		for name, field in self.__dataclass_fields__.items():
+			factory = getattr(field, 'factory', None)
+			default = factory() if callable(factory) else field.get('default')
+			if self[name] != default:
+				return True
+		return False
 
 	@lib.t.overload
 	def __eq__(self, other: 'typ.AnyField[lib.t.Any]') -> bool: ...
@@ -307,7 +297,10 @@ class ObjectBase(metaclass=metas.Meta):
 	def __eq__(
 		self, other: lib.t.Union[object, lib.t.Any]
 	) -> lib.t.Union[bool, 'queries.EqQueryCondition', lib.Never]:
-		return hash(self) == hash(other)
+		try:
+			return hash(self) == hash(other)
+		except TypeError:
+			return False
 
 	@lib.t.overload
 	def __ne__(self, other: 'typ.AnyField[lib.t.Any]') -> bool: ...
@@ -320,7 +313,7 @@ class ObjectBase(metaclass=metas.Meta):
 	def __ne__(
 		self, other: lib.t.Union[object, lib.t.Any, 'typ.AnyField[lib.t.Any]']
 	) -> lib.t.Union[bool, 'queries.NeQueryCondition', lib.Never]:
-		return hash(self) != hash(other)
+		return not self.__eq__(other)
 
 	def __sub__(self, other: lib.Self) -> typ.SnakeDict:
 		"""Calculate diff between same object types."""
@@ -420,11 +413,22 @@ class ObjectBase(metaclass=metas.Meta):
 		return self.__class__(dict(self))
 
 	def __deepcopy__(
-		self, memo: lib.t.Optional[typ.AnyDict] = None
+		self, memo: lib.t.Optional[dict[int, lib.t.Any]] = None
 	) -> lib.Self:
-		"""Return a deep copy of the instance."""
+		"""
+		Return a deep copy of the instance.
 
-		return self.__copy__()
+		---
+
+		Every field value, including `read_only` and private fields, \
+		is deep-copied, so nothing nested is shared with the original.
+
+		"""
+
+		memo = {} if memo is None else memo
+		return self.__class__(
+			{name: lib.copy.deepcopy(self[name], memo) for name in self.fields}
+		)
 
 	def __getstate__(self) -> typ.AnyDict:
 		return dict(self)
@@ -445,7 +449,8 @@ class ObjectBase(metaclass=metas.Meta):
 
 		---
 
-		Includes `null` values as well as all `read_only` fields.
+		Omits `null` values, private fields, and `write_only` fields; \
+		includes `read_only` fields.
 
 		"""
 
@@ -633,6 +638,13 @@ class ObjectBase(metaclass=metas.Meta):
 		}
 		as_dict: typ.SnakeDict = {}
 		for key, value in d.items():
+			options = self.__dataclass_fields__[key]
+			camel_keys = options.get('camel_case_keys')
+			drop_nulls = options.get('drop_null_items')
+			if camel_keys is None:
+				camel_keys = Constants.LEGACY_WIRE
+			if drop_nulls is None:
+				drop_nulls = Constants.LEGACY_WIRE
 			if isinstance(value, ObjectBase):
 				as_dict[key] = value.to_dict(
 					camel_case,
@@ -665,7 +677,7 @@ class ObjectBase(metaclass=metas.Meta):
 						if typ.utl.check.is_array_of_object(v)
 						else v
 						for v in value
-						if (v is not None or include_null)
+						if (v is not None or include_null or not drop_nulls)
 					)
 				)
 			elif typ.utl.check.is_mapping(value):
@@ -673,7 +685,11 @@ class ObjectBase(metaclass=metas.Meta):
 					**{
 						(
 							core.strings.utl.snake_case_to_camel_case(k)
-							if (camel_case and isinstance(k, str))
+							if (
+								camel_case
+								and camel_keys
+								and isinstance(k, str)
+							)
 							else k
 						): (
 							v.to_dict(
@@ -714,281 +730,47 @@ class ObjectBase(metaclass=metas.Meta):
 @lib.dataclass_transform(kw_only_default=True, field_specifiers=(typ.Field,))
 class Object(ObjectBase):
 	"""
-    Base Object.
+    Base Object: declare it once, get validation, serialization, an API \
+    resource, and a log-safe repr from the declaration.
 
     ---
-
-    Usage
-    -----
-
-    * Subclass to create objects for your application.
-
-    General Recommendations
-    -----------------------
-
-    * Ideally, objects should be 1:1 with their counterparts in the \
-    data store from which they are originally sourced (even \
-    if that data store is your own database, and even if that \
-    data is not ostensibly stored in a 1:1 manner, as is the case \
-    with most relational databases).
-        \
-        * For example, if there is a SQL table called `pets` \
-        with the schema below, you would want to create \
-        a corresponding `python representation` similar to \
-        the following.
-
-    #### pets table
-
-    ```
-    | id  | name     | type   |
-    | --- | -------- | ------ |
-    | a1  | fido     | dog    |
-    | a2  | garfield | cat    |
-    | a3  | sophie   | dog    |
-    | a4  | stripes  | turtle |
-
-    ```
-
-    #### python representation
 
     ```python
     import ft3
 
 
     class Pet(ft3.Object):
-        \"""A pet.\"""
+        \"""A pet. The docstring is the resource description.\"""
 
-        id_: ft3.Field[str] # Trailing underscores are special
-                             # in ft3, check the documentation
-                             # below for more detail.
-        name: ft3.Field[str] = 'Fido'  # Setting = 'Fido' will mean that
-                                       # all Pet() instances will be
-                                       # named 'Fido' by default.
-        type: ft3.Field[str]  # You can make a field 'required' by
-                              # not specifying a default value.
+        id_: ft3.Field[str]                # required; serializes as `id`
+        name: ft3.Field[str] = 'Fido'      # default
+        type_: ft3.Field[str] = ft3.Field(default='dog', enum=['cat', 'dog'])
+        _note: ft3.Field[str] = ''         # private: never on the wire
 
     ```
 
-    ---
+    Rules enforced at class definition, each with a named error that \
+    states the fix:
 
-    Special Rules
-    -------------
+    * every annotation is `Field[T]`
+    * every field name is `snake_case`; trailing underscores are \
+    stripped on the wire (`id_` -> `id`) and let reserved names such \
+    as `items_` or `in_` be used
+    * a field with no default and no `Optional` type is required
+    * fields named `*id` or `*key` are hash fields: they define \
+    equality, hashing, and path parameters
 
-    #### Default Values
-    Subclassed (derivative) objects should include default values for \
-    all fields specified. In cases where a default value is not specified, \
-    `None` will be used instead and the field will be assumed to be \
-    'required' for all downstream purposes (ex. as a query parameter \
-    for HTTP requests) unless otherwise specified explicitly.
+    Construction accepts a mapping, keyword arguments, or both, with \
+    camelCase or snake_case keys. Plain construction is lenient (the \
+    hydrate path for stored records); `class Model(Object, strict=True)` \
+    enforces every declared constraint on construction and assignment. \
+    Unknown keys are dropped with a one-time WARNING.
 
-    #### Type Annotations
-    Type annotations are required and must be a generic `Field[type]`. \
-    For example: `Field[int]`, `Field[str]`, `Field[str | bool]`.
-
-    * Not only is this best practice, these are leveraged downstream \
-    to do things like auto-document and auto-generate API's.
-
-    #### Uniform Casing
-    ALL Fields must be either camelCase or snake_case, with the only \
-    exception being that fields may begin with an underscore '_', so long \
-    as all following characters adhere to camelCase or snake_case conventions.
-
-    #### Underscore Prefix for Private Fields
-    Fields that begin with an underscore '_' will be ignored on \
-    conversion to / from DBO, REST, and JSON representations, \
-    unless the field ends with 'id', 'name', or 'key' (case and \
-    underscore insensitive), in which case it will still be converted.
-
-    * This follows the broader pattern of flagging methods and \
-    attributes as private / internal to a system with a preceding \
-    underscore. It should be expected that end users of your \
-    system will not need to interact with these fields.
-
-    #### Underscore Suffix for Reserved Keyword Fields
-    Fields with a trailing underscore '_' will automatically have \
-    the trailing underscore removed on conversion to / from \
-    DBO, REST, and JSON representations.
-
-    * This allows for python keywords, such as `in_`, to be used \
-    as object fields, where they would otherwise raise errors \
-    without the proceeding underscore.
-
-    * On translation to and from dictionaries, keys without \
-    underscores will still be checked against these fields -- \
-    so, a dictionary with key `in` will correctly map to the `in_` \
-    field on the Object. See below for more detail.
-
-    ```python
-    import ft3
-
-
-    class Pet(ft3.Object):
-        \"""A pet.\"""
-
-        id_: ft3.Field[str]
-        _alternate_id: ft3.Field[str]
-
-        name: ft3.Field[str]
-        type: ft3.Field[str]
-        in_: ft3.Field[str]
-        is_tail_wagging: ft3.Field[bool] = True
-
-
-    # This means each of the below will work.
-    bob_the_dog = Pet(
-        id='abc123',
-        _alternate_id='dog1',
-        name='Bob',
-        type='dog',
-        in_='timeout',
-        is_tail_wagging=False
-        )
-    bob_the_dog = Pet(
-        {
-            'id': 'abc123',
-            '_alternate_id': 'dog1',
-            'name': 'Bob',
-            'type': 'dog',
-            'in': 'timeout',
-            'is_tail_wagging': False
-            }
-        )
-
-    # And so would this, since translation
-    # automatically handles camelCase to
-    # snake_case conversions.
-    bob_the_dog = Pet(
-        {
-            'id': 'abc123',
-            'alternateId': 'dog1',
-            'name': 'Bob',
-            'type': 'dog',
-            'in': 'timeout',
-            'isTailWagging': False
-            }
-        )
-
-    ```
-
-    ---
-
-    Special Method Usage
-    --------------------
-
-    Objects have been designed to be almost interchangable with \
-    dictionaries. The primary difference is that values cannot be \
-    assigned to keys unless you define them on the Object's class \
-    definition itself.
-    * This is done to automatically maximize the efficiency of your \
-    application's memory footprint. Feel free to read more about \
-    python [slots](https://wiki.python.org/moin/UsingSlots) to better \
-    understand why this is necessary.
-
-    ```python
-    import ft3
-
-
-    class Pet(ft3.Object):  # noqa
-
-        name: ft3.Field[str]
-
-
-    dog = Pet(name='Fido')
-
-    # The below would return the string, 'Fido'.
-    dog['name']
-
-    # The following would set the dog's name to something else.
-    dog.setdefault('name', 'Arnold')
-    assert dog.name == 'Arnold'
-    dog.setdefault('name', 'Buddy')
-    assert dog.name == 'Arnold'
-    dog['name'] = 'Buddy'
-    assert dog.name == 'Buddy'
-    assert dog['name'] == 'Buddy'
-
-    # The following all work exactly the same as with a dictionary.
-    # (in the below, key will be 'name' and value 'Fido').
-    for key, value in dog.items():
-        break
-
-    for key in dog.keys():
-        break
-
-    for value in dog.values():
-        break
-
-    # But the following will raise a KeyError.
-    dog['field_that_does_not_exist'] = 'Buddy'
-
-    # And so would this, since fields can only be added
-    # or removed on the class definition of Pet itself.
-    dog.setdefault('field_that_does_not_exist', 'Buddy')
-
-    ```
-
-    Object truthiness will evaluate to True if any values for \
-    the Object instance are different from default values, \
-    otherwise False.
-
-    ```python
-    if Object:
-    ```
-
-    Objects are designed to display themselves as neatly \
-    formatted JSON on calls to `__repr__`.
-
-    ```python
-    print(Object)
-    ```
-
-    Updates Object1 with values from Object2 if they \
-    are a non-default value for the object.
-
-    ```python
-    Object1 << Object2
-    ```
-
-    Overwrites Object1 values with those from Object2 \
-    if they are a non-default value for the object.
-
-    ```python
-    Object1 >> Object2
-    ```
-
-    Returns a dictionary with {fieldName: fieldValue2} for \
-    any fields that differ between the two Objects.
-
-    ```python
-    Object1 - Object2
-    ```
-
-    Get value for Object field.
-
-    ```python
-    value = Object['field']
-    ```
-
-    Set value for Object field.
-
-    ```python
-    Object['field'] = value
-    ```
-
-    Returns True if any one of field, _field, field_, or _field_ \
-    is a valid field for the Object, otherwise False.
-
-    ```python
-    field in Object
-    ```
-
-    Same as `len(Object.fields)`.
-
-    ```python
-    len(Object)
-    ```
-
-    """
+    `as_response` is the wire shape (camelCase; nulls, private, and \
+    write_only fields omitted; read_only included). `to_dict()` is the \
+    plain-data tree (snake_case; read_only omitted by default). See \
+    `AGENTS.md` for the complete rulebook.
+	"""
 
 	class_as_dict: lib.t.Final[
 		lib.t.Optional[dict[typ.AnyString, lib.t.Any]]

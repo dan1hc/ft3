@@ -54,6 +54,14 @@ class Meta(type):
 	) -> typ.MetaType:
 		fields: typ.DataClassFields = {}
 		heritage: tuple[type, ...] = __bases
+		strict: bool = kwargs.pop(
+			'strict',
+			any(
+				getattr(base, Constants.__STRICT__, False)
+				for base in heritage
+				if isinstance(base, Meta)
+			),
+		)
 		slots: list[typ.string[typ.snake_case]]
 		_slots: tuple[typ.string[typ.snake_case], ...] | str = __namespace.get(
 			Constants.__SLOTS__, ()
@@ -69,6 +77,16 @@ class Meta(type):
 		module: str = __namespace.get(Constants.__MODULE__, '')
 		annotations: typ.SnakeDict
 		annotations = __namespace.pop(Constants.__ANNOTATIONS__, {})
+		annotate = __namespace.pop(Constants.__ANNOTATE_FUNC__, None)
+		if annotate is not None and not annotations:  # pragma: no cover
+			# Python 3.14+ (PEP 649): annotations are deferred behind an
+			# annotate function; evaluate them, keeping unresolved names
+			# as ForwardRefs for ft3 to resolve.
+			import annotationlib  # type: ignore[import-not-found]
+
+			annotations = annotationlib.call_annotate_function(
+				annotate, annotationlib.Format.FORWARDREF
+			)
 		annotations |= {
 			k: typ.utl.hint.resolve_type(v, lib.sys.modules[module].__dict__)
 			for k, v in annotations.items()
@@ -159,6 +177,7 @@ class Meta(type):
 		namespace[Constants.__DATACLASS_FIELDS__] = fields
 		namespace[Constants.__HERITAGE__] = heritage
 		namespace[Constants.__OPERATIONS__] = operations
+		namespace[Constants.__STRICT__] = strict
 
 		namespace[Constants.FIELDS] = fields_tuple
 		namespace[Constants.ENUMERATIONS] = utl.get_enumerations_from_fields(
