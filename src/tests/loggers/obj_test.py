@@ -304,8 +304,17 @@ class TestRedaction(unittest.TestCase):
 			self.logged({'note': 'postgres://user:pw@host/db'}),
 		)
 
+	def test_02b_allowlisted_keys_are_kept(self):
+		ft3.core.strings.cfg.Constants.REDACT_ALLOW = ('arena_tokens',)
+		try:
+			self.assertNotIn('REDACTED', self.logged({'arena_tokens': '5'}))
+			self.assertIn('REDACTED', self.logged({'device_token': '5'}))
+		finally:
+			ft3.core.strings.cfg.Constants.REDACT_ALLOW = ()
+
 	def test_03_all_string_lists_are_redacted(self):
 		self.assertIn('REDACTED', self.logged(['AKIARJFBAG3EGHFG2FPN']))
+		self.assertIn('step_one', self.logged(['step_one', 'hero-42']))
 
 	def test_04_long_strings_are_wrapped(self):
 		self.assertIn(

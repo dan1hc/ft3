@@ -2,6 +2,12 @@
 
 __all__ = (
 	'api_from_package',
+	'check',
+	'check_package',
+	'openapi',
+	'openapi_document',
+	'openapi_from_package',
+	'unregistered_handlers',
 	'filter_to_unique_params',
 	'operation_from_object',
 	'parameters_from_object',
@@ -22,7 +28,7 @@ from . import lib
 from . import obj
 from . import typ
 
-from .obj import OBJECTS, REQUEST_HEADERS, RESPONSE_HEADERS, SECURITY
+from .obj import FILES, OBJECTS, REQUEST_HEADERS, RESPONSE_HEADERS, SECURITY
 
 if lib.t.TYPE_CHECKING:  # pragma: no cover
 	from . import events
@@ -49,24 +55,30 @@ def _join_root(api_path: str, *segments: str) -> str:
 	return '/' + '/'.join(parts)
 
 
-def _warn_unregistered_handlers(paths: list[obj.Path]) -> None:
+def unregistered_handlers(paths: list[obj.Path]) -> list[str]:
 	"""
-    Warn once per Object that has HTTP handlers but is served by no \
-    path, the usual sign of a missing `@Api.register`.
+    Qualified names of Objects that have HTTP handlers but are served \
+    by no path, the usual sign of a missing `@Api.register`.
 
     """
 
-	from .. import loggers
-
 	served = {path._resource_ for path in paths}
 	template = '.'.join((Constants.PACKAGE, 'template'))
-	for qualname, handled in objects.objs.obj.Constants.HANDLED.items():
-		if (
-			handled in served
-			or handled.__name__ in OBJECTS
-			or handled.__module__.startswith(template)
-		):
-			continue
+	return [
+		qualname
+		for qualname, handled in objects.objs.obj.Constants.HANDLED.items()
+		if handled not in served
+		and handled.__name__ not in OBJECTS
+		and not handled.__module__.startswith(template)
+	]
+
+
+def _warn_unregistered_handlers(paths: list[obj.Path]) -> None:
+	"""Warn once per unregistered handler class."""
+
+	from .. import loggers
+
+	for qualname in unregistered_handlers(paths):
 		loggers.utl.warn_once(
 			('api', 'unregistered_handlers', qualname),
 			{
@@ -746,32 +758,10 @@ def api_from_package(
 		content_type=enm.ContentType.html.value,
 	)
 
-	api_as_dict: dict[str, typ.AnyDict] = api.to_dict(
-		camel_case=True,
-		include_null=False,
-		include_private=False,
-		include_write_only=False,
-		include_read_only=True,
-	)
-	path_dict: typ.AnyDict
-	param_dict: typ.AnyDict
-	operation_dict: typ.AnyDict
-	for path_dict in api_as_dict['paths'].values():
-		for method in Constants.METHODS:
-			params_list: list[typ.AnyDict] = []
-			if operation_dict := path_dict.get(method):
-				if 'parameters' not in operation_dict:
-					continue
-				for param_dict in operation_dict['parameters']:
-					if param_dict['in'] == enm.ParameterLocation.path.value:
-						del param_dict[Constants.SCHEMA]
-					params_list.append(param_dict)
-				operation_dict['parameters'] = params_list
-
 	obj.File(
 		path='/'.join((path_root, 'openapi.json')),
 		content=lib.json.dumps(
-			api_as_dict, indent=Constants.INDENT, default=repr
+			openapi_document(api), indent=Constants.INDENT, default=repr
 		),
 		content_type=enm.ContentType.json.value,
 	)
@@ -803,6 +793,358 @@ def runtime_api_from_package(
 		include_default_response_headers,
 		lazy_docs=True,
 	)
+
+
+def openapi_document(api: obj.Api) -> typ.AnyDict:
+	"""The OpenAPI document for `api`, as a JSON-ready dict."""
+
+	api_as_dict: dict[str, typ.AnyDict] = api.to_dict(
+		camel_case=True,
+		include_null=False,
+		include_private=False,
+		include_write_only=False,
+		include_read_only=True,
+	)
+	path_dict: typ.AnyDict
+	param_dict: typ.AnyDict
+	operation_dict: typ.AnyDict
+	for path_dict in api_as_dict['paths'].values():
+		for method in Constants.METHODS:
+			params_list: list[typ.AnyDict] = []
+			if operation_dict := path_dict.get(method):
+				if 'parameters' not in operation_dict:
+					continue
+				for param_dict in operation_dict['parameters']:
+					if param_dict['in'] == enm.ParameterLocation.path.value:
+						del param_dict[Constants.SCHEMA]
+					params_list.append(param_dict)
+				operation_dict['parameters'] = params_list
+	return api_as_dict
+
+
+def _build_for_tooling(
+	package: str,
+	version: str,
+	api_path: str,
+	include_heartbeat: bool,
+	include_version_prefix: bool,
+) -> obj.Api:
+	"""Build a fully documented API without leaving doc files registered."""
+
+	files = dict(FILES)
+	try:
+		return api_from_package(
+			package,
+			version,
+			api_path,
+			include_heartbeat=include_heartbeat,
+			include_version_prefix=include_version_prefix,
+			lazy_docs=False,
+		)
+	finally:
+		FILES.clear()
+		FILES.update(files)
+
+
+def openapi_from_package(
+	package: str,
+	version: str = Constants.DEFAULT_VERSION,
+	api_path: str = Constants.API_PATH,
+	include_heartbeat: bool = True,
+	include_version_prefix: bool = False,
+) -> typ.AnyDict:
+	"""
+    Generate the OpenAPI document for a package at build time, the \
+    way `ft3 openapi` does. Nothing runs at import time in the served \
+    application.
+
+    """
+
+	api = _build_for_tooling(
+		package, version, api_path, include_heartbeat, include_version_prefix
+	)
+	return openapi_document(api)
+
+
+def _objects_reachable(paths: list[obj.Path]) -> list[type[Object]]:
+	"""Served Objects plus every Object type nested in their fields."""
+
+	found: list[type[Object]] = []
+	pending = [path._resource_ for path in paths]
+	while pending:
+		cls = pending.pop()
+		if cls in found:
+			continue
+		found.append(cls)
+		for field in cls.__dataclass_fields__.values():
+			nested = objects.utl.get_obj_from_type(field.type_)
+			if nested is not None and nested not in found:
+				pending.append(nested)
+	return found
+
+
+def _field_notices(cls: type[Object]) -> list[typ.AnyDict]:
+	"""Every Field of `cls` whose behavior changed in ft3 2.0."""
+
+	notices: list[typ.AnyDict] = []
+	for name, field in cls.__dataclass_fields__.items():
+		checkable = typ.utl.check.get_checkable_types(field.type_)
+		item_types = typ.utl.check.get_type_args(field.type_)
+		found: list[tuple[str, str]] = []
+		if name.startswith('_'):
+			found.append(
+				(
+					'private_field',
+					'rejected on request input (400); accepted with a'
+					' warning under FT3_LEGACY_WIRE',
+				)
+			)
+		if field.required and field.default is None:
+			found.append(
+				(
+					'required_field',
+					'must be present and non-null on POST and PUT bodies'
+					' (400); warning under FT3_LEGACY_WIRE',
+				)
+			)
+		if field.constraints:
+			found.append(
+				(
+					'constraints_enforced',
+					'enum/bounds/length/pattern now return 400 on request'
+					' input: ' + ', '.join(field.constraints),
+				)
+			)
+		if (
+			any(issubclass(tp, lib.t.Mapping) for tp in checkable)
+			and field.get('camel_case_keys') is None
+		):
+			found.append(
+				(
+					'dict_keys_default',
+					'dict keys are no longer camelCased on the wire; set'
+					' camel_case_keys=True to keep 1.x behavior',
+				)
+			)
+		if (
+			typ.utl.check.is_array_type(field.type_)
+			and item_types
+			and any(
+				typ.utl.check.is_none_type(tp)
+				for tp in typ.utl.check.get_checkable_types(item_types[0])
+			)
+			and field.get('drop_null_items') is None
+		):
+			found.append(
+				(
+					'list_nulls_default',
+					'None items now keep their position on the wire; set'
+					' drop_null_items=True to keep 1.x behavior',
+				)
+			)
+		for notice, detail in found:
+			notices.append(
+				{
+					'object': cls.__name__,
+					'field': name,
+					'notice': notice,
+					'detail': detail,
+				}
+			)
+	return notices
+
+
+def check_package(
+	package: str,
+	version: str = Constants.DEFAULT_VERSION,
+	api_path: str = Constants.API_PATH,
+	include_heartbeat: bool = True,
+	include_version_prefix: bool = False,
+) -> typ.AnyDict:
+	"""
+    Validate a package the way `ft3 check` does and return the report.
+
+    ---
+
+    The report lists `errors` (the package cannot be served correctly), \
+    `routes` (every served path, its methods, and its resource), and \
+    `notices` (every Field whose behavior changed in ft3 2.0, which is \
+    the migration list for a package upgrading from 1.x). `ok` is \
+    `True` when there are no errors.
+
+    """
+
+	report: typ.AnyDict = {
+		'package': package,
+		'ok': False,
+		'errors': [],
+		'routes': [],
+		'notices': [],
+	}
+	try:
+		api = _build_for_tooling(
+			package,
+			version,
+			api_path,
+			include_heartbeat,
+			include_version_prefix,
+		)
+	except Exception as exception:
+		report['errors'].append(
+			{
+				'code': 'build_failed',
+				'ref': core.exc.code_for(type(exception)),
+				'detail': str(exception),
+				'fix': 'import the package in python and read the traceback',
+			}
+		)
+		return report
+
+	paths = list(api.paths.values())
+	for qualname in unregistered_handlers(paths):
+		report['errors'].append(
+			{
+				'code': 'unregistered_handlers',
+				'object': qualname,
+				'detail': 'has HTTP handlers but is served by no path',
+				'fix': 'decorate the class with @Api.register',
+			}
+		)
+
+	root = api.servers[0].url if api.servers else api_path
+	if api.servers and api.servers[0].variables is not None:
+		root = root.replace('{version}', version)
+	for ref, path in api.paths.items():
+		methods = [m for m in Constants.METHODS if path[m] is not None]
+		if not methods:  # pragma: no cover
+			report['errors'].append(
+				{
+					'code': 'path_without_operations',
+					'object': ref,
+					'detail': 'no method is served at this path',
+					'fix': 'attach at least one handler or unregister',
+				}
+			)
+		report['routes'].append(
+			{
+				'path': root.rstrip('/') + ref,
+				'methods': methods,
+				'resource': path._resource_.__name__,
+			}
+		)
+
+	try:
+		lib.json.dumps(openapi_document(api), default=repr)
+	except Exception as exception:  # pragma: no cover
+		report['errors'].append(
+			{
+				'code': 'openapi_failed',
+				'ref': core.exc.code_for(type(exception)),
+				'detail': str(exception),
+				'fix': 'read the traceback from `ft3 openapi`',
+			}
+		)
+
+	for cls in _objects_reachable(paths):
+		report['notices'].extend(_field_notices(cls))
+
+	report['ok'] = not report['errors']
+	return report
+
+
+def _emit(text: str) -> None:
+	"""Write CLI output to stdout, bypassing print() interception."""
+
+	lib.sys.stdout.write(text)
+	if not text.endswith('\n'):
+		lib.sys.stdout.write('\n')
+
+
+def check(
+	package: str,
+	version: str,
+	api_path: str,
+	include_heartbeat: bool,
+	include_version_prefix: bool,
+	output_format: str,
+) -> None:
+	"""
+    CLI entrypoint validating a package without serving it.
+
+    ---
+
+    `$ ft3 check my_pkg`
+
+    Prints a JSON report (or `--format text`) and exits non-zero when \
+    the package cannot be served correctly. Run it after every edit.
+
+    """
+
+	report = check_package(
+		package, version, api_path, include_heartbeat, include_version_prefix
+	)
+	if output_format == 'json':
+		_emit(lib.json.dumps(report, indent=Constants.INDENT, default=repr))
+	else:
+		lines = [f'{package}: {"ok" if report["ok"] else "FAILED"}']
+		for error in report['errors']:
+			lines.append(
+				f'  error {error["code"]}: {error.get("object", "")}'
+				f' {error["detail"]}. FIX: {error["fix"]}'
+			)
+		for route in report['routes']:
+			lines.append(
+				f'  route {route["path"]} [{", ".join(route["methods"])}]'
+				f' -> {route["resource"]}'
+			)
+		for notice in report['notices']:
+			lines.append(
+				f'  notice {notice["object"]}.{notice["field"]}'
+				f' {notice["notice"]}: {notice["detail"]}'
+			)
+		_emit('\n'.join(lines))
+	lib.sys.exit(0 if report['ok'] else 1)
+
+
+def openapi(
+	package: str,
+	version: str,
+	api_path: str,
+	include_heartbeat: bool,
+	include_version_prefix: bool,
+	output: str,
+) -> None:
+	"""
+    CLI entrypoint writing a package's OpenAPI document.
+
+    ---
+
+    `$ ft3 openapi my_pkg --output openapi.json`
+
+    This is a build-time artifact: generate it in CI and ship it \
+    beside the package or import it into your gateway. `-` writes to \
+    stdout.
+
+    """
+
+	document = lib.json.dumps(
+		openapi_from_package(
+			package,
+			version,
+			api_path,
+			include_heartbeat,
+			include_version_prefix,
+		),
+		indent=Constants.INDENT,
+		default=repr,
+	)
+	if output == '-':
+		_emit(document)
+	else:
+		with open(output, 'w') as file:
+			file.write(document + '\n')
+		_emit(f'wrote {output}')
+	return None
 
 
 def serve(
@@ -876,3 +1218,5 @@ def serve(
 
 
 obj.api_parser.set_defaults(func=serve)  # type: ignore[has-type]
+obj.check_parser.set_defaults(func=check)  # type: ignore[has-type]
+obj.openapi_parser.set_defaults(func=openapi)  # type: ignore[has-type]

@@ -108,6 +108,9 @@ class TestHandlerResponse(Built):
 	@classmethod
 	def tearDownClass(cls) -> None:
 		ft3.api.OBJECTS.pop('Ping', None)
+		handled = ft3.objects.objs.obj.Constants.HANDLED
+		for key in [k for k in handled if k.endswith('.Ping')]:
+			handled.pop(key)
 		return super().tearDownClass()
 
 	def test_01_status_and_headers_are_honoured(self):
@@ -130,11 +133,16 @@ class TestUnregisteredHandlers(unittest.TestCase):
 			return []  # pragma: no cover
 
 		paths = list(ft3.api.events.utl.PATHS)
-		with self.assertLogs(ft3.log, level='WARNING') as logs:
-			ft3.api.api_from_package(
-				Constants.TEMPLATE, Constants.VERSION, '/'
-			)
-		ft3.api.events.utl.PATHS.clear()
-		ft3.api.events.utl.PATHS.extend(paths)
+		try:
+			with self.assertLogs(ft3.log, level='WARNING') as logs:
+				ft3.api.api_from_package(
+					Constants.TEMPLATE, Constants.VERSION, '/'
+				)
+		finally:
+			ft3.api.events.utl.PATHS.clear()
+			ft3.api.events.utl.PATHS.extend(paths)
+			handled = ft3.objects.objs.obj.Constants.HANDLED
+			for key in [k for k in handled if k.endswith('.Orphan')]:
+				handled.pop(key)
 		self.assertTrue(any('Orphan' in line for line in logs.output))
 		self.assertTrue(any('Api.register' in line for line in logs.output))

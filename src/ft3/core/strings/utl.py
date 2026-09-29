@@ -336,6 +336,8 @@ def redact_key_value_pair(key: str, value: str) -> str:
 
 	"""
 
+	if key in Constants.REDACT_ALLOW:
+		return value
 	for id_, pattern in obj.KeyValueRedactionPatterns.items():
 		if pattern.search(key) is not None:
 			return f'[ REDACTED :: {id_} ]'

@@ -2,7 +2,15 @@
 
 from .. import obj
 
-__all__ = ('Error', 'Handler', 'Pattern', 'Request', 'Response', *obj.__all__)
+__all__ = (
+	'Client',
+	'Error',
+	'Handler',
+	'Pattern',
+	'Request',
+	'Response',
+	*obj.__all__,
+)
 
 from ... import core
 from ... import objects
@@ -438,6 +446,81 @@ class Response(Object):
 			return lib.json.dumps(self.body, default=str)
 		else:
 			return self.body
+
+
+class Client:
+	"""
+	In-process API client for tests and agents.
+
+	---
+
+	Builds a `Request` the way the HTTP server would and returns the \
+	`Response` the API would send, without sockets or threads.
+
+	```python
+	client = ft3.api.Client(ft3.api.api_from_package('my_pkg', 'v1', '/'))
+	response = client.get('/v1/pets', query={'type': 'dog'})
+	assert response.status_code == 200
+	```
+
+	"""
+
+	def __init__(self, api: Api) -> None:
+		self.handler = Handler(api=api)
+
+	def request(
+		self,
+		method: str,
+		path: str,
+		*,
+		body: lib.t.Any = None,
+		headers: lib.t.Optional[dict[str, str]] = None,
+		query: lib.t.Optional[dict[str, lib.t.Any]] = None,
+	) -> 'Response':
+		"""Send one request and return the response."""
+
+		url = path
+		if query:
+			url += '?' + lib.urllib.parse.urlencode(query)
+		return self.handler(
+			Request(
+				url=url,
+				path=path,
+				method=method.lower(),
+				body=body,
+				headers=headers or {},
+			)
+		)
+
+	def get(self, path: str, **kwargs: lib.t.Any) -> 'Response':
+		"""Send a GET request."""
+
+		return self.request('get', path, **kwargs)
+
+	def post(self, path: str, **kwargs: lib.t.Any) -> 'Response':
+		"""Send a POST request."""
+
+		return self.request('post', path, **kwargs)
+
+	def put(self, path: str, **kwargs: lib.t.Any) -> 'Response':
+		"""Send a PUT request."""
+
+		return self.request('put', path, **kwargs)
+
+	def patch(self, path: str, **kwargs: lib.t.Any) -> 'Response':
+		"""Send a PATCH request."""
+
+		return self.request('patch', path, **kwargs)
+
+	def delete(self, path: str, **kwargs: lib.t.Any) -> 'Response':
+		"""Send a DELETE request."""
+
+		return self.request('delete', path, **kwargs)
+
+	def options(self, path: str, **kwargs: lib.t.Any) -> 'Response':
+		"""Send an OPTIONS request."""
+
+		return self.request('options', path, **kwargs)
 
 
 class Handler(Object):
