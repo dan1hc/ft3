@@ -344,10 +344,28 @@ def redact_key_value_pair(key: str, value: str) -> str:
 
 
 def redact_string(string: str) -> str:
-	"""Redact potentially sensitive values."""
+	"""
+	Redact potentially sensitive values.
+
+	---
+
+	A pattern with a `secret` group redacts only that group, keeping \
+	the surrounding context.
+
+	"""
 
 	for id_, pattern in obj.RedactionPatterns.items():
-		string = pattern.sub(repl=f'[ REDACTED :: {id_} ]', string=string)
+		token = f'[ REDACTED :: {id_} ]'
+
+		def _repl(match: lib.re.Match[str]) -> str:
+			if 'secret' in match.groupdict() and match.group('secret'):
+				start, end = match.span('secret')
+				whole = match.group(0)
+				offset = match.start()
+				return whole[: start - offset] + token + whole[end - offset :]
+			return token
+
+		string = pattern.sub(_repl, string)
 
 	return string
 
@@ -407,7 +425,9 @@ def convert_for_repr(obj_: lib.t.Any) -> typ.Serial:
 		if len(obj_) >= 1 and not all(isinstance(v, str) for v in obj_):
 			return [convert_for_repr(v) for v in obj_][: Constants.CUTOFF_LEN]
 		else:
-			return list(obj_)[: Constants.CUTOFF_LEN]
+			return [
+				redact_string(v) for v in list(obj_)[: Constants.CUTOFF_LEN]
+			]
 	elif isinstance(obj_, (lib.types.FunctionType, lib.types.MethodType)):
 		rtn_tp: typ.Serial | lib.t.Any = obj_.__annotations__.get(
 			'return', codecs.utl.encode(obj_)

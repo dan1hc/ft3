@@ -20,9 +20,22 @@ class Constants(core.cfg.Constants):
 		else 'INFO',
 	).upper()
 	LOG_TRACEBACK = lib.os.getenv('LOG_TRACEBACK', 'true').lower() == 'true'
-	LOG_PRINTS = lib.os.getenv('LOG_PRINTS', 'false').lower() == 'true'
+	LOG_FORMAT = lib.os.getenv('LOG_FORMAT', 'json').lower()
+	"""`json` (one line per record, default) or `pretty` (indented)."""
+	INTERCEPT_PRINTS = lib.os.getenv(
+		'LOG_PRINTS', 'false'
+	).lower() != 'true' and lib.os.getenv(
+		'INTERCEPT_PRINTS', 'true'
+	).lower() in ('1', 'true', 'yes', 'on')
+	"""
+    Whether `print()` calls become INFO log records. `LOG_PRINTS=true` \
+    (1.x) or `INTERCEPT_PRINTS=false` leaves `print()` untouched.
 
-	SILENCE_MSG = f'Call to print() silenced by {core.cfg.Constants.PACKAGE}.'
-	WARN_MSG = (
-		f'Calls to print() will be silenced by {core.cfg.Constants.PACKAGE}.'
+    """
+
+	PRINT_MSG = ' '.join(
+		(
+			f'print() intercepted by {core.cfg.Constants.PACKAGE}',
+			'and logged instead. FIX: use log.debug().',
+		)
 	)

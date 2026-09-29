@@ -372,6 +372,21 @@ class RedactionPattern:
 		r'?P<secret>(ey|ew)+[A-Za-z0-9\/\+=]+))'
 	)
 
+	conn_string_password = lib.re.compile(
+		r'(?i)[a-z][a-z0-9+.\-]*:\/\/[^:@\/\s]+:(?P<secret>[^@\/\s]+)@'
+	)
+	"""Matches the password in a `scheme://user:password@host` url."""
+
+	credit_card = lib.re.compile(
+		r'\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|3'
+		r'(?:0[0-5]|[68][0-9])[0-9]{11}|6(?:011|5[0-9]{2})[0-9]{12}|'
+		r'(?:2131|1800|35\d{3})\d{11})\b'
+	)
+	"""Matches an [ostensibly] valid credit card number."""
+
+	ssn = lib.re.compile(r'\b\d{3}-\d{2}-\d{4}\b')
+	"""Matches a US social security number."""
+
 
 RedactionPatterns: dict[str, lib.re.Pattern[str]] = {
 	k.upper(): v
@@ -400,15 +415,11 @@ class KeyValueRedactionPattern:
 	)
 	"""Matches an authorization / bearer token header."""
 
-	conn_string_password = lib.re.compile(r'(:\/\/)+\w+(:[^:@]+)@')
-	"""Matches passwords in database connection strings."""
-
-	credit_card = lib.re.compile(
-		r'\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|3'
-		r'(?:0[0-5]|[68][0-9])[0-9]{11}|6(?:011|5[0-9]{2})[0-9]{12}|'
-		r'(?:2131|1800|35\d{3})\d{11})\b'
+	password_secret_token = lib.re.compile(
+		r'(passw(or)?d|pwd|secret|credentials?|cookie|token)s?$',
+		flags=lib.re.IGNORECASE,
 	)
-	"""Matches an [ostensibly] valid credit card number."""
+	"""Matches keys that end in password, secret, credential, etc."""
 
 
 KeyValueRedactionPatterns: dict[str, lib.re.Pattern[str]] = {
