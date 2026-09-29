@@ -36,6 +36,19 @@ class Constants:
 	ENV = lib.os.getenv('ENV', 'local').lower()
 	"""The lowered name of our runtime environment."""
 
+	LEGACY_WIRE_ENV = 'FT3_LEGACY_WIRE'
+	LEGACY_WIRE = lib.os.getenv(LEGACY_WIRE_ENV, 'false').lower() in (
+		'1',
+		'true',
+		'yes',
+		'on',
+	)
+	"""
+    Global compatibility switch restoring every ft3 1.x request-side \
+    and response-side wire behavior at once. See `V2.md`.
+
+    """
+
 	DEPLOY_ENVS = (
 		'dev',
 		'develop',

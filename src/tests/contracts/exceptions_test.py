@@ -1,5 +1,6 @@
 """Contract: ft3 exceptions are catchable and carry stable codes."""
 
+import json
 import pickle
 import re
 import unittest
@@ -107,7 +108,22 @@ class TestExceptionCodes(unittest.TestCase):
 		self.assertEqual(CustomError.code, 'custom_error_code')
 		self.assertEqual(DerivedError.code, 'derived_error')
 
-	def test_05_code_survives_pickling(self):
+	def test_05_code_for_keeps_acronyms_whole(self):
+		"""Non-ft3 exceptions get a readable snake_case code too."""
+
+		self.assertEqual(
+			ft3.core.exc.code_for(json.JSONDecodeError), 'json_decode_error'
+		)
+		self.assertEqual(
+			ft3.core.exc.code_for(ft3.api.events.exc.HTTPError), 'http_error'
+		)
+		self.assertEqual(ft3.core.exc.code_for(KeyError), 'key_error')
+		self.assertEqual(
+			ft3.core.exc.code_for(ft3.objects.exc.TypeValidationError),
+			'type_validation_error',
+		)
+
+	def test_06_code_survives_pickling(self):
 		"""Code and args round-trip through pickle."""
 
 		error_ref = list(ft3.core.codecs.enm.ParseErrorRef)[0]

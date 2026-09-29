@@ -122,6 +122,7 @@ def handle_request(request: obj.Request, api: obj.Api) -> obj.Response:
 		callback = obj_.__operations__.get(op_name)
 		if callback is not None:
 			operation: obj.Operation = path[method]
+			parse_error: lib.t.Optional[Exception] = None
 			try:
 				if operation.parameters is not None:
 					request.parse_path_params(
@@ -136,26 +137,37 @@ def handle_request(request: obj.Request, api: obj.Api) -> obj.Response:
 					request.parse_query_params(method, operation, obj_)
 				if operation.request_body is not None:
 					request.parse_body(operation, obj_)
-			except Exception as exception:  # pragma: no cover
-				log.error({'request.error': repr(exception)})
+				request.validate_input(obj_, method)
+			except Exception as exception:
+				if Constants.LEGACY_WIRE:
+					log.error({'request.error': repr(exception)})
+				else:
+					parse_error = exception
 			else:
 				log.info({'request.parsed': request})
 			try:
+				if parse_error is not None:
+					raise parse_error
 				response_obj = callback(request)
 			except Exception as exception:
-				last_frame = lib.traceback.format_tb(exception.__traceback__)[
-					-1
-				]
-				is_error_raised = 'raise ' in last_frame
-				is_error_from_api = api.info.title in last_frame
-				if (
-					is_error_raised
-					or is_error_from_api
-					or isinstance(exception, objects.exc.TypeValidationError)
-				):
-					error = obj.Error.from_exception(exception)
-				else:  # pragma: no cover
-					error = obj.Error.from_exception(exc.UnexpectedError)
+				if exception is parse_error:
+					error = obj.Error.from_request_exception(exception)
+				else:
+					last_frame = lib.traceback.format_tb(
+						exception.__traceback__
+					)[-1]
+					is_error_raised = 'raise ' in last_frame
+					is_error_from_api = api.info.title in last_frame
+					if (
+						is_error_raised
+						or is_error_from_api
+						or isinstance(
+							exception, objects.exc.TypeValidationError
+						)
+					):
+						error = obj.Error.from_exception(exception)
+					else:  # pragma: no cover
+						error = obj.Error.from_exception(exc.UnexpectedError)
 				log.error({'operation.error': error})
 				content_type = enm.ContentType.json.value
 				status_code = error.error_code

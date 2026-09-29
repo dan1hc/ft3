@@ -46,3 +46,25 @@ class TestUnknownKeys(unittest.TestCase):
 		key = ('Holder', 'unknown_key', 'x')
 		self.assertTrue(ft3.loggers.utl.warn_once(key, {'content': 'x'}))
 		self.assertFalse(ft3.loggers.utl.warn_once(key, {'content': 'x'}))
+
+
+class TestSameNamedClasses(unittest.TestCase):
+	"""Two Objects with the same class name never share state."""
+
+	def test_01_annotations_are_cached_per_class(self):
+		class Pet(ft3.Object):
+			name: ft3.Field[str] = 'a'
+
+		first = Pet
+
+		class Pet(ft3.Object):  # noqa: F811
+			other: ft3.Field[int] = 1
+
+		self.assertEqual(
+			set(ft3.core.typ.utl.hint.collect_annotations(first)), {'name'}
+		)
+		self.assertEqual(
+			set(ft3.core.typ.utl.hint.collect_annotations(Pet)), {'other'}
+		)
+		self.assertIn('name', repr(first))
+		self.assertIn('other', repr(Pet))

@@ -495,7 +495,7 @@ class TestEndpoint(unittest.TestCase):
 
 		response = self.handler(request)
 
-		self.assertEqual(response.status_code, 500)
+		self.assertEqual(response.status_code, 400)
 
 	def test_11_patch_with_error(self):
 		"""Test PATCH 404."""
@@ -613,7 +613,7 @@ class TestEndpoint(unittest.TestCase):
 
 		response = self.handler(request)
 
-		self.assertEqual(response.status_code, 500)
+		self.assertEqual(response.status_code, 404)
 
 	def test_15_get_file_unexpected_error(self):
 		"""Test GET file raises unexpected error."""
@@ -626,7 +626,7 @@ class TestEndpoint(unittest.TestCase):
 
 		response = self.handler(request)
 
-		self.assertEqual(response.status_code, 500)
+		self.assertEqual(response.status_code, 404)
 
 	def test_16_options(self):
 		"""Test OPTIONS."""
@@ -664,7 +664,7 @@ class TestEndpoint(unittest.TestCase):
 
 		response = self.handler(request)
 
-		self.assertEqual(response.status_code, 500)
+		self.assertEqual(response.status_code, 501)
 
 
 class TestGeneratedDocsEndpoint(unittest.TestCase):
@@ -752,7 +752,7 @@ class TestRuntimeEndpoint(unittest.TestCase):
 
 		response = self.handler(request)
 
-		self.assertEqual(response.status_code, 500)
+		self.assertEqual(response.status_code, 404)
 
 	def test_02_runtime_api_dispatches_requests(self):
 		"""Test runtime API can dispatch and parse requests."""

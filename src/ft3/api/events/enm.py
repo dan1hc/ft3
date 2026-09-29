@@ -41,6 +41,9 @@ class ErrorMap(lib.enum.Enum):
 	NotImplementedError = 'MethodNotImplementedError'
 
 	TypeValidationError = 'RequestError'
+	ConstraintViolationError = 'RequestError'
+	MissingRequiredFieldError = 'RequestError'
+	JSONDecodeError = 'RequestError'
 
 
 class ErrorMessage(lib.enum.Enum):

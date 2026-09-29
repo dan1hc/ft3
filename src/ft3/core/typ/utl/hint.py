@@ -20,7 +20,7 @@ if lib.t.TYPE_CHECKING:  # pragma: no cover
 class Constants(cfg.Constants):
 	"""Constant values specific to this file."""
 
-	CACHED_ANNOTATIONS: 'dict[str, typ.AnyDict]' = {}
+	CACHED_ANNOTATIONS: 'dict[type, typ.AnyDict]' = {}
 	"""Local cache for typed object annotations."""
 
 	MAX_RECURSIONS = 4
@@ -132,7 +132,7 @@ def resolve_type(
 
 
 def _collect_annotations(
-	__name: str, __annotations: 'typ.AnyDict', __bases: tuple[type, ...]
+	__tp: type, __annotations: 'typ.AnyDict', __bases: tuple[type, ...]
 ) -> 'typ.AnyDict':
 	annotations: 'typ.AnyDict' = {}
 	for _base in reversed(__bases):
@@ -147,7 +147,7 @@ def _collect_annotations(
 	annotations.pop(Constants.FIELDS, None)
 	annotations.pop(Constants.ENUMERATIONS, None)
 	annotations.pop(Constants.HASH_FIELDS, None)
-	Constants.CACHED_ANNOTATIONS[__name] = annotations
+	Constants.CACHED_ANNOTATIONS[__tp] = annotations
 	return annotations
 
 
@@ -165,11 +165,11 @@ def collect_annotations(
 
 	obj_tp = typed_obj if isinstance(typed_obj, type) else type(typed_obj)
 
-	if obj_tp.__name__ in Constants.CACHED_ANNOTATIONS:
-		return Constants.CACHED_ANNOTATIONS[obj_tp.__name__]
+	if obj_tp in Constants.CACHED_ANNOTATIONS:
+		return Constants.CACHED_ANNOTATIONS[obj_tp]
 
 	return _collect_annotations(
-		obj_tp.__name__,
+		obj_tp,
 		getattr(obj_tp, Constants.__ANNOTATIONS__, {}),
 		obj_tp.__bases__,
 	)
