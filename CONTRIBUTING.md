@@ -19,7 +19,7 @@ Verify loop
 -----------
 
 Every commit must pass all of these; the pre-commit hooks run them, and
-CI runs them again on Python 3.10 through 3.13 on Linux, macOS, and
+CI runs them again on Python 3.11 through 3.14 on Linux, macOS, and
 Windows.
 
 ```bash

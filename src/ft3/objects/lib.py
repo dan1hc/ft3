@@ -18,7 +18,4 @@ import numbers
 
 from ..core.lib import *
 
-if sys.version_info < (3, 11):  # pragma: no cover
-	from typing_extensions import dataclass_transform  # noqa  # type: ignore
-else:  # pragma: no cover
-	from typing import dataclass_transform
+from typing import dataclass_transform

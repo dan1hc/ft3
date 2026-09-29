@@ -67,6 +67,7 @@ class Constants:
 	DELIM_REBASE = '_X_'
 
 	__ANNOTATIONS__: 'typ.string[typ.snake_case]' = '__annotations__'
+	__ANNOTATE_FUNC__: 'typ.string[typ.snake_case]' = '__annotate_func__'
 	__DATACLASS_FIELDS__: 'typ.string[typ.snake_case]' = '__dataclass_fields__'
 	__HERITAGE__: 'typ.string[typ.snake_case]' = '__heritage__'
 	__SLOTS__: 'typ.string[typ.snake_case]' = '__slots__'

@@ -77,6 +77,16 @@ class Meta(type):
 		module: str = __namespace.get(Constants.__MODULE__, '')
 		annotations: typ.SnakeDict
 		annotations = __namespace.pop(Constants.__ANNOTATIONS__, {})
+		annotate = __namespace.pop(Constants.__ANNOTATE_FUNC__, None)
+		if annotate is not None and not annotations:  # pragma: no cover
+			# Python 3.14+ (PEP 649): annotations are deferred behind an
+			# annotate function; evaluate them, keeping unresolved names
+			# as ForwardRefs for ft3 to resolve.
+			import annotationlib  # type: ignore[import-not-found]
+
+			annotations = annotationlib.call_annotate_function(
+				annotate, annotationlib.Format.FORWARDREF
+			)
 		annotations |= {
 			k: typ.utl.hint.resolve_type(v, lib.sys.modules[module].__dict__)
 			for k, v in annotations.items()
