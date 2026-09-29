@@ -129,23 +129,42 @@ class ObjectBase(metaclass=metas.Meta):
 		/,
 		**kwargs: lib.t.Any,
 	):
-		ckwargs = {
-			cname: value
-			for name, value in kwargs.items()
-			if (cname := core.strings.utl.cname_for(name, self.fields))
-		}
-
+		ckwargs: dict[str, lib.t.Any] = {}
+		unknown: list[str] = []
+		supplied: list[tuple[lib.t.Any, lib.t.Any]] = list(kwargs.items())
 		if isinstance(class_as_dict, lib.t.Mapping):
-			class_as_cdict = {
-				cname: value
-				for name, value in class_as_dict.items()
-				if (cname := core.strings.utl.cname_for(name, self.fields))
-			}
-			ckwargs |= class_as_cdict
+			supplied.extend(class_as_dict.items())
+		for name, value in supplied:
+			if cname := core.strings.utl.cname_for(name, self.fields):
+				ckwargs[cname] = value
+			else:
+				unknown.append(str(name))
+
+		for name in unknown:
+			from ... import loggers
+
+			loggers.utl.warn_once(
+				(type(self).__name__, 'unknown_key', name),
+				{
+					'unknown.key': {
+						'object': type(self).__name__,
+						'key': name,
+						'outcome': 'dropped',
+						'fix': 'declare a Field for it or stop sending it',
+					}
+				},
+			)
 
 		for cname, field in self.__dataclass_fields__.items():
 			if cname not in ckwargs:
 				ckwargs[cname] = field.factory()
+
+		if getattr(type(self), Constants.__STRICT__, False):
+			for cname, field in self.__dataclass_fields__.items():
+				if field.required and ckwargs.get(cname) is None:
+					raise exc.MissingRequiredFieldError(
+						type(self).__name__, cname
+					)
 
 		for cname, value in ckwargs.items():
 			setattr(self, cname, value)

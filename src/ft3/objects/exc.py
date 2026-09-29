@@ -13,6 +13,7 @@ __all__ = (
 	'InvalidFieldAdditionError',
 	'InvalidFieldRedefinitionError',
 	'InvalidObjectComparisonError',
+	'MissingRequiredFieldError',
 	'MissingTypeAnnotation',
 	'ReservedKeywordError',
 	'TypeValidationError',
@@ -243,6 +244,24 @@ class FieldAnnotationError(
 				)
 			),
 			*(name, dtype),
+		)
+
+
+class MissingRequiredFieldError(BasePackageException[str, str]):
+	"""Error raised in strict mode when a required field is absent."""
+
+	def __init__(self, object_name: str, name: str) -> None:
+		self.object = object_name
+		self.field = name
+		super().__init__(
+			' '.join(
+				(
+					f"Field: '{name}' of Object: '{object_name}'",
+					'is required but was not supplied (or was null).',
+					f"\nFIX: supply a non-null value for '{name}'.",
+				)
+			),
+			*(object_name, name),
 		)
 
 

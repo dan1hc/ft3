@@ -1,6 +1,6 @@
 """Loggers utility functions."""
 
-__all__ = ('parse_incoming_log_message',)
+__all__ = ('parse_incoming_log_message', 'warn_once')
 
 from .. import core
 
@@ -12,6 +12,29 @@ from . import typ
 
 class Constants(cfg.Constants):
 	"""Constant values specific to this file."""
+
+	WARNED: set[tuple[str, ...]] = set()
+	"""Keys already warned about by `warn_once`."""
+
+
+def warn_once(key: tuple[str, ...], content: dict[str, lib.t.Any]) -> bool:
+	"""
+	Log `content` at WARNING the first time `key` is seen in this \
+	process, returning whether anything was logged.
+
+	---
+
+	Used for lenient-mode notices so a hot path never floods the log.
+
+	"""
+
+	if key in Constants.WARNED:
+		return False
+	Constants.WARNED.add(key)
+	from . import obj
+
+	obj.log.warning(content)
+	return True
 
 
 @lib.t.overload

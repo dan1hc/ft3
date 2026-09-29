@@ -38,8 +38,6 @@ class Constants(cfg.Constants):
 	"""Pseudo-constraint name for a coercion that would lose data."""
 	NUMERIC_TYPES = (int, float, lib.decimal.Decimal)
 	"""Types checked for lossless coercion and numeric constraints."""
-	WARNED: set[tuple[str, str, str]] = set()
-	"""(object, field, constraint) triples already warned about."""
 
 
 class Field(objs.Object, lib.t.Generic[typ.AnyType]):
@@ -767,14 +765,11 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 		value: lib.t.Any,
 		outcome: str,
 	) -> None:
-		owner = getattr(self._object_, '__name__', type(object_).__name__)
-		key = (owner, str(self.name), constraint)
-		if key in Constants.WARNED:
-			return None
-		Constants.WARNED.add(key)
-		from ... import log
+		from ... import loggers
 
-		log.warning(
+		owner = getattr(self._object_, '__name__', type(object_).__name__)
+		loggers.utl.warn_once(
+			(owner, str(self.name), constraint),
 			{
 				'lenient.violation': {
 					'object': owner,
@@ -785,7 +780,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 					'outcome': outcome,
 					'fix': 'declare the class with strict=True to raise',
 				}
-			}
+			},
 		)
 		return None
 

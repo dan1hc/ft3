@@ -111,7 +111,7 @@ class TestLenientParse(unittest.TestCase):
 	"""Without strict, parsing keeps 1.x behavior and warns once."""
 
 	def setUp(self) -> None:
-		ft3.objects.fields.obj.Constants.WARNED.clear()
+		ft3.loggers.utl.Constants.WARNED.clear()
 		return super().setUp()
 
 	def test_01_violations_are_kept(self):
@@ -177,7 +177,20 @@ class TestStrictObjects(unittest.TestCase):
 		obj = Constrained(required_count=1, count=99, kind='turtle')
 		self.assertEqual((obj.count, obj.kind), (99, 'turtle'))
 
-	def test_06_strict_is_reserved(self):
+	def test_06_missing_required_raises(self):
+		with self.assertRaises(
+			ft3.objects.exc.MissingRequiredFieldError
+		) as ctx:
+			Strict()
+		self.assertEqual(ctx.exception.field, 'required_count')
+		self.assertEqual(ctx.exception.object, 'Strict')
+		self.assertRaises(
+			ft3.objects.exc.MissingRequiredFieldError,
+			lambda: Inherited(required_count=None),
+		)
+		self.assertIsNone(Constrained().required_count)
+
+	def test_07_strict_is_reserved(self):
 		def _define():
 			class Bad(ft3.Object):
 				__strict__: ft3.Field[bool] = True
