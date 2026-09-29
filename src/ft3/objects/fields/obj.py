@@ -156,9 +156,14 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 		if isinstance(parsed, core.codecs.enm.ParseErrorRef):
 			if strict or not self.required:
 				raise exc.TypeValidationError(self.name, self.type_, parsed)
-			self._warn_once(
-				__object, 'type', parsed.value, __value, 'became None'
-			)
+			if parsed is core.codecs.enm.ParseErrorRef.null_decode:
+				self._warn_once(
+					__object, 'required', True, None, 'stayed None'
+				)
+			else:
+				self._warn_once(
+					__object, 'type', parsed.value, __value, 'became None'
+				)
 			parsed = None
 		else:
 			self._enforce(parsed, __value, strict, __object)

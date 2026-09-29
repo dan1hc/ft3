@@ -14,8 +14,9 @@ authors = [
 maintainers = [
     {name = "Dan", email = "dan@1howardcapital.com"},
     ]
-description = "Zero-dependency Python framework for object oriented development."
+description = "Zero-dependency Python framework for object-oriented services, built for agents."
 keywords = [
+    "agents",
     "dataclasses",
     "ft3",
     "framework",

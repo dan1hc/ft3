@@ -4,32 +4,30 @@ Overview
 
 **Author:** dan@1howardcapital.com
 
-**Summary:** Zero-dependency python framework for object oriented development.
-Implement _once_, document _once_, in _one_ place.
+**Summary:** Zero-dependency Python framework for object-oriented \
+services, built for agents as its only users.
 
 ---
 
-With ft3, you will quickly learn established best practice... \
-or face the consequences of runtime errors that will break your code \
-if you deviate from it.
-
-Experienced python engineers will find a framework \
-that expects and rewards intuitive magic method implementations, \
-consistent type annotations, and robust docstrings.
-
-Implement _pythonically_ with ft3 and you will only ever need to: \
-implement _once_, document _once_, in _one_ place.
+Declare an `Object` once; ft3 derives validation, JSON serialization, \
+a REST API with an OpenAPI document, and structured logging from it. \
+Every rule ft3 enforces is written down in `AGENTS.md`, every error \
+names the fix, and `ft3 check` reports whether a package is correct \
+before it is served.
 
 ---
 
 Getting Started
 ---------------
 
-### Installation
+```sh
+pip install ft3
+ft3 check my_pkg      # validate: routes, errors, per-field notices
+ft3 openapi my_pkg    # write openapi.json as a build artifact
+ft3 api my_pkg        # serve locally
+```
 
-Install from command line, with pip:
-
-`$ pip install ft3`
+Settings come from environment variables or `ft3.configure(...)`.
 
 """
 

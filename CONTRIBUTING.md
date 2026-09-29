@@ -1,16 +1,13 @@
 Contributing
 ============
 
+ft3 is built for agents as its only users, and its contributors are
+expected to be agents too. Read [AGENTS.md](AGENTS.md) first: it is the
+rulebook the code enforces. [V2.md](V2.md) is the plan of record.
+
 Read our [Code of Conduct](https://github.com/dan1hc/ft3/blob/main/CODE_OF_CONDUCT.md).
 
-* Step 1 - [Create New Issue](https://github.com/dan1hc/ft3/issues/new)
-* Step 2 - Create New Branch (Corresponding to New Issue)
-* Step 3 - Clone Branch & [Development Install](#development-install)
-* Step 4 - Make Changes
-* Step 5 - Push & [Create New PR](https://github.com/dan1hc/ft3/pulls)
-* Step 6 - Wait for Review / Approval
-
-Development Install
+Development install
 -------------------
 
 ```bash
@@ -18,67 +15,44 @@ pip install -e ".[develop]"
 pre-commit install -f
 ```
 
-Styling, Testing, and Typing
-----------------------------
+Verify loop
+-----------
 
-Assuming you installed pre-commit hooks, the below will happen when you make a commit.
-
-*It will certainly happen on a CI runner when you push your commit.*
+Every commit must pass all of these; the pre-commit hooks run them, and
+CI runs them again on Python 3.10 through 3.13 on Linux, macOS, and
+Windows.
 
 ```bash
-ruff check
+ruff format . && ruff check .
 python -m mypy
-pytest
+pytest                    # 100% coverage is required
+ft3 check ft3.template    # the bundled reference package must stay valid
 ```
 
-Coverage requirements: `100%`
+Rules that are not obvious from the code:
 
-Commit Messages
+* Every behavior ft3 guarantees to downstream packages is pinned in
+  `src/tests/contracts/`. Changing a pin is a coordinated release, not a
+  refactor: update `V2.md` and the downstream checklist in the same change.
+* Every Python block in `README.md` is executed by the test suite. Keep
+  examples runnable and self-contained.
+* Nothing may run at import time that scales with the size of an API.
+  OpenAPI generation is a build step (`ft3 openapi`).
+* Zero dependency. Stdlib only.
+* Production consumers must never break: wire-visible changes ship behind
+  `FT3_LEGACY_WIRE` / `ft3.configure(legacy_wire=...)`.
+
+Commit messages
 ---------------
 
-Additionally, commit messages must adhere to [angular commit guidelines](https://github.com/angular/angular.js/blob/master/DEVELOPERS.md#commits) (templates below).
-
-#### _multi-line_
-
----
+One line, angular style, validated by the commit-msg hook and by CI:
 
 ```
-<type>(<scope>): <subject>
-<BLANK LINE>
-<body>
-<BLANK LINE>
-<footer>
+<type>(<scope>)?: <subject>
 ```
 
-#### _single-line_
-
----
-
-```
-<type>(<scope>): <subject>
-```
-
-#### Special Rules
-
-* `<subject>` as a pythonic `__dunder__` can be cool.
-* `<subject>` must be appropriately descriptive of the change.
-* If the multi-line template is used, at least one issue ref must be correctly [keyworded](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/using-keywords-in-issues-and-pull-requests) in the footer.
-
-
-#### _regex_
-
----
-
-```python
-import re
-
-pattern = re.compile(
-    r'((^[mM]erge .*$)|(^((build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.+\))?!?: .+)((\n\n(.+)\n\n)((BREAKING CHANGE|DEPRECATED)(: )(.+)\n\n(.+))?(\n\n\nresolve[ds]? \#[A-Z0-9\-]+|fix(ed|es)? \#[A-Z0-9\-]+|close[ds]? \#[A-Z0-9\-]+)((, )(resolve[ds]? \#[A-Z0-9\-]+|fix(ed|es)? \#[A-Z0-9\-]+|close[ds]? \#[A-Z0-9\-]+))?)?)?$)|(^revert: ((build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.+\))?!?: .+)(\n\n(This reverts commit [a-z0-9]{40}\..*))(\n\n(fix(ed|es)? \#[A-Z0-9\-]+)((, )(fix(ed|es)? \#[A-Z0-9\-]+))?)?$)'
-    )
-
-assert bool(pattern.match('feat: __valid_example__\n\noptional body text\n\ncloses #1, resolve #2')) is True
-assert bool(pattern.match('feat!: __new_stuff__\n\nbody text.\n\nBREAKING CHANGE: Breaks stuff.\n\nDetails on how stuff breaks and what to do.\n\n\nresolves #1')) is True
-assert bool(pattern.match('revert: feat! __new_stuff__\n\nThis reverts commit 2c4ed28b069267f39974b5da50795c5210040e33. Because reasons.\n\nfixes #TKT-123')) is True
-assert bool(pattern.match('test: __short_valid_example__')) is True
-
-```
+`type` is one of `build`, `chore`, `ci`, `docs`, `feat`, `fix`, `perf`,
+`refactor`, `revert`, `style`, `test`. `feat!:` or `fix!:` marks a
+breaking change. `fix` and `perf` release a patch, `feat` a minor, `!` a
+major; releases are cut by semantic-release from `main`, and pull requests
+publish `rc` prereleases. Trailer lines are not accepted by the validator.

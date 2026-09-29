@@ -4,7 +4,8 @@ Objects Overview
 
 **Author:** dan@1howardcapital.com
 
-**Summary:** Objects module including `Object` and `Field`.
+**Summary:** `Object` and `Field`, the declaration everything else \
+derives from.
 
 ---
 
@@ -14,7 +15,16 @@ Usage
 ```python
 import ft3
 
+
+class Pet(ft3.Object):
+    \"""A pet.\"""
+
+    id_: ft3.Field[str]
+    name: ft3.Field[str] = 'Fido'
+
 ```
+
+See `AGENTS.md` for the rules and `Object` / `Field` for the options.
 
 """
 

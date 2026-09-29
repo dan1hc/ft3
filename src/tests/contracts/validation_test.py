@@ -142,6 +142,12 @@ class TestLenientParse(unittest.TestCase):
 		self.assertIsNone(obj.required_count)
 		self.assertIn('became None', logs.output[0])
 
+	def test_03b_required_none_warns_as_required(self):
+		with self.assertLogs(ft3.log, level='WARNING') as logs:
+			obj = Constrained()
+		self.assertIsNone(obj.required_count)
+		self.assertIn('"constraint": "required"', logs.output[0])
+
 	def test_04_violations_lists_everything(self):
 		self.assertEqual(
 			[

@@ -1158,34 +1158,21 @@ def serve(
 	lazy_docs: bool = True,
 ) -> None:  # pragma: no cover
 	"""
-    CLI entrypoint for serving an application.
+    CLI entrypoint serving a package with the stdlib HTTP server, \
+    for local development.
 
     ---
 
-    Specify the name of your API package to serve it via simple http \
-    server.
+    `$ ft3 api my_pkg --port 8080`
 
-    ### Example
+    Serves on port 80 by default with no generated docs, so startup \
+    costs no more than importing the package. `--generate-docs` also \
+    serves Swagger at `/swagger` and the OpenAPI document; for a build \
+    artifact use `ft3 openapi` instead.
 
-    `$ ft3 api ft3.template`
-
-    ---
-
-	You may specify a port as a positional argument following \
-	the package name. By default, your application will be served \
-	on port 80 without generated docs for faster startup. Use \
-	`--generate-docs` to serve Swagger at http://localhost/swagger.
-
-    ---
-
-    ### DISCLAIMER
-
-    `$ ft3 api serve` is highly insecure and should NOT be used \
-    in any production environment.
-
-    This _may_ change in the future.
-
-    """
+    Deploy behind a gateway, not this server: pass the gateway event \
+    to `ft3.api.Handler(api=api)(request)`.
+	"""
 
 	from .. import log
 	from .events import Handler
