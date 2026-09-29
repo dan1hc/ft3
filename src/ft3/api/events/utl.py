@@ -19,8 +19,12 @@ class Constants(cfg.Constants):
 	ID = 'id'
 
 
-PATHS: list[str] = []
-"""Cached, sorted path names."""
+PATHS: dict[int, tuple[obj.Api, list[str]]] = {}
+"""
+Sorted path names per `Api`, keyed by `id(api)` and holding the `Api` \
+so the id stays unique for as long as the entry exists.
+
+"""
 
 
 def _uri_len(uri: str) -> tuple[int, int]:
@@ -30,29 +34,28 @@ def _uri_len(uri: str) -> tuple[int, int]:
 
 
 def paths_from_api(api: obj.Api) -> list[str]:
-	"""Cache and return cached paths from an OpenAPI spec."""
+	"""Cache and return the sorted path names of an OpenAPI spec."""
 
-	if not PATHS:
-		if api.servers:
-			server = api.servers[0]
-			if server.variables is not None:
-				path_root = server.url.replace(
-					'{version}', server.variables['version'].default
-				)
-			else:
-				path_root = server.url
-			path_root = path_root.rstrip('/')
-		else:  # pragma: no cover
-			path_root = ''
-		PATHS.extend(
-			sorted(
-				[path_root + path for path in api.paths],
-				key=_uri_len,
-				reverse=True,
+	if id(api) in PATHS:
+		return PATHS[id(api)][1]
+	if api.servers:
+		server = api.servers[0]
+		if server.variables is not None:
+			path_root = server.url.replace(
+				'{version}', server.variables['version'].default
 			)
-		)
-
-	return PATHS
+		else:
+			path_root = server.url
+		path_root = path_root.rstrip('/')
+	else:  # pragma: no cover
+		path_root = ''
+	paths = sorted(
+		[path_root + path for path in api.paths],
+		key=_uri_len,
+		reverse=True,
+	)
+	PATHS[id(api)] = (api, paths)
+	return paths
 
 
 def handle_request(request: obj.Request, api: obj.Api) -> obj.Response:
@@ -177,7 +180,6 @@ def handle_request(request: obj.Request, api: obj.Api) -> obj.Response:
 				response_body = error.as_response
 			else:
 				if isinstance(response_obj, obj.Response):
-					# `dict` is avoided by name here: see ObjectBase.__getitem__.
 					override_headers = response_obj.headers.copy()
 					override_status = response_obj.status_code
 					response_obj = response_obj.body

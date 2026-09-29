@@ -673,9 +673,7 @@ class TestGeneratedDocsEndpoint(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls) -> None:
 		cls._files = dict(ft3.api.FILES)
-		cls._paths = list(ft3.api.events.utl.PATHS)
 		ft3.api.FILES.clear()
-		ft3.api.events.utl.PATHS.clear()
 		cls.api = ft3.api.api_from_package(
 			f'{Constants.PACKAGE}.template',
 			Constants.DEFAULT_VERSION,
@@ -690,8 +688,6 @@ class TestGeneratedDocsEndpoint(unittest.TestCase):
 	def tearDownClass(cls) -> None:
 		ft3.api.FILES.clear()
 		ft3.api.FILES.update(cls._files)
-		ft3.api.events.utl.PATHS.clear()
-		ft3.api.events.utl.PATHS.extend(cls._paths)
 		return super().tearDownClass()
 
 	def test_01_get_file(self):
@@ -716,8 +712,6 @@ class TestRuntimeEndpoint(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls) -> None:
 		cls._files = dict(ft3.api.FILES)
-		cls._paths = list(ft3.api.events.utl.PATHS)
-		ft3.api.events.utl.PATHS.clear()
 		cls.api = ft3.api.runtime_api_from_package(
 			f'{Constants.PACKAGE}.template',
 			Constants.DEFAULT_VERSION,
@@ -731,8 +725,6 @@ class TestRuntimeEndpoint(unittest.TestCase):
 	def tearDownClass(cls) -> None:
 		ft3.api.FILES.clear()
 		ft3.api.FILES.update(cls._files)
-		ft3.api.events.utl.PATHS.clear()
-		ft3.api.events.utl.PATHS.extend(cls._paths)
 		return super().tearDownClass()
 
 	def test_01_runtime_api_skips_generated_docs(self):

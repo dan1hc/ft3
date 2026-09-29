@@ -416,10 +416,10 @@ class KeyValueRedactionPattern:
 	"""Matches an authorization / bearer token header."""
 
 	password_secret_token = lib.re.compile(
-		r'(passw(or)?d|pwd|secret|credentials?|cookie|token)s?$',
+		r'(passw(or)?d|pwd|secret|cookie|token)s?$',
 		flags=lib.re.IGNORECASE,
 	)
-	"""Matches keys that end in password, secret, credential, etc."""
+	"""Matches keys that end in password, secret, cookie, or token."""
 
 
 KeyValueRedactionPatterns: dict[str, lib.re.Pattern[str]] = {

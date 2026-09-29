@@ -61,8 +61,6 @@ class TestClient(unittest.TestCase):
 
 	@classmethod
 	def setUpClass(cls) -> None:
-		cls._paths = list(ft3.api.events.utl.PATHS)
-		ft3.api.events.utl.PATHS.clear()
 		cls.api = ft3.api.api_from_package(
 			Constants.TEMPLATE,
 			Constants.VERSION,
@@ -74,8 +72,6 @@ class TestClient(unittest.TestCase):
 
 	@classmethod
 	def tearDownClass(cls) -> None:
-		ft3.api.events.utl.PATHS.clear()
-		ft3.api.events.utl.PATHS.extend(cls._paths)
 		return super().tearDownClass()
 
 	def test_01_get(self):

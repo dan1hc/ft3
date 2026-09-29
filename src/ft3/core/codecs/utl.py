@@ -125,7 +125,7 @@ def try_decode(
 			return enm.ParseErrorRef.null_decode
 		else:
 			return tp(value)  # type: ignore[call-arg]
-	except:  # noqa: E722
+	except Exception:
 		return enm.ParseErrorRef.value_decode
 
 
@@ -139,7 +139,7 @@ def try_parse_json(json_string: str) -> typ.Serial | enm.ParseErrorRef:
 	try:
 		deserialized: typ.Serial = lib.json.loads(json_string)
 		return deserialized
-	except:  # noqa: E722
+	except Exception:
 		return enm.ParseErrorRef.invalid_json
 
 

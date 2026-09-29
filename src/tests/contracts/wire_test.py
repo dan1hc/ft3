@@ -56,6 +56,15 @@ class TestTruthiness(unittest.TestCase):
 		self.assertFalse(Costs())
 		self.assertTrue(Costs(maybe='y'))
 
+	def test_03_comparison_with_unhashable_never_raises(self):
+		self.assertFalse(Costs() == {'maybe': None})
+		self.assertTrue(Costs() != {'maybe': None})
+		self.assertFalse(Costs() == ['x'])
+
+	def test_02b_default_instance_is_falsy(self):
+		self.assertFalse(Costs())
+		self.assertTrue(Costs(maybe='y'))
+
 
 class TestDeepCopy(unittest.TestCase):
 	"""`deepcopy(obj)` shares nothing with the original."""

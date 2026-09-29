@@ -91,8 +91,8 @@ per class and key, never rejected.
 - `bool(obj)` is True when any field differs from its default and never
   raises. `a == b` compares hash fields only. `a - b` is a dict of `b`'s
   values that differ. `copy.deepcopy(obj)` shares nothing with the original.
-- `dict(obj)` converts nested Objects to dicts by inspecting the caller for
-  the name `dict`; prefer `to_dict()` in new code.
+- `dict(obj)` returns field values exactly as stored, nested Objects
+  included. Use `to_dict()` for a plain-data tree.
 
 ## Errors
 
@@ -188,7 +188,7 @@ local development only. Deploy behind a gateway: pass the gateway event to
   list of lines. `exc_info=False` suppresses it.
 - `print()` becomes an `INFO` record with a `printed` key. Use `log.debug`.
 - Values under keys that look sensitive (`api_key`, `password`, `*token`,
-  `secret`, `credential`, `cookie`, `authorization`) and values that look
+  `secret`, `cookie`, `authorization`) and values that look
   like secrets (cloud keys, JWTs, connection-string passwords, card and
   SSN numbers) are redacted. `LOG_REDACT_ALLOW=a,b` exempts key names.
 - Long strings are wrapped and truncated; tracebacks are not.

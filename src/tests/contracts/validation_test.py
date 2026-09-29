@@ -105,6 +105,7 @@ class TestStrictParse(unittest.TestCase):
 		self.assertViolation(Constrained.count, True, 'lossless')
 		self.assertIs(Constrained.flag.parse(True, strict=True), True)
 		self.assertEqual(Constrained.anything.parse(3.9, strict=True), 3.9)
+		self.assertIs(Constrained.anything.parse(False, strict=True), False)
 
 	def test_08_none_skips_constraints(self):
 		self.assertIsNone(Constrained.optional_count.parse(None, strict=True))

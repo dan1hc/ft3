@@ -6,8 +6,6 @@ import sys
 import types
 import unittest
 
-import ft3
-
 
 class TestReadMe(unittest.TestCase):
 	"""README.md examples are executable."""
@@ -21,7 +19,6 @@ class TestReadMe(unittest.TestCase):
 		self.assertGreaterEqual(len(blocks), 5)
 		for index, block in enumerate(blocks):
 			with self.subTest(block=index):
-				paths = list(ft3.api.events.utl.PATHS)
 				module = types.ModuleType(f'readme_{index}')
 				sys.modules[module.__name__] = module
 				try:
@@ -31,5 +28,3 @@ class TestReadMe(unittest.TestCase):
 					)
 				finally:
 					sys.modules.pop(module.__name__, None)
-					ft3.api.events.utl.PATHS.clear()
-					ft3.api.events.utl.PATHS.extend(paths)

@@ -158,7 +158,7 @@ class Pet(ft3.Object):
 query = ((Pet.type_ == 'dog') & (Pet.name == 'Fido')) | Pet.name % ('fido', 0.75)
 query += 'name'
 
-assert dict(query) == {
+assert query.to_dict() == {
     'limit': None,
     'or': [
         {

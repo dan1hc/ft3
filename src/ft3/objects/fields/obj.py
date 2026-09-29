@@ -826,7 +826,12 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 			and isinstance(original, Constants.NUMERIC_TYPES)
 		):
 			is_bool = isinstance(original, bool)
-			lossy = (is_bool and bool not in checkable) or (
+			numeric_target = bool not in checkable and any(
+				isinstance(tp, type)
+				and issubclass(tp, Constants.NUMERIC_TYPES)
+				for tp in checkable
+			)
+			lossy = (is_bool and numeric_target) or (
 				not is_bool and parsed != original
 			)
 			if lossy:

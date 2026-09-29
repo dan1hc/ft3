@@ -37,8 +37,6 @@ class Built(unittest.TestCase):
 
 	@classmethod
 	def setUpClass(cls) -> None:
-		cls._paths = list(ft3.api.events.utl.PATHS)
-		ft3.api.events.utl.PATHS.clear()
 		cls.api = ft3.api.api_from_package(
 			Constants.TEMPLATE,
 			Constants.VERSION,
@@ -50,8 +48,6 @@ class Built(unittest.TestCase):
 
 	@classmethod
 	def tearDownClass(cls) -> None:
-		ft3.api.events.utl.PATHS.clear()
-		ft3.api.events.utl.PATHS.extend(cls._paths)
 		return super().tearDownClass()
 
 	def get(self, path: str) -> ft3.api.Response:
@@ -132,15 +128,12 @@ class TestUnregisteredHandlers(unittest.TestCase):
 		def orphans(request: ft3.api.Request) -> list[Orphan]:
 			return []  # pragma: no cover
 
-		paths = list(ft3.api.events.utl.PATHS)
 		try:
 			with self.assertLogs(ft3.log, level='WARNING') as logs:
 				ft3.api.api_from_package(
 					Constants.TEMPLATE, Constants.VERSION, '/'
 				)
 		finally:
-			ft3.api.events.utl.PATHS.clear()
-			ft3.api.events.utl.PATHS.extend(paths)
 			handled = ft3.objects.objs.obj.Constants.HANDLED
 			for key in [k for k in handled if k.endswith('.Orphan')]:
 				handled.pop(key)

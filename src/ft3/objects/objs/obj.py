@@ -210,85 +210,29 @@ class ObjectBase(metaclass=metas.Meta):
 			raise KeyError(__key)
 
 	def __getitem__(self, __key: lib.t.Any, /) -> lib.t.Any:
-		"""Return field value dict style."""
+		"""
+		Return a field value dict style, exactly as stored.
+
+		---
+
+		Nested Objects are returned as Objects. Use `to_dict()` for a \
+		plain-data tree.
+
+		"""
 
 		if isinstance(__key, str) and (
 			k := core.strings.utl.cname_for(__key, self.fields)
 		):
-			value = getattr(
+			field_ = self.__dataclass_fields__[k]
+			return getattr(
 				self,
 				k,
 				(
 					field_.factory()
-					if typ.utl.check.is_field(
-						field_ := self.__dataclass_fields__[k]
-					)
+					if typ.utl.check.is_field(field_)
 					else field_['default']
 				),
 			)
-			if (
-				isinstance(value, Object)
-				and (
-					callers := lib.t.cast(
-						lib.types.FrameType,
-						lib.t.cast(
-							lib.types.FrameType, lib.inspect.currentframe()
-						).f_back,
-					).f_code.co_names
-				)
-				and 'dict' in callers
-				and (
-					callers[0] == 'dict'
-					or (callers[callers.index('dict') - 1] != 'to_dict')
-				)
-			):
-				return value.to_dict()
-			elif (
-				typ.utl.check.is_array(value)
-				and (
-					callers := lib.t.cast(
-						lib.types.FrameType,
-						lib.t.cast(
-							lib.types.FrameType, lib.inspect.currentframe()
-						).f_back,
-					).f_code.co_names
-				)
-				and 'dict' in callers
-				and (
-					callers[0] == 'dict'
-					or (callers[callers.index('dict') - 1] != 'to_dict')
-				)
-			):
-				return value.__class__(
-					item.to_dict() if typ.utl.check.is_object(item) else item
-					for item in value
-				)
-			elif (
-				typ.utl.check.is_mapping(value)
-				and (
-					callers := lib.t.cast(
-						lib.types.FrameType,
-						lib.t.cast(
-							lib.types.FrameType, lib.inspect.currentframe()
-						).f_back,
-					).f_code.co_names
-				)
-				and 'dict' in callers
-				and (
-					callers[0] == 'dict'
-					or (callers[callers.index('dict') - 1] != 'to_dict')
-				)
-			):
-				return value.__class__(
-					{
-						(k.to_dict() if typ.utl.check.is_object(k) else k): (
-							v.to_dict() if typ.utl.check.is_object(v) else v
-						)
-						for k, v in value.items()
-					}
-				)
-			else:
-				return value
 		else:
 			raise KeyError(__key)
 
@@ -353,7 +297,10 @@ class ObjectBase(metaclass=metas.Meta):
 	def __eq__(
 		self, other: lib.t.Union[object, lib.t.Any]
 	) -> lib.t.Union[bool, 'queries.EqQueryCondition', lib.Never]:
-		return hash(self) == hash(other)
+		try:
+			return hash(self) == hash(other)
+		except TypeError:
+			return False
 
 	@lib.t.overload
 	def __ne__(self, other: 'typ.AnyField[lib.t.Any]') -> bool: ...
@@ -366,7 +313,7 @@ class ObjectBase(metaclass=metas.Meta):
 	def __ne__(
 		self, other: lib.t.Union[object, lib.t.Any, 'typ.AnyField[lib.t.Any]']
 	) -> lib.t.Union[bool, 'queries.NeQueryCondition', lib.Never]:
-		return hash(self) != hash(other)
+		return not self.__eq__(other)
 
 	def __sub__(self, other: lib.Self) -> typ.SnakeDict:
 		"""Calculate diff between same object types."""
