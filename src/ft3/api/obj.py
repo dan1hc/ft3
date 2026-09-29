@@ -699,6 +699,7 @@ api_parser.add_argument(
 api_parser.add_argument(
 	'--port',
 	'-p',
+	type=int,
 	default=Constants.DEFAULT_PORT,
 	help='the port to serve on',
 	dest='port',
