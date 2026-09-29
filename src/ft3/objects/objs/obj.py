@@ -730,281 +730,47 @@ class ObjectBase(metaclass=metas.Meta):
 @lib.dataclass_transform(kw_only_default=True, field_specifiers=(typ.Field,))
 class Object(ObjectBase):
 	"""
-    Base Object.
+    Base Object: declare it once, get validation, serialization, an API \
+    resource, and a log-safe repr from the declaration.
 
     ---
-
-    Usage
-    -----
-
-    * Subclass to create objects for your application.
-
-    General Recommendations
-    -----------------------
-
-    * Ideally, objects should be 1:1 with their counterparts in the \
-    data store from which they are originally sourced (even \
-    if that data store is your own database, and even if that \
-    data is not ostensibly stored in a 1:1 manner, as is the case \
-    with most relational databases).
-        \
-        * For example, if there is a SQL table called `pets` \
-        with the schema below, you would want to create \
-        a corresponding `python representation` similar to \
-        the following.
-
-    #### pets table
-
-    ```
-    | id  | name     | type   |
-    | --- | -------- | ------ |
-    | a1  | fido     | dog    |
-    | a2  | garfield | cat    |
-    | a3  | sophie   | dog    |
-    | a4  | stripes  | turtle |
-
-    ```
-
-    #### python representation
 
     ```python
     import ft3
 
 
     class Pet(ft3.Object):
-        \"""A pet.\"""
+        \"""A pet. The docstring is the resource description.\"""
 
-        id_: ft3.Field[str] # Trailing underscores are special
-                             # in ft3, check the documentation
-                             # below for more detail.
-        name: ft3.Field[str] = 'Fido'  # Setting = 'Fido' will mean that
-                                       # all Pet() instances will be
-                                       # named 'Fido' by default.
-        type: ft3.Field[str]  # You can make a field 'required' by
-                              # not specifying a default value.
+        id_: ft3.Field[str]                # required; serializes as `id`
+        name: ft3.Field[str] = 'Fido'      # default
+        type_: ft3.Field[str] = ft3.Field(default='dog', enum=['cat', 'dog'])
+        _note: ft3.Field[str] = ''         # private: never on the wire
 
     ```
 
-    ---
+    Rules enforced at class definition, each with a named error that \
+    states the fix:
 
-    Special Rules
-    -------------
+    * every annotation is `Field[T]`
+    * every field name is `snake_case`; trailing underscores are \
+    stripped on the wire (`id_` -> `id`) and let reserved names such \
+    as `items_` or `in_` be used
+    * a field with no default and no `Optional` type is required
+    * fields named `*id` or `*key` are hash fields: they define \
+    equality, hashing, and path parameters
 
-    #### Default Values
-    Subclassed (derivative) objects should include default values for \
-    all fields specified. In cases where a default value is not specified, \
-    `None` will be used instead and the field will be assumed to be \
-    'required' for all downstream purposes (ex. as a query parameter \
-    for HTTP requests) unless otherwise specified explicitly.
+    Construction accepts a mapping, keyword arguments, or both, with \
+    camelCase or snake_case keys. Plain construction is lenient (the \
+    hydrate path for stored records); `class Model(Object, strict=True)` \
+    enforces every declared constraint on construction and assignment. \
+    Unknown keys are dropped with a one-time WARNING.
 
-    #### Type Annotations
-    Type annotations are required and must be a generic `Field[type]`. \
-    For example: `Field[int]`, `Field[str]`, `Field[str | bool]`.
-
-    * Not only is this best practice, these are leveraged downstream \
-    to do things like auto-document and auto-generate API's.
-
-    #### Uniform Casing
-    ALL Fields must be either camelCase or snake_case, with the only \
-    exception being that fields may begin with an underscore '_', so long \
-    as all following characters adhere to camelCase or snake_case conventions.
-
-    #### Underscore Prefix for Private Fields
-    Fields that begin with an underscore '_' will be ignored on \
-    conversion to / from DBO, REST, and JSON representations, \
-    unless the field ends with 'id', 'name', or 'key' (case and \
-    underscore insensitive), in which case it will still be converted.
-
-    * This follows the broader pattern of flagging methods and \
-    attributes as private / internal to a system with a preceding \
-    underscore. It should be expected that end users of your \
-    system will not need to interact with these fields.
-
-    #### Underscore Suffix for Reserved Keyword Fields
-    Fields with a trailing underscore '_' will automatically have \
-    the trailing underscore removed on conversion to / from \
-    DBO, REST, and JSON representations.
-
-    * This allows for python keywords, such as `in_`, to be used \
-    as object fields, where they would otherwise raise errors \
-    without the proceeding underscore.
-
-    * On translation to and from dictionaries, keys without \
-    underscores will still be checked against these fields -- \
-    so, a dictionary with key `in` will correctly map to the `in_` \
-    field on the Object. See below for more detail.
-
-    ```python
-    import ft3
-
-
-    class Pet(ft3.Object):
-        \"""A pet.\"""
-
-        id_: ft3.Field[str]
-        _alternate_id: ft3.Field[str]
-
-        name: ft3.Field[str]
-        type: ft3.Field[str]
-        in_: ft3.Field[str]
-        is_tail_wagging: ft3.Field[bool] = True
-
-
-    # This means each of the below will work.
-    bob_the_dog = Pet(
-        id='abc123',
-        _alternate_id='dog1',
-        name='Bob',
-        type='dog',
-        in_='timeout',
-        is_tail_wagging=False
-        )
-    bob_the_dog = Pet(
-        {
-            'id': 'abc123',
-            '_alternate_id': 'dog1',
-            'name': 'Bob',
-            'type': 'dog',
-            'in': 'timeout',
-            'is_tail_wagging': False
-            }
-        )
-
-    # And so would this, since translation
-    # automatically handles camelCase to
-    # snake_case conversions.
-    bob_the_dog = Pet(
-        {
-            'id': 'abc123',
-            'alternateId': 'dog1',
-            'name': 'Bob',
-            'type': 'dog',
-            'in': 'timeout',
-            'isTailWagging': False
-            }
-        )
-
-    ```
-
-    ---
-
-    Special Method Usage
-    --------------------
-
-    Objects have been designed to be almost interchangable with \
-    dictionaries. The primary difference is that values cannot be \
-    assigned to keys unless you define them on the Object's class \
-    definition itself.
-    * This is done to automatically maximize the efficiency of your \
-    application's memory footprint. Feel free to read more about \
-    python [slots](https://wiki.python.org/moin/UsingSlots) to better \
-    understand why this is necessary.
-
-    ```python
-    import ft3
-
-
-    class Pet(ft3.Object):  # noqa
-
-        name: ft3.Field[str]
-
-
-    dog = Pet(name='Fido')
-
-    # The below would return the string, 'Fido'.
-    dog['name']
-
-    # The following would set the dog's name to something else.
-    dog.setdefault('name', 'Arnold')
-    assert dog.name == 'Arnold'
-    dog.setdefault('name', 'Buddy')
-    assert dog.name == 'Arnold'
-    dog['name'] = 'Buddy'
-    assert dog.name == 'Buddy'
-    assert dog['name'] == 'Buddy'
-
-    # The following all work exactly the same as with a dictionary.
-    # (in the below, key will be 'name' and value 'Fido').
-    for key, value in dog.items():
-        break
-
-    for key in dog.keys():
-        break
-
-    for value in dog.values():
-        break
-
-    # But the following will raise a KeyError.
-    dog['field_that_does_not_exist'] = 'Buddy'
-
-    # And so would this, since fields can only be added
-    # or removed on the class definition of Pet itself.
-    dog.setdefault('field_that_does_not_exist', 'Buddy')
-
-    ```
-
-    Object truthiness will evaluate to True if any values for \
-    the Object instance are different from default values, \
-    otherwise False.
-
-    ```python
-    if Object:
-    ```
-
-    Objects are designed to display themselves as neatly \
-    formatted JSON on calls to `__repr__`.
-
-    ```python
-    print(Object)
-    ```
-
-    Updates Object1 with values from Object2 if they \
-    are a non-default value for the object.
-
-    ```python
-    Object1 << Object2
-    ```
-
-    Overwrites Object1 values with those from Object2 \
-    if they are a non-default value for the object.
-
-    ```python
-    Object1 >> Object2
-    ```
-
-    Returns a dictionary with {fieldName: fieldValue2} for \
-    any fields that differ between the two Objects.
-
-    ```python
-    Object1 - Object2
-    ```
-
-    Get value for Object field.
-
-    ```python
-    value = Object['field']
-    ```
-
-    Set value for Object field.
-
-    ```python
-    Object['field'] = value
-    ```
-
-    Returns True if any one of field, _field, field_, or _field_ \
-    is a valid field for the Object, otherwise False.
-
-    ```python
-    field in Object
-    ```
-
-    Same as `len(Object.fields)`.
-
-    ```python
-    len(Object)
-    ```
-
-    """
+    `as_response` is the wire shape (camelCase; nulls, private, and \
+    write_only fields omitted; read_only included). `to_dict()` is the \
+    plain-data tree (snake_case; read_only omitted by default). See \
+    `AGENTS.md` for the complete rulebook.
+	"""
 
 	class_as_dict: lib.t.Final[
 		lib.t.Optional[dict[typ.AnyString, lib.t.Any]]

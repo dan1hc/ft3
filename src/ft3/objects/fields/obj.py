@@ -42,237 +42,60 @@ class Constants(cfg.Constants):
 
 class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 	"""
-    Simple field object.
+    A typed, constrained, documented field of an `Object`.
 
     ---
+
+    Declare a field as a bare default, a `Field(...)`, or a dict of \
+    Field keys; a callable default is a factory called per instance.
+
+    ```python
+    kind: ft3.Field[str] = ft3.Field(default='dog', enum=['cat', 'dog'])
+    count: ft3.Field[int] = {'default': 1, 'minimum': 0, 'maximum': 10}
+    tags: ft3.Field[list[str]] = lambda: ['new']
+
+    ```
+
+    ## Options
+
+    * `name`, `type_`, `description`: sourced from the attribute name, \
+    the annotation, and the attribute docstring.
+    * `default`: the default value or a zero-argument factory.
+    * `required`: must be present and non-null on `POST` and `PUT` \
+    bodies and on strict construction. Defaults to `True` for a field \
+    declared with no default and no `Optional` type.
+    * `enum`: an `Enum` class or an iterable of allowed values; for an \
+    array-typed field every item must be allowed.
+    * `minimum`, `maximum`, `exclusive_minimum`, `exclusive_maximum`, \
+    `multiple_of`: numeric constraints.
+    * `min_length`, `max_length`, `pattern` (unanchored regex): string \
+    constraints.
+    * `min_items`, `max_items`, `unique_items`: array constraints.
+    * `read_only`: never accepted on input (dropped with a WARNING), \
+    included in `as_response`, omitted by `to_dict()`.
+    * `write_only`: accepted on input, never in `as_response`.
+    * `camel_case_keys`, `drop_null_items`: wire options for dict and \
+    array values; `None` follows `FT3_LEGACY_WIRE`.
+
+    Constraints are enforced by `parse(value, strict=True)`, on request \
+    input, and on strict classes; otherwise a violation is kept and \
+    logged once per class and field.
 
     ## Querying
 
-    Queries for `Objects` can be generated from their fields \
-    using the following comparison operators:
-
-    * `field_1_eq_filter = Object.field_1 == 'test_value_123'`
-    * `field_1_ne_filter = Object.field_1 != 'test_value_123'`
-    * `field_1_ge_filter = Object.field_1 >= 'test_value_123'`
-    * `field_1_gt_filter = Object.field_1 > 'test_value_123'`
-    * `field_1_le_filter = Object.field_1 <= 'test_value_123'`
-    * `field_1_lt_filter = Object.field_1 < 'test_value_123'`
-
-    And the following special operators:
-
-    * `field_1_contains_filter = Object.field_1 << 'test_value_123'`
-    * `field_1_similarity_filter = Object.field_1 % 'test_value_123'`
-    * `field_1_similarity_filter_with_threshold = Object.field_1 % ('test_value_123', 0.8)`
-
-    Queries may be chained together using the `&` and `|` bitwise \
-    operators, corresponding to `and` and `or` clauses respectively.
-
-    Additionally, the invert (`~`) operator may be prefixed to any \
-    Query to match the opposite of any conditions specified \
-    instead.
-
-    Queries also support optional result limiting and sorting:
-
-    * Result limits can be specified by setting the `limit` field.
-    * Results can be sorted any number of times using the `+=` and `-=` \
-    operators.
-
-    ---
-
-    ### Example
+    Comparing a class-level field builds a database-agnostic query \
+    document: `==`, `!=`, `<`, `<=`, `>`, `>=`, `<<` (contains), and \
+    `%` (similar, optionally `('text', 0.8)` with a threshold). Combine \
+    with `&`, `|`, and `~`; sort with `query += 'field'` (ascending) or \
+    `query -= 'field'` (descending); set `query.limit`. \
+    `query.to_dict()` is the document.
 
     ```python
-    query: Query = (
-        (
-            (Object.integer_field >= 1)
-            | (Object.string_field % ('test', 0.75))
-            )
-        & ~(Object.list_field << 'test')
-        ) += 'string_field' -= 'integer_field'
+    query = (Pet.type_ == 'dog') & ~(Pet.name % ('fido', 0.75))
+    query += 'name'
 
     ```
-
-    In the example above, the query would match any `Object` for which \
-    the string `'test'` is `not` a member of `list_field` and for which \
-    either the value for `integer_field` is greater than or equal to `1` \
-    or the value for `string_field` is at least `75%` similar to `'test'`. \
-    Results would then be sorted first in `ascending` order on `string_field`, \
-    then in `descending` order on `integer_field`.
-
-    ---
-
-    ## Parameters
-
-    Specify parameters to constrain values allowed for the field \
-    and control its behavior.
-
-
-    ```python
-    name: str = None
-
-    ```
-
-    Field Name.
-    Sourced from / overwritten by attribute name.
-
-
-    ```python
-    type: type[lib.t.Any] = None
-
-    ```
-
-    Type of value.
-    Sourced from / overwritten by type annotation.
-
-
-    ```python
-    default: lib.t.Any = None
-
-    ```
-
-    Default value for field.
-    Sourced from / overwritten by attribute value.
-    MUST be an instance of field `type` or `None`.
-
-
-    ```python
-    required: bool = False
-
-    ```
-
-    Whether or not the field SHOULD be required.
-    Default behavior changes to assume `True` if \
-    no attribute value is specified for the field.
-
-
-    ```python
-    enum: deque | frozenset | list | tuple | set | Enum = None
-
-    ```
-
-    Sequence of which field value SHOULD be a member, unless \
-    `"*"` is included in the sequence, in which case ANY value \
-    MAY be allowed, in addition to those explicitly specified.
-    `None` is always allowed.
-
-
-    ```python
-    min_length: int = None
-
-    ```
-
-    Specify `len(value)` SHOULD be `>=` minimum.
-    Field type MUST be `str` if specified.
-
-
-    ```python
-    max_length: int = None
-
-    ```
-
-    Specify `len(value)` SHOULD be `<=` maximum.
-    Field type MUST be `str` if specified.
-
-
-    ```python
-    minimum: float = None
-
-    ```
-
-    Specify value SHOULD be `>=` minimum.
-    Field type MUST be numeric if specified.
-
-
-    ```python
-    exclusive_minimum: bool = False
-
-    ```
-
-    Set `True` to specify value SHOULD be `>` minimum.
-    Field minimum MUST also be specified.
-
-
-    ```python
-    maximum: float = None
-
-    ```
-
-    Specify value SHOULD be `<=` maximum.
-    Field type MUST be numeric if specified.
-
-
-    ```python
-    exclusive_maximum: bool = False
-
-    ```
-
-    Set `True` to specify value SHOULD be `<` maximum.
-    Field maximum MUST also be specified.
-
-
-    ```python
-    multiple_of: float = None
-
-    ```
-
-    Specify `value % multiple_of` SHOULD be `0`.
-    Field type MUST be numeric if specified.
-
-
-    ```python
-    pattern: str = None
-
-    ```
-
-    Specify a Regex pattern for which the value SHOULD match.
-    Field type MUST be `str` if specified.
-
-
-    ```python
-    min_items: int = None
-
-    ```
-
-    Specify `len(value)` SHOULD be `>=` min_items.
-    Field type MUST be `deque | frozenset | list | tuple | set` if specified.
-
-
-    ```python
-    max_items: int = None
-
-    ```
-
-    Specify `len(value)` SHOULD be `<=` max_items.
-    Field type MUST be `deque | frozenset | list | tuple | set` if specified.
-
-
-    ```python
-    unique_items: bool = False
-
-    ```
-
-    Specify all elements of value SHOULD be unique.
-    Field type MUST be `deque | frozenset | list | tuple | set` if specified.
-
-
-    ```python
-    read_only: bool = False
-
-    ```
-
-    Specify this field SHOULD only be available to read \
-    operations (like `GET` http calls).
-
-
-    ```python
-    write_only: bool = False
-
-    ```
-
-    Specify this field SHOULD only be available to write \
-    operations (like `PATCH`, `POST`, or `PUT` http calls).
-
-    """
+	"""
 
 	_object_: 'Field[type[typ.Object]]'
 

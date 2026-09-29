@@ -4,7 +4,6 @@
 [![PyVersions](https://img.shields.io/pypi/pyversions/ft3?color=brightgreen)](https://pypi.org/project/ft3)
 [![readthedocs](https://readthedocs.org/projects/ft3/badge)](https://ft3.readthedocs.io)
 [![CI](https://github.com/dan1hc/ft3/actions/workflows/main.yml/badge.svg?branch=main&event=push)](https://github.com/dan1hc/ft3/actions)
-[![codeql](https://github.com/dan1hc/ft3/workflows/codeql/badge.svg)](https://github.com/dan1hc/ft3/actions/workflows/codeql.yml)
 [![coverage](https://img.shields.io/badge/dynamic/toml?url=https://raw.githubusercontent.com/dan1hc/ft3/main/pyproject.toml&query=tool.coverage.report.fail_under&label=coverage&suffix=%25&color=brightgreen)](https://github.com/dan1hc/ft3/actions)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
