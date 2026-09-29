@@ -59,6 +59,7 @@ class Constants:
 	__SLOTS__: 'typ.string[typ.snake_case]' = '__slots__'
 	__MODULE__: 'typ.string[typ.snake_case]' = '__module__'
 	__OPERATIONS__: 'typ.string[typ.snake_case]' = '__operations__'
+	__STRICT__: 'typ.string[typ.snake_case]' = '__strict__'
 
 	FIELDS: 'typ.string[typ.snake_case]' = 'fields'
 	ENUMERATIONS: 'typ.string[typ.snake_case]' = 'enumerations'

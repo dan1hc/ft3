@@ -21,6 +21,25 @@ class Constants(cfg.Constants):
 	"""Constant values specific to this file."""
 
 	FACTORY_CACHE: dict[str, lib.t.Callable[[], lib.t.Any]] = {}
+	CONSTRAINT_KEYS = (
+		'enum',
+		'min_length',
+		'max_length',
+		'minimum',
+		'maximum',
+		'multiple_of',
+		'pattern',
+		'min_items',
+		'max_items',
+		'unique_items',
+	)
+	"""Field keys that constrain a value beyond its type."""
+	LOSSLESS = 'lossless'
+	"""Pseudo-constraint name for a coercion that would lose data."""
+	NUMERIC_TYPES = (int, float, lib.decimal.Decimal)
+	"""Types checked for lossless coercion and numeric constraints."""
+	WARNED: set[tuple[str, str, str]] = set()
+	"""(object, field, constraint) triples already warned about."""
 
 
 class Field(objs.Object, lib.t.Generic[typ.AnyType]):
@@ -297,9 +316,18 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 	def __set__(
 		self, __object: lib.t.Any, __value: typ.AnyType
 	) -> lib.t.Optional[lib.Never]:
-		object.__setattr__(
-			__object, self.name, self.parse(__value, not self.required)
-		)
+		strict: bool = getattr(type(__object), Constants.__STRICT__, False)
+		parsed = self._parse(__value)
+		if isinstance(parsed, core.codecs.enm.ParseErrorRef):
+			if strict or not self.required:
+				raise exc.TypeValidationError(self.name, self.type_, parsed)
+			self._warn_once(
+				__object, 'type', parsed.value, __value, 'became None'
+			)
+			parsed = None
+		else:
+			self._enforce(parsed, __value, strict, __object)
+		object.__setattr__(__object, self.name, parsed)
 		return None
 
 	@lib.t.overload
@@ -647,40 +675,183 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 		else:
 			return None
 
+	def _parse(
+		self, value: lib.t.Any
+	) -> typ.AnyType | core.codecs.enm.ParseErrorRef:
+		self.type_ = typ.utl.hint.finalize_type(self.type_)  # type: ignore[arg-type]
+		parsed: typ.AnyType | core.codecs.enm.ParseErrorRef = (
+			core.codecs.utl.parse(value, self.type_)
+		)
+		return parsed
+
 	@lib.t.overload
 	def parse(
 		self,
 		value: lib.t.Any,
 		raise_validation_error: bool,
+		*,
+		strict: bool = False,
 	) -> typ.AnyType | lib.Never: ...
 	@lib.t.overload
 	def parse(
 		self,
 		value: lib.t.Any,
 		raise_validation_error: bool = True,
+		*,
+		strict: bool = False,
 	) -> typ.AnyType | lib.Never: ...
 	def parse(
 		self,
 		value: lib.t.Any,
 		raise_validation_error: bool = True,
+		*,
+		strict: bool = False,
 	) -> lib.t.Optional[typ.AnyType] | lib.Never:
 		"""
         Return correctly typed value if possible, `None` otherwise, or \
         [optionally] raise an error if an invalid value is passed, the \
         method's default behavior.
 
+        ---
+
+        With `strict=True`, every declared constraint (`enum`, \
+        `minimum`, `pattern`, ...) is enforced and only lossless \
+        coercion is allowed, raising `ConstraintViolationError` \
+        otherwise. Without it, constraint violations are logged once \
+        per field and the value is returned as parsed.
+
         """
 
-		self.type_ = typ.utl.hint.finalize_type(self.type_)  # type: ignore[arg-type]
-
-		parsed = core.codecs.utl.parse(value, self.type_)
+		parsed = self._parse(value)
 		if isinstance(parsed, core.codecs.enm.ParseErrorRef):
-			if raise_validation_error:
+			if raise_validation_error or strict:
 				raise exc.TypeValidationError(self.name, self.type_, parsed)
 			else:
 				return None
 		else:
+			self._enforce(parsed, value, strict)
 			return parsed
+
+	@property
+	def constraints(self) -> dict[str, lib.t.Any]:
+		"""Declared constraints beyond type, keyed by field key."""
+
+		return {
+			key: limit
+			for key in Constants.CONSTRAINT_KEYS
+			if (limit := self.get(key)) is not None
+		}
+
+	def _enforce(
+		self,
+		parsed: lib.t.Any,
+		original: lib.t.Any,
+		strict: bool,
+		object_: lib.t.Any = None,
+	) -> lib.t.Optional[lib.Never]:
+		"""Raise (strict) or warn once (lenient) per violated constraint."""
+
+		for constraint, limit, value in self.violations(parsed, original):
+			if strict:
+				raise exc.ConstraintViolationError(
+					self.name, constraint, limit, value
+				)
+			self._warn_once(object_, constraint, limit, value, 'was kept')
+		return None
+
+	def _warn_once(
+		self,
+		object_: lib.t.Any,
+		constraint: str,
+		limit: lib.t.Any,
+		value: lib.t.Any,
+		outcome: str,
+	) -> None:
+		owner = getattr(self._object_, '__name__', type(object_).__name__)
+		key = (owner, str(self.name), constraint)
+		if key in Constants.WARNED:
+			return None
+		Constants.WARNED.add(key)
+		from ... import log
+
+		log.warning(
+			{
+				'lenient.violation': {
+					'object': owner,
+					'field': self.name,
+					'constraint': constraint,
+					'limit': core.codecs.utl.encode(limit),
+					'value': core.codecs.utl.encode(value),
+					'outcome': outcome,
+					'fix': 'declare the class with strict=True to raise',
+				}
+			}
+		)
+		return None
+
+	def violations(
+		self, parsed: lib.t.Any, original: lib.t.Any = Constants.UNDEFINED
+	) -> list[tuple[str, lib.t.Any, lib.t.Any]]:
+		"""
+        Return `(constraint, limit, value)` for every declared \
+        constraint the already type-parsed value violates, including \
+        `lossless` when `original` was coerced with loss.
+
+        """
+
+		found: list[tuple[str, lib.t.Any, lib.t.Any]] = []
+		if parsed is None:
+			return found
+		checkable = typ.utl.check.get_checkable_types(self.type_)
+		if (
+			original is not Constants.UNDEFINED
+			and checkable
+			and isinstance(original, Constants.NUMERIC_TYPES)
+		):
+			is_bool = isinstance(original, bool)
+			lossy = (is_bool and bool not in checkable) or (
+				not is_bool and parsed != original
+			)
+			if lossy:
+				found.append((Constants.LOSSLESS, self.type_, original))
+		for constraint, limit in self.constraints.items():
+			if self._violates(constraint, limit, parsed):
+				found.append((constraint, limit, parsed))
+		return found
+
+	@staticmethod
+	def _violates(constraint: str, limit: lib.t.Any, value: lib.t.Any) -> bool:
+		is_number = isinstance(
+			value, Constants.NUMERIC_TYPES
+		) and not isinstance(value, bool)
+		is_array = typ.utl.check.is_array(value)
+		if constraint == 'enum':
+			if isinstance(limit, lib.enum.EnumMeta):
+				members = lib.t.cast(lib.t.Iterable[lib.enum.Enum], limit)
+				allowed = tuple(member.value for member in members)
+			else:
+				allowed = tuple(limit)
+			return getattr(value, 'value', value) not in allowed
+		elif constraint == 'min_length':
+			return isinstance(value, str) and len(value) < limit
+		elif constraint == 'max_length':
+			return isinstance(value, str) and len(value) > limit
+		elif constraint == 'minimum':
+			return is_number and value < limit
+		elif constraint == 'maximum':
+			return is_number and value > limit
+		elif constraint == 'multiple_of':
+			return is_number and value % limit != 0
+		elif constraint == 'pattern':
+			return (
+				isinstance(value, str) and lib.re.search(limit, value) is None
+			)
+		elif constraint == 'min_items':
+			return is_array and len(value) < limit
+		elif constraint == 'max_items':
+			return is_array and len(value) > limit
+		else:
+			return is_array and len({repr(v) for v in value}) < len(value)
 
 	@property
 	def factory(self) -> lib.t.Callable[[], typ.AnyType]:

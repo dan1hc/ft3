@@ -3,6 +3,7 @@
 from .. import core
 
 __all__ = (
+	'ConstraintViolationError',
 	'FieldAnnotationError',
 	'IncorrectCasingError',
 	'IncorrectDefaultTypeError',
@@ -26,6 +27,40 @@ from . import lib
 
 class Constants(cfg.Constants):
 	"""Constant values specific to this file."""
+
+
+class ConstraintViolationError(
+	BasePackageException[str, str, lib.t.Any, lib.t.Any]
+):
+	"""
+    Error raised in strict mode when a value satisfies a field's \
+    type but violates one of its declared constraints.
+
+    """
+
+	def __init__(
+		self,
+		name: str,
+		constraint: str,
+		limit: lib.t.Any,
+		value: lib.t.Any,
+	) -> None:
+		self.field = name
+		self.constraint = constraint
+		self.limit = limit
+		self.value = value
+		super().__init__(
+			' '.join(
+				(
+					f"Field: '{name}'",
+					f'declares {constraint}={limit!r},',
+					f'but the value supplied: {value!r}',
+					'does not satisfy it.',
+					f'\nFIX: supply a value that satisfies {constraint}.',
+				)
+			),
+			*(name, constraint, limit, value),
+		)
 
 
 class InvalidFieldAdditionError(BasePackageException[str]):

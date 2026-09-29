@@ -12,6 +12,7 @@ class Constants(core.cfg.Constants):
 		'__heritage__',
 		'__dataclass_fields__',
 		'__operations__',
+		'__strict__',
 		'enumerations',
 		'fields',
 		'hash_fields',
