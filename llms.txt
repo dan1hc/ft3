@@ -1,0 +1,24 @@
+# ft3
+
+> Zero-dependency Python framework for object-oriented services: declare an Object once and get validation, JSON serialization, a REST API with OpenAPI, and structured logging. Built for agents as its only users.
+
+Start with the rulebook, then the plan of record.
+
+- [Rulebook for writing and calling ft3 code](AGENTS.md): objects, validation modes, serialization, errors, API routing, logging, environment variables, compatibility switch, verify loop.
+- [Plan of record for ft3 2.0](V2.md): principles, compatibility design, what changed and why.
+- [README](README.md): executable examples; every Python block is run by the test suite.
+- [Contract tests](src/tests/contracts/): the pinned behaviors downstream projects rely on.
+- [Bundled example package](src/ft3/template/): a complete API (`ft3 api ft3.template`).
+
+## Commands
+
+- `ft3 check PKG`: validate a package without serving it; JSON report of errors, routes, and per-field notices; exit 1 on errors.
+- `ft3 openapi PKG -o openapi.json`: write the OpenAPI document as a build artifact.
+- `ft3 api PKG --port 8080`: serve locally with the stdlib server.
+- `ft3 docs PKG`: build Sphinx docs (`pip install ft3[docs]`).
+
+## Optional
+
+- [Changelog](CHANGELOG.md)
+- [Hosted API reference](https://ft3.readthedocs.io)
+- [PyPI](https://pypi.org/project/ft3)
