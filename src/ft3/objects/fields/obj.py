@@ -295,6 +295,20 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 	unique_items: 'Field[bool]' = None
 	read_only: 'Field[bool]' = None
 	write_only: 'Field[bool]' = None
+	camel_case_keys: 'Field[bool]' = None
+	"""
+    Whether first-level keys of a dict value are camelCased on the \
+    wire. `None` follows `FT3_LEGACY_WIRE` (2.0 default: keys are \
+    never re-keyed).
+
+    """
+	drop_null_items: 'Field[bool]' = None
+	"""
+    Whether `None` items of an array value are dropped on the wire. \
+    `None` follows `FT3_LEGACY_WIRE` (2.0 default: positions are \
+    preserved).
+
+    """
 
 	@lib.t.overload
 	def __get__(
@@ -352,6 +366,8 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 		unique_items: bool = None,
 		read_only: bool = None,
 		write_only: bool = None,
+		camel_case_keys: bool = None,
+		drop_null_items: bool = None,
 		**kwargs: lib.t.Any,
 	): ...
 	@lib.t.overload
@@ -378,6 +394,8 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 		unique_items: bool = None,
 		read_only: bool = None,
 		write_only: bool = None,
+		camel_case_keys: bool = None,
+		drop_null_items: bool = None,
 		**kwargs: lib.t.Any,
 	): ...
 	def __init__(
@@ -403,6 +421,8 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 		unique_items: bool = None,
 		read_only: bool = None,
 		write_only: bool = None,
+		camel_case_keys: bool = None,
+		drop_null_items: bool = None,
 		**kwargs: lib.t.Any,
 	):
 		if class_as_dict is not None:
@@ -430,6 +450,8 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 				unique_items=unique_items,
 				read_only=read_only,
 				write_only=write_only,
+				camel_case_keys=camel_case_keys,
+				drop_null_items=drop_null_items,
 			)
 
 		ckwargs = {
@@ -826,6 +848,10 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 				allowed = tuple(member.value for member in members)
 			else:
 				allowed = tuple(limit)
+			if is_array:
+				return any(
+					getattr(v, 'value', v) not in allowed for v in value
+				)
 			return getattr(value, 'value', value) not in allowed
 		elif constraint == 'min_length':
 			return isinstance(value, str) and len(value) < limit

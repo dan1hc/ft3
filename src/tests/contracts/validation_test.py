@@ -34,6 +34,9 @@ class Constrained(ft3.Object):
 	tags: ft3.Field[list[str]] = ft3.Field(
 		default=lambda: ['a'], min_items=1, max_items=3, unique_items=True
 	)
+	labels: ft3.Field[list[str]] = ft3.Field(
+		default=lambda: ['a'], enum=['a', 'b']
+	)
 	flag: ft3.Field[bool] = True
 	anything: ft3.Field[lib.t.Any] = None
 	optional_count: ft3.Field[lib.t.Optional[int]] = ft3.Field(
@@ -87,6 +90,12 @@ class TestStrictParse(unittest.TestCase):
 		self.assertViolation(Constrained.tags, [], 'min_items')
 		self.assertViolation(Constrained.tags, list('abcd'), 'max_items')
 		self.assertViolation(Constrained.tags, ['a', 'a'], 'unique_items')
+
+	def test_06b_enum_on_array_applies_per_item(self):
+		self.assertViolation(Constrained.labels, ['a', 'c'], 'enum')
+		self.assertEqual(
+			Constrained.labels.parse(['a', 'b'], strict=True), ['a', 'b']
+		)
 
 	def test_07_lossless_coercion(self):
 		"""'3' -> 3 is fine; 3.9 -> 3 and True -> 1 are not."""

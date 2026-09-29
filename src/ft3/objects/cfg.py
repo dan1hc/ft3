@@ -39,6 +39,8 @@ class Constants(core.cfg.Constants):
 		'unique_items',
 		'read_only',
 		'write_only',
+		'camel_case_keys',
+		'drop_null_items',
 	)
 	FIELDS_MODULE = __name__.replace('cfg', 'fields.obj')
 	OBJECTS_MODULE = __name__.replace('cfg', 'objs.obj')

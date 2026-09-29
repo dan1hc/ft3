@@ -311,9 +311,22 @@ class ObjectBase(metaclass=metas.Meta):
 		)
 
 	def __bool__(self) -> bool:
-		"""Determine truthiness by diff with default field values."""
+		"""
+		True if any field differs from its default.
 
-		return bool(self - self.__class__())
+		---
+
+		Never constructs a default instance, so it cannot raise for \
+		classes with required or constrained fields.
+
+		"""
+
+		for name, field in self.__dataclass_fields__.items():
+			factory = getattr(field, 'factory', None)
+			default = factory() if callable(factory) else field.get('default')
+			if self[name] != default:
+				return True
+		return False
 
 	@lib.t.overload
 	def __eq__(self, other: 'typ.AnyField[lib.t.Any]') -> bool: ...
@@ -439,11 +452,22 @@ class ObjectBase(metaclass=metas.Meta):
 		return self.__class__(dict(self))
 
 	def __deepcopy__(
-		self, memo: lib.t.Optional[typ.AnyDict] = None
+		self, memo: lib.t.Optional[dict[int, lib.t.Any]] = None
 	) -> lib.Self:
-		"""Return a deep copy of the instance."""
+		"""
+		Return a deep copy of the instance.
 
-		return self.__copy__()
+		---
+
+		Every field value, including `read_only` and private fields, \
+		is deep-copied, so nothing nested is shared with the original.
+
+		"""
+
+		memo = {} if memo is None else memo
+		return self.__class__(
+			{name: lib.copy.deepcopy(self[name], memo) for name in self.fields}
+		)
 
 	def __getstate__(self) -> typ.AnyDict:
 		return dict(self)
@@ -464,7 +488,8 @@ class ObjectBase(metaclass=metas.Meta):
 
 		---
 
-		Includes `null` values as well as all `read_only` fields.
+		Omits `null` values, private fields, and `write_only` fields; \
+		includes `read_only` fields.
 
 		"""
 
@@ -652,6 +677,13 @@ class ObjectBase(metaclass=metas.Meta):
 		}
 		as_dict: typ.SnakeDict = {}
 		for key, value in d.items():
+			options = self.__dataclass_fields__[key]
+			camel_keys = options.get('camel_case_keys')
+			drop_nulls = options.get('drop_null_items')
+			if camel_keys is None:
+				camel_keys = Constants.LEGACY_WIRE
+			if drop_nulls is None:
+				drop_nulls = Constants.LEGACY_WIRE
 			if isinstance(value, ObjectBase):
 				as_dict[key] = value.to_dict(
 					camel_case,
@@ -684,7 +716,7 @@ class ObjectBase(metaclass=metas.Meta):
 						if typ.utl.check.is_array_of_object(v)
 						else v
 						for v in value
-						if (v is not None or include_null)
+						if (v is not None or include_null or not drop_nulls)
 					)
 				)
 			elif typ.utl.check.is_mapping(value):
@@ -692,7 +724,11 @@ class ObjectBase(metaclass=metas.Meta):
 					**{
 						(
 							core.strings.utl.snake_case_to_camel_case(k)
-							if (camel_case and isinstance(k, str))
+							if (
+								camel_case
+								and camel_keys
+								and isinstance(k, str)
+							)
 							else k
 						): (
 							v.to_dict(
