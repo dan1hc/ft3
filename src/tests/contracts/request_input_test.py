@@ -120,6 +120,16 @@ class TestInputPolicy(unittest.TestCase):
 		self.assertNotIn('stored', request.body)
 		self.assertEqual(request.body['name'], 'n')
 
+	def test_03b_read_only_accepted_with_warning_under_legacy(self):
+		legacy(True)
+		request = self.request('post', {'stored': 'x', 'name': 'n'})
+		with self.assertLogs(ft3.log, level='WARNING') as logs:
+			request.validate_input(Inputs, 'post')
+			request.validate_input(Inputs, 'post')
+		self.assertEqual(request.body['stored'], 'x')
+		self.assertEqual(len(logs.records), 1)
+		self.assertIn('accepted', logs.output[0])
+
 	def test_04_required_missing_is_rejected_on_post_and_put(self):
 		for method in ('post', 'put'):
 			with self.subTest(method=method):

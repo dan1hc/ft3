@@ -135,6 +135,11 @@ class Request(Object):
 
         ---
 
+        Parses values only. The input policy (private, `read_only`, \
+        and `required` handling) is applied afterwards by \
+        `validate_input`, which `handle_request` always calls; call it \
+        yourself when using `parse_body` directly.
+
         Automatically handles translation and injection of `id` params \
         for `PUT` requests.
 
@@ -303,7 +308,9 @@ class Request(Object):
 
         * Private (`_x`) fields may not be supplied: 400, or accepted \
         with a one-time WARNING under `FT3_LEGACY_WIRE`.
-        * `read_only` fields are dropped with a one-time WARNING.
+        * `read_only` fields are dropped with a one-time WARNING, or \
+        accepted with a one-time WARNING under `FT3_LEGACY_WIRE` (1.x \
+        never enforced `read_only` on input).
         * On `POST` and `PUT`, every `required` field must be present \
         and non-null in the body: 400, or a one-time WARNING under \
         `FT3_LEGACY_WIRE`.
@@ -359,19 +366,35 @@ class Request(Object):
 					},
 				)
 			elif field.read_only:
-				mapping.pop(key)
-				loggers.utl.warn_once(
-					(obj_.__name__, 'read_only_input', cname),
-					{
-						'read_only.input': {
-							'object': obj_.__name__,
-							'field': cname,
-							'outcome': 'dropped',
-							'fix': 'stop sending read_only fields',
-						}
-					},
-				)
-				continue
+				if legacy:
+					loggers.utl.warn_once(
+						(obj_.__name__, 'read_only_input', cname),
+						{
+							'legacy.read_only_input': {
+								'object': obj_.__name__,
+								'field': cname,
+								'outcome': 'accepted',
+								'fix': (
+									'declare a writable Field for input ids,'
+									' or stop sending read_only fields'
+								),
+							}
+						},
+					)
+				else:
+					mapping.pop(key)
+					loggers.utl.warn_once(
+						(obj_.__name__, 'read_only_input', cname),
+						{
+							'read_only.input': {
+								'object': obj_.__name__,
+								'field': cname,
+								'outcome': 'dropped',
+								'fix': 'stop sending read_only fields',
+							}
+						},
+					)
+					continue
 			present[cname] = mapping[key]
 		if not require:
 			return None

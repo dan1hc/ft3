@@ -153,7 +153,8 @@ def create_pet(request: ft3.api.Request) -> Pet:
   status and per-response headers explicitly.
 - Request input policy: body and query values are parsed strictly (400 on a
   violation); private `_x` fields are rejected (400); `read_only` fields
-  are dropped with a one-time WARNING; `POST` and `PUT` bodies must carry
+  are dropped with a one-time WARNING (accepted with one under
+  `FT3_LEGACY_WIRE`); `POST` and `PUT` bodies must carry
   every `required` field. Malformed JSON is a 400 before any handler runs.
   `PATCH` reads its fields from query params.
 - Routes match exactly. `/pets` never matches `/petsitters`. A trailing
@@ -221,6 +222,15 @@ parse failures logged instead of returning 400. Per-field
 `camel_case_keys` and `drop_null_items` override it. Non-wire fixes
 (exception base, `bool()`, `deepcopy`, exact routing) are not switchable.
 `ft3 check` lists every field relying on a changed default.
+
+## Testing an API in-process
+
+Build with `api_from_package` and drive it with `ft3.api.Client`, or call
+`ft3.api.Handler(api=api)(request)` directly. `Request.parse_body` and
+`parse_query_params` only parse values; `Request.validate_input` applies the
+input policy and `handle_request` always calls it. Route lookups are cached
+per `Api` in `ft3.api.events.utl.PATHS`, a dict keyed by `id(api)`; tests
+never need to touch it.
 
 ## Contract tests
 
