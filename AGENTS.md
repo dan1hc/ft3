@@ -207,7 +207,10 @@ local development only. Deploy behind a gateway: pass the gateway event to
 | `FT3_EXTRACT_ATTRIBUTE_DOCS` | `1` | read attribute docstrings from source |
 | `INDENT`, `MAX_CHARS`, `CUTOFF_LEN`, `WRAP_WIDTH` | `2`, `384`, `12`, `64` | repr and log formatting |
 
-All are read once at import.
+All are read once at import. `ft3.configure(legacy_wire=..., redact_allow=...,
+log_format=..., log_level=..., log_traceback=...)` sets the same things from
+code, so an application never needs its deployment to carry a library
+setting; call it once at import of your package.
 
 ## Compatibility with 1.x
 
