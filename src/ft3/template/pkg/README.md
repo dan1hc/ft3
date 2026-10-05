@@ -1,7 +1,7 @@
 ## Overview
 -----------
 
-**Summary:** A simple python package that can be copy / pasted / replaced.
+**Summary:** Reference Objects, a fake database client, and a custom error.
 
 ## Usage Guidelines
 -------------------

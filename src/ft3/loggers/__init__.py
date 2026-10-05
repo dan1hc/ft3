@@ -25,11 +25,15 @@ LOG_LEVEL = (
     ).upper()
 # The default level for the logger.
 
-LOG_PRINTS = os.getenv('LOG_PRINTS', 'false').lower() == 'true'
-# Whether or not print() statements may be logged.
+LOG_TRACEBACK = os.getenv('LOG_TRACEBACK', 'true').lower() == 'true'
+# Whether error tracebacks are attached to ERROR+ records.
 
-LOG_TRACEBACK = os.getenv('LOG_TRACEBACK', 'false').lower() == 'true'
-# Whether or not error tracebacks may be logged.
+LOG_FORMAT = os.getenv('LOG_FORMAT', 'json').lower()
+# 'json' emits one line per record; 'pretty' indents each record.
+
+INTERCEPT_PRINTS = os.getenv('INTERCEPT_PRINTS', 'true').lower() == 'true'
+# Whether print() calls become INFO records carrying the printed text.
+# LOG_PRINTS=true (the 1.x name) also disables interception.
 
 ```
 
@@ -41,6 +45,7 @@ __all__ = (
 	'lib',
 	'log',
 	'obj',
+	'Formatter',
 	'typ',
 	'utl',
 )
@@ -52,4 +57,4 @@ from . import obj
 from . import typ
 from . import utl
 
-from .obj import log
+from .obj import log, Formatter

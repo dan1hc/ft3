@@ -125,7 +125,7 @@ def try_decode(
 			return enm.ParseErrorRef.null_decode
 		else:
 			return tp(value)  # type: ignore[call-arg]
-	except:  # noqa: E722
+	except Exception:
 		return enm.ParseErrorRef.value_decode
 
 
@@ -139,7 +139,7 @@ def try_parse_json(json_string: str) -> typ.Serial | enm.ParseErrorRef:
 	try:
 		deserialized: typ.Serial = lib.json.loads(json_string)
 		return deserialized
-	except:  # noqa: E722
+	except Exception:
 		return enm.ParseErrorRef.invalid_json
 
 
@@ -360,8 +360,21 @@ def parse_typed_tp(
 				if isinstance(tp_val, enm.ParseErrorRef):
 					return enm.ParseErrorRef.invalid_map_decode
 				tp_dict[ckey] = tp_val
-			else:  # pragma: no cover
-				return enm.ParseErrorRef.invalid_keys_decode
+			else:
+				from ... import loggers
+
+				owner = getattr(tp, '__name__', str(tp))
+				loggers.utl.warn_once(
+					(owner, 'unknown_key', str(k)),
+					{
+						'unknown.key': {
+							'object': owner,
+							'key': k,
+							'outcome': 'dropped',
+							'fix': 'declare a Field for it or stop sending it',
+						}
+					},
+				)
 		return tp(**tp_dict)
 	else:
 		return try_decode(value, tp)

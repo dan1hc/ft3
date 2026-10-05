@@ -7,6 +7,7 @@ __all__ = (
 	'lib',
 	'obj',
 	'utl',
+	'Client',
 	'Handler',
 	'Request',
 	'Response',
@@ -19,4 +20,4 @@ from . import lib
 from . import obj
 from . import utl
 
-from .obj import Handler, Request, Response
+from .obj import Client, Handler, Request, Response

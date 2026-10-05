@@ -2,7 +2,7 @@
 Summary
 -------
 
-A simple python package that can be copy / pasted / replaced.
+Reference Objects, a fake database client, and a custom error.
 
 """
 

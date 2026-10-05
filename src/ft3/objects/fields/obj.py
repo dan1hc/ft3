@@ -21,241 +21,81 @@ class Constants(cfg.Constants):
 	"""Constant values specific to this file."""
 
 	FACTORY_CACHE: dict[str, lib.t.Callable[[], lib.t.Any]] = {}
+	CONSTRAINT_KEYS = (
+		'enum',
+		'min_length',
+		'max_length',
+		'minimum',
+		'maximum',
+		'multiple_of',
+		'pattern',
+		'min_items',
+		'max_items',
+		'unique_items',
+	)
+	"""Field keys that constrain a value beyond its type."""
+	LOSSLESS = 'lossless'
+	"""Pseudo-constraint name for a coercion that would lose data."""
+	NUMERIC_TYPES = (int, float, lib.decimal.Decimal)
+	"""Types checked for lossless coercion and numeric constraints."""
 
 
 class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 	"""
-    Simple field object.
+    A typed, constrained, documented field of an `Object`.
 
     ---
+
+    Declare a field as a bare default, a `Field(...)`, or a dict of \
+    Field keys; a callable default is a factory called per instance.
+
+    ```python
+    kind: ft3.Field[str] = ft3.Field(default='dog', enum=['cat', 'dog'])
+    count: ft3.Field[int] = {'default': 1, 'minimum': 0, 'maximum': 10}
+    tags: ft3.Field[list[str]] = lambda: ['new']
+
+    ```
+
+    ## Options
+
+    * `name`, `type_`, `description`: sourced from the attribute name, \
+    the annotation, and the attribute docstring.
+    * `default`: the default value or a zero-argument factory.
+    * `required`: must be present and non-null on `POST` and `PUT` \
+    bodies and on strict construction. Defaults to `True` for a field \
+    declared with no default and no `Optional` type.
+    * `enum`: an `Enum` class or an iterable of allowed values; for an \
+    array-typed field every item must be allowed.
+    * `minimum`, `maximum`, `exclusive_minimum`, `exclusive_maximum`, \
+    `multiple_of`: numeric constraints.
+    * `min_length`, `max_length`, `pattern` (unanchored regex): string \
+    constraints.
+    * `min_items`, `max_items`, `unique_items`: array constraints.
+    * `read_only`: never accepted on input (dropped with a WARNING), \
+    included in `as_response`, omitted by `to_dict()`.
+    * `write_only`: accepted on input, never in `as_response`.
+    * `camel_case_keys`, `drop_null_items`: wire options for dict and \
+    array values; `None` follows `FT3_LEGACY_WIRE`.
+
+    Constraints are enforced by `parse(value, strict=True)`, on request \
+    input, and on strict classes; otherwise a violation is kept and \
+    logged once per class and field.
 
     ## Querying
 
-    Queries for `Objects` can be generated from their fields \
-    using the following comparison operators:
-
-    * `field_1_eq_filter = Object.field_1 == 'test_value_123'`
-    * `field_1_ne_filter = Object.field_1 != 'test_value_123'`
-    * `field_1_ge_filter = Object.field_1 >= 'test_value_123'`
-    * `field_1_gt_filter = Object.field_1 > 'test_value_123'`
-    * `field_1_le_filter = Object.field_1 <= 'test_value_123'`
-    * `field_1_lt_filter = Object.field_1 < 'test_value_123'`
-
-    And the following special operators:
-
-    * `field_1_contains_filter = Object.field_1 << 'test_value_123'`
-    * `field_1_similarity_filter = Object.field_1 % 'test_value_123'`
-    * `field_1_similarity_filter_with_threshold = Object.field_1 % ('test_value_123', 0.8)`
-
-    Queries may be chained together using the `&` and `|` bitwise \
-    operators, corresponding to `and` and `or` clauses respectively.
-
-    Additionally, the invert (`~`) operator may be prefixed to any \
-    Query to match the opposite of any conditions specified \
-    instead.
-
-    Queries also support optional result limiting and sorting:
-
-    * Result limits can be specified by setting the `limit` field.
-    * Results can be sorted any number of times using the `+=` and `-=` \
-    operators.
-
-    ---
-
-    ### Example
+    Comparing a class-level field builds a database-agnostic query \
+    document: `==`, `!=`, `<`, `<=`, `>`, `>=`, `<<` (contains), and \
+    `%` (similar, optionally `('text', 0.8)` with a threshold). Combine \
+    with `&`, `|`, and `~`; sort with `query += 'field'` (ascending) or \
+    `query -= 'field'` (descending); set `query.limit`. \
+    `query.to_dict()` is the document.
 
     ```python
-    query: Query = (
-        (
-            (Object.integer_field >= 1)
-            | (Object.string_field % ('test', 0.75))
-            )
-        & ~(Object.list_field << 'test')
-        ) += 'string_field' -= 'integer_field'
+    query = (Pet.type_ == 'dog') & ~(Pet.name % ('fido', 0.75))
+    query += 'name'
 
     ```
-
-    In the example above, the query would match any `Object` for which \
-    the string `'test'` is `not` a member of `list_field` and for which \
-    either the value for `integer_field` is greater than or equal to `1` \
-    or the value for `string_field` is at least `75%` similar to `'test'`. \
-    Results would then be sorted first in `ascending` order on `string_field`, \
-    then in `descending` order on `integer_field`.
-
-    ---
-
-    ## Parameters
-
-    Specify parameters to constrain values allowed for the field \
-    and control its behavior.
-
-
-    ```python
-    name: str = None
-
-    ```
-
-    Field Name.
-    Sourced from / overwritten by attribute name.
-
-
-    ```python
-    type: type[lib.t.Any] = None
-
-    ```
-
-    Type of value.
-    Sourced from / overwritten by type annotation.
-
-
-    ```python
-    default: lib.t.Any = None
-
-    ```
-
-    Default value for field.
-    Sourced from / overwritten by attribute value.
-    MUST be an instance of field `type` or `None`.
-
-
-    ```python
-    required: bool = False
-
-    ```
-
-    Whether or not the field SHOULD be required.
-    Default behavior changes to assume `True` if \
-    no attribute value is specified for the field.
-
-
-    ```python
-    enum: deque | frozenset | list | tuple | set | Enum = None
-
-    ```
-
-    Sequence of which field value SHOULD be a member, unless \
-    `"*"` is included in the sequence, in which case ANY value \
-    MAY be allowed, in addition to those explicitly specified.
-    `None` is always allowed.
-
-
-    ```python
-    min_length: int = None
-
-    ```
-
-    Specify `len(value)` SHOULD be `>=` minimum.
-    Field type MUST be `str` if specified.
-
-
-    ```python
-    max_length: int = None
-
-    ```
-
-    Specify `len(value)` SHOULD be `<=` maximum.
-    Field type MUST be `str` if specified.
-
-
-    ```python
-    minimum: float = None
-
-    ```
-
-    Specify value SHOULD be `>=` minimum.
-    Field type MUST be numeric if specified.
-
-
-    ```python
-    exclusive_minimum: bool = False
-
-    ```
-
-    Set `True` to specify value SHOULD be `>` minimum.
-    Field minimum MUST also be specified.
-
-
-    ```python
-    maximum: float = None
-
-    ```
-
-    Specify value SHOULD be `<=` maximum.
-    Field type MUST be numeric if specified.
-
-
-    ```python
-    exclusive_maximum: bool = False
-
-    ```
-
-    Set `True` to specify value SHOULD be `<` maximum.
-    Field maximum MUST also be specified.
-
-
-    ```python
-    multiple_of: float = None
-
-    ```
-
-    Specify `value % multiple_of` SHOULD be `0`.
-    Field type MUST be numeric if specified.
-
-
-    ```python
-    pattern: str = None
-
-    ```
-
-    Specify a Regex pattern for which the value SHOULD match.
-    Field type MUST be `str` if specified.
-
-
-    ```python
-    min_items: int = None
-
-    ```
-
-    Specify `len(value)` SHOULD be `>=` min_items.
-    Field type MUST be `deque | frozenset | list | tuple | set` if specified.
-
-
-    ```python
-    max_items: int = None
-
-    ```
-
-    Specify `len(value)` SHOULD be `<=` max_items.
-    Field type MUST be `deque | frozenset | list | tuple | set` if specified.
-
-
-    ```python
-    unique_items: bool = False
-
-    ```
-
-    Specify all elements of value SHOULD be unique.
-    Field type MUST be `deque | frozenset | list | tuple | set` if specified.
-
-
-    ```python
-    read_only: bool = False
-
-    ```
-
-    Specify this field SHOULD only be available to read \
-    operations (like `GET` http calls).
-
-
-    ```python
-    write_only: bool = False
-
-    ```
-
-    Specify this field SHOULD only be available to write \
-    operations (like `PATCH`, `POST`, or `PUT` http calls).
-
-    """
+	"""
 
 	_object_: 'Field[type[typ.Object]]'
 
@@ -278,6 +118,20 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 	unique_items: 'Field[bool]' = None
 	read_only: 'Field[bool]' = None
 	write_only: 'Field[bool]' = None
+	camel_case_keys: 'Field[bool]' = None
+	"""
+    Whether first-level keys of a dict value are camelCased on the \
+    wire. `None` follows `FT3_LEGACY_WIRE` (2.0 default: keys are \
+    never re-keyed).
+
+    """
+	drop_null_items: 'Field[bool]' = None
+	"""
+    Whether `None` items of an array value are dropped on the wire. \
+    `None` follows `FT3_LEGACY_WIRE` (2.0 default: positions are \
+    preserved).
+
+    """
 
 	@lib.t.overload
 	def __get__(
@@ -297,9 +151,23 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 	def __set__(
 		self, __object: lib.t.Any, __value: typ.AnyType
 	) -> lib.t.Optional[lib.Never]:
-		object.__setattr__(
-			__object, self.name, self.parse(__value, not self.required)
-		)
+		strict: bool = getattr(type(__object), Constants.__STRICT__, False)
+		parsed = self._parse(__value)
+		if isinstance(parsed, core.codecs.enm.ParseErrorRef):
+			if strict or not self.required:
+				raise exc.TypeValidationError(self.name, self.type_, parsed)
+			if parsed is core.codecs.enm.ParseErrorRef.null_decode:
+				self._warn_once(
+					__object, 'required', True, None, 'stayed None'
+				)
+			else:
+				self._warn_once(
+					__object, 'type', parsed.value, __value, 'became None'
+				)
+			parsed = None
+		else:
+			self._enforce(parsed, __value, strict, __object)
+		object.__setattr__(__object, self.name, parsed)
 		return None
 
 	@lib.t.overload
@@ -326,6 +194,8 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 		unique_items: bool = None,
 		read_only: bool = None,
 		write_only: bool = None,
+		camel_case_keys: bool = None,
+		drop_null_items: bool = None,
 		**kwargs: lib.t.Any,
 	): ...
 	@lib.t.overload
@@ -352,6 +222,8 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 		unique_items: bool = None,
 		read_only: bool = None,
 		write_only: bool = None,
+		camel_case_keys: bool = None,
+		drop_null_items: bool = None,
 		**kwargs: lib.t.Any,
 	): ...
 	def __init__(
@@ -377,6 +249,8 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 		unique_items: bool = None,
 		read_only: bool = None,
 		write_only: bool = None,
+		camel_case_keys: bool = None,
+		drop_null_items: bool = None,
 		**kwargs: lib.t.Any,
 	):
 		if class_as_dict is not None:
@@ -404,6 +278,8 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 				unique_items=unique_items,
 				read_only=read_only,
 				write_only=write_only,
+				camel_case_keys=camel_case_keys,
+				drop_null_items=drop_null_items,
 			)
 
 		ckwargs = {
@@ -647,40 +523,189 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 		else:
 			return None
 
+	def _parse(
+		self, value: lib.t.Any
+	) -> typ.AnyType | core.codecs.enm.ParseErrorRef:
+		self.type_ = typ.utl.hint.finalize_type(self.type_)  # type: ignore[arg-type]
+		parsed: typ.AnyType | core.codecs.enm.ParseErrorRef = (
+			core.codecs.utl.parse(value, self.type_)
+		)
+		return parsed
+
 	@lib.t.overload
 	def parse(
 		self,
 		value: lib.t.Any,
 		raise_validation_error: bool,
+		*,
+		strict: bool = False,
 	) -> typ.AnyType | lib.Never: ...
 	@lib.t.overload
 	def parse(
 		self,
 		value: lib.t.Any,
 		raise_validation_error: bool = True,
+		*,
+		strict: bool = False,
 	) -> typ.AnyType | lib.Never: ...
 	def parse(
 		self,
 		value: lib.t.Any,
 		raise_validation_error: bool = True,
+		*,
+		strict: bool = False,
 	) -> lib.t.Optional[typ.AnyType] | lib.Never:
 		"""
         Return correctly typed value if possible, `None` otherwise, or \
         [optionally] raise an error if an invalid value is passed, the \
         method's default behavior.
 
+        ---
+
+        With `strict=True`, every declared constraint (`enum`, \
+        `minimum`, `pattern`, ...) is enforced and only lossless \
+        coercion is allowed, raising `ConstraintViolationError` \
+        otherwise. Without it, constraint violations are logged once \
+        per field and the value is returned as parsed.
+
         """
 
-		self.type_ = typ.utl.hint.finalize_type(self.type_)  # type: ignore[arg-type]
-
-		parsed = core.codecs.utl.parse(value, self.type_)
+		parsed = self._parse(value)
 		if isinstance(parsed, core.codecs.enm.ParseErrorRef):
-			if raise_validation_error:
+			if raise_validation_error or strict:
 				raise exc.TypeValidationError(self.name, self.type_, parsed)
 			else:
 				return None
 		else:
+			self._enforce(parsed, value, strict)
 			return parsed
+
+	@property
+	def constraints(self) -> dict[str, lib.t.Any]:
+		"""Declared constraints beyond type, keyed by field key."""
+
+		return {
+			key: limit
+			for key in Constants.CONSTRAINT_KEYS
+			if (limit := self.get(key)) is not None
+		}
+
+	def _enforce(
+		self,
+		parsed: lib.t.Any,
+		original: lib.t.Any,
+		strict: bool,
+		object_: lib.t.Any = None,
+	) -> lib.t.Optional[lib.Never]:
+		"""Raise (strict) or warn once (lenient) per violated constraint."""
+
+		for constraint, limit, value in self.violations(parsed, original):
+			if strict:
+				raise exc.ConstraintViolationError(
+					self.name, constraint, limit, value
+				)
+			self._warn_once(object_, constraint, limit, value, 'was kept')
+		return None
+
+	def _warn_once(
+		self,
+		object_: lib.t.Any,
+		constraint: str,
+		limit: lib.t.Any,
+		value: lib.t.Any,
+		outcome: str,
+	) -> None:
+		from ... import loggers
+
+		owner = getattr(self._object_, '__name__', type(object_).__name__)
+		loggers.utl.warn_once(
+			(owner, str(self.name), constraint),
+			{
+				'lenient.violation': {
+					'object': owner,
+					'field': self.name,
+					'constraint': constraint,
+					'limit': core.codecs.utl.encode(limit),
+					'value': core.codecs.utl.encode(value),
+					'outcome': outcome,
+					'fix': 'declare the class with strict=True to raise',
+				}
+			},
+		)
+		return None
+
+	def violations(
+		self, parsed: lib.t.Any, original: lib.t.Any = Constants.UNDEFINED
+	) -> list[tuple[str, lib.t.Any, lib.t.Any]]:
+		"""
+        Return `(constraint, limit, value)` for every declared \
+        constraint the already type-parsed value violates, including \
+        `lossless` when `original` was coerced with loss.
+
+        """
+
+		found: list[tuple[str, lib.t.Any, lib.t.Any]] = []
+		if parsed is None:
+			return found
+		checkable = typ.utl.check.get_checkable_types(self.type_)
+		if (
+			original is not Constants.UNDEFINED
+			and checkable
+			and isinstance(original, Constants.NUMERIC_TYPES)
+		):
+			is_bool = isinstance(original, bool)
+			numeric_target = bool not in checkable and any(
+				isinstance(tp, type)
+				and issubclass(tp, Constants.NUMERIC_TYPES)
+				for tp in checkable
+			)
+			lossy = (is_bool and numeric_target) or (
+				not is_bool and parsed != original
+			)
+			if lossy:
+				found.append((Constants.LOSSLESS, self.type_, original))
+		for constraint, limit in self.constraints.items():
+			if self._violates(constraint, limit, parsed):
+				found.append((constraint, limit, parsed))
+		return found
+
+	@staticmethod
+	def _violates(constraint: str, limit: lib.t.Any, value: lib.t.Any) -> bool:
+		is_number = isinstance(
+			value, Constants.NUMERIC_TYPES
+		) and not isinstance(value, bool)
+		is_array = typ.utl.check.is_array(value)
+		if constraint == 'enum':
+			if isinstance(limit, lib.enum.EnumMeta):
+				members = lib.t.cast(lib.t.Iterable[lib.enum.Enum], limit)
+				allowed = tuple(member.value for member in members)
+			else:
+				allowed = tuple(limit)
+			if is_array:
+				return any(
+					getattr(v, 'value', v) not in allowed for v in value
+				)
+			return getattr(value, 'value', value) not in allowed
+		elif constraint == 'min_length':
+			return isinstance(value, str) and len(value) < limit
+		elif constraint == 'max_length':
+			return isinstance(value, str) and len(value) > limit
+		elif constraint == 'minimum':
+			return is_number and value < limit
+		elif constraint == 'maximum':
+			return is_number and value > limit
+		elif constraint == 'multiple_of':
+			return is_number and value % limit != 0
+		elif constraint == 'pattern':
+			return (
+				isinstance(value, str) and lib.re.search(limit, value) is None
+			)
+		elif constraint == 'min_items':
+			return is_array and len(value) < limit
+		elif constraint == 'max_items':
+			return is_array and len(value) > limit
+		else:
+			return is_array and len({repr(v) for v in value}) < len(value)
 
 	@property
 	def factory(self) -> lib.t.Callable[[], typ.AnyType]:
@@ -725,7 +750,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 					Constants.DELETE,
 				)
 			)
-			obj_or_none.__operations__[k] = fn
+			obj_or_none._add_operation(k, fn)
 		return fn
 
 	def GET(  # type: ignore[override]
@@ -755,7 +780,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 						Constants.GET,
 					)
 				)
-			obj_or_none.__operations__[k] = fn
+			obj_or_none._add_operation(k, fn)
 		return fn
 
 	def OPTIONS(  # type: ignore[override]
@@ -771,7 +796,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 					Constants.OPTIONS,
 				)
 			)
-			obj_or_none.__operations__[k] = fn
+			obj_or_none._add_operation(k, fn)
 		return fn
 
 	def PATCH(  # type: ignore[override]
@@ -787,7 +812,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 					Constants.PATCH,
 				)
 			)
-			obj_or_none.__operations__[k] = fn
+			obj_or_none._add_operation(k, fn)
 		return fn
 
 	def POST(  # type: ignore[override]
@@ -797,7 +822,7 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 		obj_or_none = utl.get_obj_from_type(self.type_)  # type: ignore[arg-type]
 		if obj_or_none is not None:
 			k = '_'.join((self._object_.__name__.lower(), Constants.POST))
-			obj_or_none.__operations__[k] = fn
+			obj_or_none._add_operation(k, fn)
 		return fn
 
 	def PUT(  # type: ignore[override]
@@ -813,5 +838,5 @@ class Field(objs.Object, lib.t.Generic[typ.AnyType]):
 					Constants.PUT,
 				)
 			)
-			obj_or_none.__operations__[k] = fn
+			obj_or_none._add_operation(k, fn)
 		return fn

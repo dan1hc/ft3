@@ -22,6 +22,11 @@ class Constants(core.cfg.Constants):
 		'put',
 	)
 	SKIP_FIELDS = (
+		'_object',
 		'default',
+		'name',
 		'required',
+		'camel_case_keys',
+		'drop_null_items',
 	)
+	"""Field keys that never appear in an OpenAPI schema."""

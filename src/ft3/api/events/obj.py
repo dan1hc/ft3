@@ -2,9 +2,18 @@
 
 from .. import obj
 
-__all__ = ('Error', 'Handler', 'Pattern', 'Request', 'Response', *obj.__all__)
+__all__ = (
+	'Client',
+	'Error',
+	'Handler',
+	'Pattern',
+	'Request',
+	'Response',
+	*obj.__all__,
+)
 
 from ... import core
+from ... import objects
 
 from ... import log, Field, Object
 
@@ -14,6 +23,7 @@ from ..obj import *
 
 from . import cfg
 from . import enm
+from . import exc
 from . import lib
 
 
@@ -33,38 +43,70 @@ class Error(Object):
 
 	error_message: Field[str]
 	error_code: Field[typ.HttpErrorCode]
+	error_ref: Field[lib.t.Optional[str]] = None
+	"""
+    Stable identifier of the underlying error: an ft3 exception's \
+    `code`, otherwise the exception class name in snake_case.
+
+    """
 
 	@classmethod
 	def from_exception(
 		cls, exception: typ.ExceptionType | type[typ.ExceptionType]
 	) -> lib.Self:
-		"""Populate error object from an exception."""
+		"""
+        Populate error object from an exception instance or class.
 
-		name_ = exception.__class__.__name__
-		exc_tp: type[typ.ExceptionType] = exception.__class__
+        ---
 
-		msg: lib.t.Optional[str]
-		if isinstance(exception.args, tuple) and exception.args:
-			msg = str(exception.args[0])
+        The HTTP code comes from the first class in the exception's \
+        MRO that is a known HTTP error or is mapped to one, so \
+        subclasses inherit their parent's status.
+
+        """
+
+		exc_tp: type[BaseException]
+		msg: lib.t.Optional[str] = None
+		if isinstance(exception, type):
+			exc_tp = exception
 		else:
-			msg = None
+			exc_tp = type(exception)
+			if exception.args:
+				msg = str(exception.args[0])
 
 		error_code: typ.HttpErrorCode = 500
-		while issubclass(exc_tp, Exception):
-			if name_ in enm.ErrorCode._member_names_:
-				error_code = enm.ErrorCode[name_].value
+		for klass in exc_tp.__mro__:
+			name_ = klass.__name__
+			if name_ in enm.ErrorCode.__members__:
+				error_code = enm.ErrorCode.__members__[name_].value
 				break
-			elif name_ in enm.ErrorMap._member_names_:
-				error_code = enm.ErrorCode[enm.ErrorMap[name_].value].value
+			elif name_ in enm.ErrorMap.__members__:
+				mapped = enm.ErrorMap.__members__[name_].value
+				error_code = enm.ErrorCode.__members__[mapped].value
 				break
-			else:
-				name_ = exc_tp.__name__
-			exc_tp = exc_tp.__class__
 
 		if msg is None:
 			msg = enm.ErrorMessage['_' + str(error_code)].value
 
-		return cls(error_message=msg, error_code=error_code)
+		return cls(
+			error_message=msg,
+			error_code=error_code,
+			error_ref=core.exc.code_for(exc_tp),
+		)
+
+	@classmethod
+	def from_request_exception(cls, exception: Exception) -> lib.Self:
+		"""
+        Like `from_exception`, for failures while parsing a request: \
+        anything not already mapped is the request's fault (400).
+
+        """
+
+		error = cls.from_exception(exception)
+		if error.error_code == 500:
+			error.error_code = 400
+			error.error_message = str(exception) or enm.ErrorMessage._400.value
+		return error
 
 
 class Request(Object):
@@ -92,6 +134,11 @@ class Request(Object):
         Parse JSON body from url string and optionally an `Object`.
 
         ---
+
+        Parses values only. The input policy (private, `read_only`, \
+        and `required` handling) is applied afterwards by \
+        `validate_input`, which `handle_request` always calls; call it \
+        yourself when using `parse_body` directly.
 
         Automatically handles translation and injection of `id` params \
         for `PUT` requests.
@@ -146,7 +193,9 @@ class Request(Object):
 
 		if isinstance(deserialized, dict) and obj_ is not None:
 			body = {
-				k: obj_.__dataclass_fields__[cname].parse(v)
+				k: obj_.__dataclass_fields__[cname].parse(
+					v, strict=not Constants.LEGACY_WIRE
+				)
 				for k, v in deserialized.items()
 				if core.strings.utl.isCamelCaseString(k)
 				and isinstance(content, Content)
@@ -163,7 +212,9 @@ class Request(Object):
 				{
 					**id_params,
 					**{
-						k: obj_.__dataclass_fields__[cname].parse(v)
+						k: obj_.__dataclass_fields__[cname].parse(
+							v, strict=not Constants.LEGACY_WIRE
+						)
 						for k, v in d.items()
 						if core.strings.utl.isCamelCaseString(k)
 						and isinstance(content, Content)
@@ -208,7 +259,9 @@ class Request(Object):
 			}
 		if obj_ is not None:
 			self.query_params = {
-				param.name: field.parse(query_param)
+				param.name: field.parse(
+					query_param, strict=not Constants.LEGACY_WIRE
+				)
 				for param in (operation.parameters or ())
 				if param.name
 				and (
@@ -243,6 +296,128 @@ class Request(Object):
 				and (field := obj_.__dataclass_fields__.get(cname))
 			}
 
+		return None
+
+	def validate_input(
+		self, obj_: type[typ.Object], method: typ.string[typ.snake_case]
+	) -> lib.t.Optional[lib.Never]:
+		"""
+        Apply the input policy to the parsed body and query params.
+
+        ---
+
+        * Private (`_x`) fields may not be supplied: 400, or accepted \
+        with a one-time WARNING under `FT3_LEGACY_WIRE`.
+        * `read_only` fields are dropped with a one-time WARNING, or \
+        accepted with a one-time WARNING under `FT3_LEGACY_WIRE` (1.x \
+        never enforced `read_only` on input).
+        * On `POST` and `PUT`, every `required` field must be present \
+        and non-null in the body: 400, or a one-time WARNING under \
+        `FT3_LEGACY_WIRE`.
+
+        """
+
+		bodies: list[dict[typ.AnyString, lib.t.Any]] = []
+		if isinstance(self.body, dict):
+			bodies.append(self.body)
+		elif isinstance(self.body, list):
+			bodies.extend(b for b in self.body if isinstance(b, dict))
+		require = method in (Constants.POST, Constants.PUT)
+		for body in bodies:
+			self._apply_input_policy(obj_, body, require)
+		self._apply_input_policy(obj_, self.query_params, False)
+		return None
+
+	@staticmethod
+	def _apply_input_policy(
+		obj_: type[typ.Object],
+		mapping: dict[typ.AnyString, lib.t.Any],
+		require: bool,
+	) -> lib.t.Optional[lib.Never]:
+		from ... import loggers
+
+		legacy = Constants.LEGACY_WIRE
+		present: dict[str, lib.t.Any] = {}
+		for key in list(mapping):
+			cname = core.strings.utl.cname_for(str(key), obj_.fields)
+			if cname is None:
+				continue
+			field = obj_.__dataclass_fields__[cname]
+			if cname.startswith('_'):
+				if not legacy:
+					raise exc.RequestError(
+						' '.join(
+							(
+								f"Field: '{key}' is private and may not be",
+								f"supplied. FIX: remove '{key}' from the",
+								'request.',
+							)
+						)
+					)
+				loggers.utl.warn_once(
+					(obj_.__name__, 'private_input', cname),
+					{
+						'legacy.private_input': {
+							'object': obj_.__name__,
+							'field': cname,
+							'outcome': 'accepted',
+							'fix': 'stop sending private fields',
+						}
+					},
+				)
+			elif field.read_only:
+				if legacy:
+					loggers.utl.warn_once(
+						(obj_.__name__, 'read_only_input', cname),
+						{
+							'legacy.read_only_input': {
+								'object': obj_.__name__,
+								'field': cname,
+								'outcome': 'accepted',
+								'fix': (
+									'declare a writable Field for input ids,'
+									' or stop sending read_only fields'
+								),
+							}
+						},
+					)
+				else:
+					mapping.pop(key)
+					loggers.utl.warn_once(
+						(obj_.__name__, 'read_only_input', cname),
+						{
+							'read_only.input': {
+								'object': obj_.__name__,
+								'field': cname,
+								'outcome': 'dropped',
+								'fix': 'stop sending read_only fields',
+							}
+						},
+					)
+					continue
+			present[cname] = mapping[key]
+		if not require:
+			return None
+		for fname, field in obj_.__dataclass_fields__.items():
+			if not field.required or field.read_only:
+				continue
+			if present.get(fname) is not None:
+				continue
+			if not legacy:
+				raise objects.exc.MissingRequiredFieldError(
+					obj_.__name__, fname
+				)
+			loggers.utl.warn_once(
+				(obj_.__name__, 'missing_required', fname),
+				{
+					'legacy.missing_required': {
+						'object': obj_.__name__,
+						'field': fname,
+						'outcome': 'accepted',
+						'fix': 'supply every required field',
+					}
+				},
+			)
 		return None
 
 	def parse_path_params(self, uri: str, operation: 'Operation') -> None:
@@ -294,6 +469,81 @@ class Response(Object):
 			return lib.json.dumps(self.body, default=str)
 		else:
 			return self.body
+
+
+class Client:
+	"""
+	In-process API client for tests and agents.
+
+	---
+
+	Builds a `Request` the way the HTTP server would and returns the \
+	`Response` the API would send, without sockets or threads.
+
+	```python
+	client = ft3.api.Client(ft3.api.api_from_package('my_pkg', 'v1', '/'))
+	response = client.get('/v1/pets', query={'type': 'dog'})
+	assert response.status_code == 200
+	```
+
+	"""
+
+	def __init__(self, api: Api) -> None:
+		self.handler = Handler(api=api)
+
+	def request(
+		self,
+		method: str,
+		path: str,
+		*,
+		body: lib.t.Any = None,
+		headers: lib.t.Optional[dict[str, str]] = None,
+		query: lib.t.Optional[dict[str, lib.t.Any]] = None,
+	) -> 'Response':
+		"""Send one request and return the response."""
+
+		url = path
+		if query:
+			url += '?' + lib.urllib.parse.urlencode(query)
+		return self.handler(
+			Request(
+				url=url,
+				path=path,
+				method=method.lower(),
+				body=body,
+				headers=headers or {},
+			)
+		)
+
+	def get(self, path: str, **kwargs: lib.t.Any) -> 'Response':
+		"""Send a GET request."""
+
+		return self.request('get', path, **kwargs)
+
+	def post(self, path: str, **kwargs: lib.t.Any) -> 'Response':
+		"""Send a POST request."""
+
+		return self.request('post', path, **kwargs)
+
+	def put(self, path: str, **kwargs: lib.t.Any) -> 'Response':
+		"""Send a PUT request."""
+
+		return self.request('put', path, **kwargs)
+
+	def patch(self, path: str, **kwargs: lib.t.Any) -> 'Response':
+		"""Send a PATCH request."""
+
+		return self.request('patch', path, **kwargs)
+
+	def delete(self, path: str, **kwargs: lib.t.Any) -> 'Response':
+		"""Send a DELETE request."""
+
+		return self.request('delete', path, **kwargs)
+
+	def options(self, path: str, **kwargs: lib.t.Any) -> 'Response':
+		"""Send an OPTIONS request."""
+
+		return self.request('options', path, **kwargs)
 
 
 class Handler(Object):

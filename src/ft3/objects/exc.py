@@ -3,6 +3,7 @@
 from .. import core
 
 __all__ = (
+	'ConstraintViolationError',
 	'FieldAnnotationError',
 	'IncorrectCasingError',
 	'IncorrectDefaultTypeError',
@@ -12,6 +13,7 @@ __all__ = (
 	'InvalidFieldAdditionError',
 	'InvalidFieldRedefinitionError',
 	'InvalidObjectComparisonError',
+	'MissingRequiredFieldError',
 	'MissingTypeAnnotation',
 	'ReservedKeywordError',
 	'TypeValidationError',
@@ -26,6 +28,40 @@ from . import lib
 
 class Constants(cfg.Constants):
 	"""Constant values specific to this file."""
+
+
+class ConstraintViolationError(
+	BasePackageException[str, str, lib.t.Any, lib.t.Any]
+):
+	"""
+    Error raised in strict mode when a value satisfies a field's \
+    type but violates one of its declared constraints.
+
+    """
+
+	def __init__(
+		self,
+		name: str,
+		constraint: str,
+		limit: lib.t.Any,
+		value: lib.t.Any,
+	) -> None:
+		self.field = name
+		self.constraint = constraint
+		self.limit = limit
+		self.value = value
+		super().__init__(
+			' '.join(
+				(
+					f"Field: '{name}'",
+					f'declares {constraint}={limit!r},',
+					f'but the value supplied: {value!r}',
+					'does not satisfy it.',
+					f'\nFIX: supply a value that satisfies {constraint}.',
+				)
+			),
+			*(name, constraint, limit, value),
+		)
 
 
 class InvalidFieldAdditionError(BasePackageException[str]):
@@ -208,6 +244,24 @@ class FieldAnnotationError(
 				)
 			),
 			*(name, dtype),
+		)
+
+
+class MissingRequiredFieldError(BasePackageException[str, str]):
+	"""Error raised in strict mode when a required field is absent."""
+
+	def __init__(self, object_name: str, name: str) -> None:
+		self.object = object_name
+		self.field = name
+		super().__init__(
+			' '.join(
+				(
+					f"Field: '{name}' of Object: '{object_name}'",
+					'is required but was not supplied (or was null).',
+					f"\nFIX: supply a non-null value for '{name}'.",
+				)
+			),
+			*(object_name, name),
 		)
 
 

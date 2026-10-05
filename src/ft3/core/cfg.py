@@ -36,6 +36,19 @@ class Constants:
 	ENV = lib.os.getenv('ENV', 'local').lower()
 	"""The lowered name of our runtime environment."""
 
+	LEGACY_WIRE_ENV = 'FT3_LEGACY_WIRE'
+	LEGACY_WIRE = lib.os.getenv(LEGACY_WIRE_ENV, 'false').lower() in (
+		'1',
+		'true',
+		'yes',
+		'on',
+	)
+	"""
+    Global compatibility switch restoring every ft3 1.x request-side \
+    and response-side wire behavior at once. See `V2.md`.
+
+    """
+
 	DEPLOY_ENVS = (
 		'dev',
 		'develop',
@@ -54,11 +67,13 @@ class Constants:
 	DELIM_REBASE = '_X_'
 
 	__ANNOTATIONS__: 'typ.string[typ.snake_case]' = '__annotations__'
+	__ANNOTATE_FUNC__: 'typ.string[typ.snake_case]' = '__annotate_func__'
 	__DATACLASS_FIELDS__: 'typ.string[typ.snake_case]' = '__dataclass_fields__'
 	__HERITAGE__: 'typ.string[typ.snake_case]' = '__heritage__'
 	__SLOTS__: 'typ.string[typ.snake_case]' = '__slots__'
 	__MODULE__: 'typ.string[typ.snake_case]' = '__module__'
 	__OPERATIONS__: 'typ.string[typ.snake_case]' = '__operations__'
+	__STRICT__: 'typ.string[typ.snake_case]' = '__strict__'
 
 	FIELDS: 'typ.string[typ.snake_case]' = 'fields'
 	ENUMERATIONS: 'typ.string[typ.snake_case]' = 'enumerations'

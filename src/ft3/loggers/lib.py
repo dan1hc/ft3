@@ -2,8 +2,16 @@
 
 from .. import core
 
-__all__ = ('logging', 'time', 'traceback', 'warnings', *core.lib.__all__)
+__all__ = (
+	'builtins',
+	'logging',
+	'time',
+	'traceback',
+	'warnings',
+	*core.lib.__all__,
+)
 
+import builtins
 import logging
 import time
 import traceback

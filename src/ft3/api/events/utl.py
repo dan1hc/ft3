@@ -19,8 +19,12 @@ class Constants(cfg.Constants):
 	ID = 'id'
 
 
-PATHS: list[str] = []
-"""Cached, sorted path names."""
+PATHS: dict[int, tuple[obj.Api, list[str]]] = {}
+"""
+Sorted path names per `Api`, keyed by `id(api)` and holding the `Api` \
+so the id stays unique for as long as the entry exists.
+
+"""
 
 
 def _uri_len(uri: str) -> tuple[int, int]:
@@ -30,28 +34,28 @@ def _uri_len(uri: str) -> tuple[int, int]:
 
 
 def paths_from_api(api: obj.Api) -> list[str]:
-	"""Cache and return cached paths from an OpenAPI spec."""
+	"""Cache and return the sorted path names of an OpenAPI spec."""
 
-	if not PATHS:
-		if api.servers:
-			server = api.servers[0]
-			if server.variables is not None:
-				path_root = server.url.replace(
-					'{version}', server.variables['version'].default
-				)
-			else:  # pragma: no cover
-				path_root = ''
-		else:  # pragma: no cover
-			path_root = ''
-		PATHS.extend(
-			sorted(
-				[path_root + path for path in api.paths],
-				key=_uri_len,
-				reverse=True,
+	if id(api) in PATHS:
+		return PATHS[id(api)][1]
+	if api.servers:
+		server = api.servers[0]
+		if server.variables is not None:
+			path_root = server.url.replace(
+				'{version}', server.variables['version'].default
 			)
-		)
-
-	return PATHS
+		else:
+			path_root = server.url
+		path_root = path_root.rstrip('/')
+	else:  # pragma: no cover
+		path_root = ''
+	paths = sorted(
+		[path_root + path for path in api.paths],
+		key=_uri_len,
+		reverse=True,
+	)
+	PATHS[id(api)] = (api, paths)
+	return paths
 
 
 def handle_request(request: obj.Request, api: obj.Api) -> obj.Response:
@@ -59,6 +63,7 @@ def handle_request(request: obj.Request, api: obj.Api) -> obj.Response:
 
 	path: lib.t.Optional[obj.Path] = None
 	path_names = paths_from_api(api)
+	request_path = lib.urllib.parse.urlsplit(request.path).path or '/'
 
 	if api.servers:
 		server = api.servers[0]
@@ -66,9 +71,9 @@ def handle_request(request: obj.Request, api: obj.Api) -> obj.Response:
 			server_root = server.url.replace(
 				'{version}', server.variables['version'].default
 			)
-			server_root += '/'
-		else:  # pragma: no cover
-			server_root = Constants.API_PATH
+		else:
+			server_root = server.url
+		server_root = server_root.rstrip('/') + '/'
 	else:  # pragma: no cover
 		server_root = Constants.API_PATH
 
@@ -82,16 +87,17 @@ def handle_request(request: obj.Request, api: obj.Api) -> obj.Response:
 				for path_element in path_name.split('/')
 			)
 		)
-		if bool(lib.re.match(path_pattern, request.path)):
+		if bool(lib.re.fullmatch(path_pattern + '/?', request_path)):
 			path = api.paths[
 				path_name.replace(server_root, Constants.API_PATH)
 			]
 			break
 
-	request_path = request.path
 	status_code: typ.HttpStatusCode
 	response_body: typ.CamelDict | list[typ.CamelDict] | str | bytes
 	response_headers: dict[str, obj.Header] = {}
+	override_headers: dict[str, str] = {}
+	override_status: lib.t.Optional[typ.HttpStatusCode] = None
 
 	default_response_headers: dict[str, obj.Header]
 	if api.components is not None and (
@@ -122,6 +128,7 @@ def handle_request(request: obj.Request, api: obj.Api) -> obj.Response:
 		callback = obj_.__operations__.get(op_name)
 		if callback is not None:
 			operation: obj.Operation = path[method]
+			parse_error: lib.t.Optional[Exception] = None
 			try:
 				if operation.parameters is not None:
 					request.parse_path_params(
@@ -136,31 +143,46 @@ def handle_request(request: obj.Request, api: obj.Api) -> obj.Response:
 					request.parse_query_params(method, operation, obj_)
 				if operation.request_body is not None:
 					request.parse_body(operation, obj_)
-			except Exception as exception:  # pragma: no cover
-				log.error({'request.error': repr(exception)})
+				request.validate_input(obj_, method)
+			except Exception as exception:
+				if Constants.LEGACY_WIRE:
+					log.error({'request.error': repr(exception)})
+				else:
+					parse_error = exception
 			else:
 				log.info({'request.parsed': request})
 			try:
+				if parse_error is not None:
+					raise parse_error
 				response_obj = callback(request)
 			except Exception as exception:
-				last_frame = lib.traceback.format_tb(exception.__traceback__)[
-					-1
-				]
-				is_error_raised = 'raise ' in last_frame
-				is_error_from_api = api.info.title in last_frame
-				if (
-					is_error_raised
-					or is_error_from_api
-					or isinstance(exception, objects.exc.TypeValidationError)
-				):
-					error = obj.Error.from_exception(exception)
-				else:  # pragma: no cover
-					error = obj.Error.from_exception(exc.UnexpectedError)
+				if exception is parse_error:
+					error = obj.Error.from_request_exception(exception)
+				else:
+					last_frame = lib.traceback.format_tb(
+						exception.__traceback__
+					)[-1]
+					is_error_raised = 'raise ' in last_frame
+					is_error_from_api = api.info.title in last_frame
+					if (
+						is_error_raised
+						or is_error_from_api
+						or isinstance(
+							exception, objects.exc.TypeValidationError
+						)
+					):
+						error = obj.Error.from_exception(exception)
+					else:  # pragma: no cover
+						error = obj.Error.from_exception(exc.UnexpectedError)
 				log.error({'operation.error': error})
 				content_type = enm.ContentType.json.value
 				status_code = error.error_code
 				response_body = error.as_response
 			else:
+				if isinstance(response_obj, obj.Response):
+					override_headers = response_obj.headers.copy()
+					override_status = response_obj.status_code
+					response_obj = response_obj.body
 				if response_obj is None:
 					content_type = enm.ContentType.text.value
 					status_code = 204 if method == Constants.DELETE else 200
@@ -177,6 +199,8 @@ def handle_request(request: obj.Request, api: obj.Api) -> obj.Response:
 					content_type = enm.ContentType.json.value
 					status_code = 201 if method == Constants.POST else 200
 					response_body = response_obj.as_response
+				if override_status is not None:
+					status_code = override_status
 			if operation.responses:
 				for response_definition in operation.responses.values():
 					response_headers.update(response_definition.headers or {})
@@ -222,6 +246,7 @@ def handle_request(request: obj.Request, api: obj.Api) -> obj.Response:
 			headers[name] = request.headers[name]
 		elif name not in headers:
 			headers[name] = header.description or ''
+	headers.update(override_headers)
 
 	return obj.Response(
 		request_id=request.id_,

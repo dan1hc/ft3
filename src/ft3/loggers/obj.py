@@ -1,6 +1,6 @@
 """Loggers objects."""
 
-__all__ = ('log',)
+__all__ = ('log', 'Formatter')
 
 from .. import core
 
@@ -13,49 +13,94 @@ from . import utl
 class Constants(cfg.Constants):
 	"""Constant values specific to this file."""
 
+	FT3_MESSAGE = 'ft3_message'
+	"""`LogRecord` attribute carrying the structured message."""
 
-lib.logging.Formatter.converter = lib.time.gmtime
-lib.logging.Formatter.default_time_format = Constants.FTIME_LOG
-lib.logging.Formatter.default_msec_format = Constants.FTIME_LOG_MSEC
-lib.logging.basicConfig(
-	format=(' ' * Constants.INDENT).join(
-		(
-			'{\n',
-			'"level": %(levelname)s,\n',
-			'"timestamp": %(asctime)s,\n',
-			'"logger": ft3,\n',
-			'"message": %(message)s\n}',
+	CAPTURED_WARNING = lib.re.compile(r'^.+?:\d+: \w*Warning: ')
+	"""Matches text produced by `warnings.formatwarning`."""
+
+
+def level_for(name: str) -> int:
+	"""Numeric level for a `LOG_LEVEL` name, `INFO` if unknown."""
+
+	return lib.logging._nameToLevel.get(name.upper(), lib.logging.INFO)
+
+
+def is_pretty() -> bool:
+	"""Whether records are indented rather than single-line."""
+
+	return Constants.LOG_FORMAT == 'pretty'
+
+
+class Formatter(lib.logging.Formatter):
+	"""
+	Emits one valid JSON document per record.
+
+	---
+
+	```json
+	{"level": "INFO", "timestamp": "2026-09-29T15:26:20.083Z", \
+	"logger": "ft3", "message": {"content": "example"}}
+	```
+
+	Records produced by other libraries are wrapped the same way, \
+	with their formatted text as `content`.
+
+	"""
+
+	converter = lib.time.gmtime
+	default_time_format = Constants.FTIME_LOG
+	default_msec_format = Constants.FTIME_LOG_MSEC
+
+	def __init__(self, pretty: lib.t.Optional[bool] = None) -> None:
+		super().__init__()
+		self.pretty = pretty
+
+	def format(self, record: lib.logging.LogRecord) -> str:
+		"""Render the record as JSON."""
+
+		message = getattr(record, Constants.FT3_MESSAGE, None)
+		if message is None:
+			message = {'content': record.getMessage()}
+		envelope = {
+			'level': record.levelname,
+			'timestamp': self.formatTime(record),
+			'logger': record.name,
+			'message': message,
+		}
+		pretty = is_pretty() if self.pretty is None else self.pretty
+		return lib.json.dumps(
+			envelope,
+			indent=Constants.INDENT if pretty else None,
+			default=core.strings.utl.convert_for_repr,
 		)
-	),
-)
 
-log = lib.logging.getLogger(__name__)
+
+log = lib.logging.getLogger(Constants.PACKAGE)
 """
 Centralized application log.
 
-Pre-configured so you do not need to. By default, this loggger \
-will do everything it can to keep your log stream as actionable \
-and free from pollution as possible.
+Pre-configured so you do not need to. This logger keeps the log \
+stream machine-readable and free from pollution.
 
-* emits neatly formatted JSON log messages
-* intercepts forgotten print statements
-    \
-    * silences them in all deployed environments
-* intercepts forgotten debug-level logs
-    \
-    * silences them in deployed environments > dev
-* intercepts irritating warnings, displaying them once as \
-neatly formatted warning level log messages
-* automatically redacts things that should never be logged \
-in the first place (like API Keys, credentials, SSN's, etc.)
+* emits one valid JSON document per record (single-line by default, \
+indented with `LOG_FORMAT=pretty`)
+* turns forgotten `print()` calls into INFO records that carry the \
+printed text (disable with `INTERCEPT_PRINTS=false`)
+* captures `warnings` and displays each once as a WARNING record
+* attaches the full, untruncated traceback to ERROR and CRITICAL \
+records logged while an exception is active (`LOG_TRACEBACK`)
+* redacts values that should never be logged (api keys, tokens, \
+passwords, connection-string passwords, card and social security \
+numbers, and more)
 
 ---
 
 Usage
 -----
 
-The expectation is this will be the only log used across \
-an application.
+The expectation is this will be the only log used across an \
+application.
 
 * Set logging level through the `LOG_LEVEL` environment variable.
     \
@@ -67,25 +112,10 @@ an application.
 Special Rules
 -------------
 
-* Can only log `str`, `dict`, and `Object` types.
+* Can only log `str`, `dict`, `list`, and `Object` types.
 
-* Automatically redacts almost all sensitive data, including \
-api keys, tokens, credit card numbers, connection strings, \
-and secrets.
-
-* All `warnings` will be filtered through this log and \
-displayed only once.
-
-* All `print` statements will be silenced *except* when \
-`Constants.ENV` is set to 'local' (its default if `ENV` \
-is unavailable in `os.environ` at runtime).
-    \
-    * Best practice is to set log level to 'DEBUG' and \
-    use the `log.debug` method in place of `print` statements.
-    \
-    * `warnings` will be displayed once for all `print` \
-    statements that would otherwise be silenced in any \
-    non-local development environment.
+* A `dict` shaped like a record (`{'content': ...}`) is logged as-is; \
+any other mapping becomes the record's `content`.
 
 ---
 
@@ -97,112 +127,54 @@ import ft3
 
 ft3.log.debug('example')
 # >>>
-# {
-#   "level": DEBUG,
-#   "timestamp": 2024-02-25T15:30:01.061Z,
-#   "logger": ft3,
-#   "message": {
-#     "content": "example"
-#   }
-# }
+# {"level": "DEBUG", "timestamp": "2026-09-29T15:30:01.061Z", \
+# "logger": "ft3", "message": {"content": "example"}}
 
 ft3.log.info({'str': 'example', 'a': 2})
 # >>>
-# {
-#   "level": INFO,
-#   "timestamp": 2024-02-25T15:31:11.118Z,
-#   "logger": ft3,
-#   "message": {
-#     "a": 2,
-#     "str": "example"
-#   }
-# }
-
-
-class Pet(ft3.Object):
-    \"""A pet.\"""
-
-    id_: ft3.Field[str]
-    _alternate_id: ft3.Field[str]
-
-    name: ft3.Field[str]
-    type: ft3.Field[str]
-    in_: ft3.Field[str]
-    is_tail_wagging: ft3.Field[bool] = True
-
-
-ft3.log.debug(Pet)
-# >>>
-# {
-#   "level": DEBUG,
-#   "timestamp": 2024-02-25T15:30:01.339Z,
-#   "logger": ft3,
-#   "message": {
-#     "Pet": {
-#       "_alternate_id": "Field[str]",
-#       "id": "Field[str]",
-#       "in": "Field[str]",
-#       "is_tail_wagging": "Field[bool]",
-#       "name": "Field[str]",
-#       "type": "Field[str]"
-#     }
-#   }
-# }
-
-ft3.log.debug(
-    Pet(
-        id_='abc1234',
-        name='Fido',
-        type='dog',
-        )
-    )
-# >>>
-# {
-#   "level": DEBUG,
-#   "timestamp": 2024-02-25T15:30:01.450Z,
-#   "logger": ft3,
-#   "message": {
-#     "Pet": {
-#       "_alternate_id": null,
-#       "id": "abc1234",
-#       "in": null,
-#       "is_tail_wagging": true,
-#       "name": "Fido",
-#       "type": "dog"
-#     }
-#   }
-# }
+# {"level": "INFO", "timestamp": "2026-09-29T15:31:11.118Z", \
+# "logger": "ft3", "message": {"content": {"a": 2, "str": "example"}}}
 
 ```
 
 """
 
-log.setLevel(lib.logging._nameToLevel[Constants.LOG_LEVEL])
+log.setLevel(level_for(Constants.LOG_LEVEL))
+
+lib.logging.basicConfig(handlers=[lib.logging.StreamHandler()])
+for _handler in lib.logging.getLogger().handlers:
+	if isinstance(_handler.formatter, (type(None), lib.logging.Formatter)):
+		_handler.setFormatter(Formatter())
 
 lib.warnings.simplefilter('once')
 lib.logging.captureWarnings(True)
 lib.logging.Logger.manager.loggerDict['py.warnings'] = log
 
-if not Constants.LOG_PRINTS:
-	_print = __builtins__['print']  # type: ignore[index]
+if Constants.INTERCEPT_PRINTS:
+	_print = lib.builtins.print
 
-	def _reprint(*args: lib.t.Any, **kwargs: lib.t.Any) -> None:
-		if (
-			Constants.ENV in Constants.DEPLOY_ENVS
-		):  # pragma: no cover (still covered)
-			lib.warnings.warn(
-				'\n'.join(
-					(
-						Constants.SILENCE_MSG,
-						*[str(a) for a in args],
-					)
-				)
-			)
-		else:
-			lib.warnings.warn(Constants.WARN_MSG, stacklevel=1)
-			_print(*args, **kwargs)
+	def _reprint(
+		*args: lib.t.Any,
+		sep: lib.t.Optional[str] = ' ',
+		end: lib.t.Optional[str] = '\n',
+		file: lib.t.Any = None,
+		flush: bool = False,
+	) -> None:
+		"""Route `print()` into the log unless it targets a file."""
 
-	__builtins__['print'] = _reprint
+		if file is not None and file not in (lib.sys.stdout, lib.sys.stderr):
+			_print(*args, sep=sep, end=end, file=file, flush=flush)
+			return None
+		log.info(
+			typ.LogRecordWithPrint(
+				content=Constants.PRINT_MSG,
+				printed=(sep or ' ').join(str(a) for a in args),
+			),
+			stacklevel=2,
+		)
+		return None
+
+	lib.builtins.print = _reprint
 
 
 def _monkey_log(
@@ -216,72 +188,87 @@ def _monkey_log(
 	),
 	msg: lib.t.Any,
 	args: 'lib.logging._ArgsType',
-	exc_info: 'lib.logging._ExcInfoType' = True,
+	exc_info: 'lib.logging._ExcInfoType' = None,
 	extra: lib.t.Union[lib.t.Mapping[str, object], None] = None,
 	stack_info: bool = False,
 	stacklevel: int = 1,
 	**kwargs: lib.t.Any,
 ) -> None:
-	"""Monkey patch for `logger._log`."""
+	"""
+	Replacement for `Logger._log` that builds structured records.
+
+	---
+
+	`record.msg` is the JSON-serialized message, so any foreign \
+	formatter (a Lambda runtime's, say) still prints valid JSON; \
+	`record.ft3_message` carries the structured form for `Formatter`.
+
+	"""
 
 	sinfo = None
-	if lib.logging._srcfile:  # pragma: no cover
-		try:
-			fn, lno, func, sinfo = log.findCaller(stack_info, stacklevel)
-		except ValueError:
-			fn, lno, func = '(unknown file)', 0, '(unknown function)'
-	else:  # pragma: no cover
+	try:
+		fn, lno, func, sinfo = log.findCaller(stack_info, stacklevel + 1)
+	except ValueError:  # pragma: no cover
 		fn, lno, func = '(unknown file)', 0, '(unknown function)'
 
-	if msg == '%s' and args and isinstance(args, tuple):  # pragma: no cover
-		msg_ = args[0]
+	if isinstance(msg, str) and args:
+		msg_ = msg % args
 	else:
 		msg_ = msg
+	captured_warning = (
+		level == lib.logging.WARNING
+		and isinstance(msg_, str)
+		and Constants.CAPTURED_WARNING.match(msg_) is not None
+	)
 
-	msg_dict = utl.parse_incoming_log_message(msg_, level)
+	msg_dict = utl.parse_incoming_log_message(
+		msg_, level, captured_warning=captured_warning
+	)
 
 	if isinstance(exc_info, BaseException):
-		exc_info = (type(exc_info), exc_info, exc_info.__traceback__)
-	elif not isinstance(exc_info, tuple):
-		exc_info = lib.sys.exc_info()
+		exc_tuple: lib.t.Any = (
+			type(exc_info),
+			exc_info,
+			exc_info.__traceback__,
+		)
+	elif isinstance(exc_info, tuple):
+		exc_tuple = exc_info
+	elif exc_info is None or exc_info is True:
+		exc_tuple = lib.sys.exc_info()
+	else:
+		exc_tuple = (None, None, None)
+
+	converted: dict[str, lib.t.Any] = core.strings.utl.convert_for_repr(
+		msg_dict
+	)
 	if (
 		Constants.LOG_TRACEBACK
 		and level >= lib.logging.ERROR
-		and any(exc_info)
-		and not isinstance(exc_info[1], KeyboardInterrupt)
+		and exc_tuple[1] is not None
+		and not isinstance(exc_tuple[1], KeyboardInterrupt)
 	):
-		if 'printed' in msg_dict:  # pragma: no cover (still covered)
-			msg_final = typ.LogRecordWithPrintAndTraceBack(
-				content=msg_dict['content'],
-				printed=msg_dict['printed'],  # type: ignore[typeddict-item]
-				traceback=''.join(lib.traceback.format_exception(*exc_info)),
-			)
-		else:  # pragma: no cover (still covered)
-			msg_final = typ.LogRecordWithTraceBack(
-				content=msg_dict['content'],
-				traceback=''.join(lib.traceback.format_exception(*exc_info)),
-			)
-	else:
-		msg_final = msg_dict
+		converted['traceback'] = [
+			core.strings.utl.redact_string(line)
+			for line in ''.join(
+				lib.traceback.format_exception(*exc_tuple)
+			).splitlines()
+		]
 
 	record = log.makeRecord(
 		log.name,
 		level,
 		fn,
 		lno,
-		lib.textwrap.indent(
-			lib.json.dumps(
-				core.strings.utl.convert_for_repr(msg_final),
-				default=core.strings.utl.convert_for_repr,
-				indent=Constants.INDENT,
-				sort_keys=True,
-			),
-			Constants.INDENT * ' ',
-		).lstrip(),
+		lib.json.dumps(
+			converted,
+			indent=Constants.INDENT if is_pretty() else None,
+			sort_keys=True,
+			default=core.strings.utl.convert_for_repr,
+		),
 		tuple(),
 		None,
 		func,
-		extra,
+		{**(extra or {}), Constants.FT3_MESSAGE: converted},
 		sinfo,
 	)
 	log.handle(record)
