@@ -3,8 +3,10 @@
 import pathlib
 import re
 import sys
+import tomllib
 import types
 import unittest
+import urllib.parse
 
 
 class TestReadMe(unittest.TestCase):
@@ -28,3 +30,22 @@ class TestReadMe(unittest.TestCase):
 					)
 				finally:
 					sys.modules.pop(module.__name__, None)
+
+	def test_02_python_badge_matches_classifiers(self):
+		pyproject = tomllib.loads(
+			(self.README.parent / 'pyproject.toml').read_text()
+		)
+		prefix = 'Programming Language :: Python :: '
+		versions = [
+			classifier.removeprefix(prefix)
+			for classifier in pyproject['project']['classifiers']
+			if classifier.startswith(prefix)
+		]
+		badge = re.search(
+			r'img\.shields\.io/badge/python-(.*?)-brightgreen',
+			self.README.read_text(),
+		)
+		assert badge is not None
+		self.assertEqual(
+			urllib.parse.unquote(badge.group(1)).split(' | '), versions
+		)

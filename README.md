@@ -1,14 +1,14 @@
 # [![banner](https://1howardcapital.s3.amazonaws.com/images/ft3/banner.png)](https://ft3.readthedocs.io)
 
 [![MinVersion](https://img.shields.io/python/required-version-toml?tomlFilePath=https://raw.githubusercontent.com/dan1hc/ft3/main/pyproject.toml&color=gold)](https://pypi.org/project/ft3)
-[![PyVersions](https://img.shields.io/pypi/pyversions/ft3?color=brightgreen)](https://pypi.org/project/ft3)
+[![PyVersions](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-brightgreen)](https://pypi.org/project/ft3)
 [![readthedocs](https://readthedocs.org/projects/ft3/badge)](https://ft3.readthedocs.io)
 [![CI](https://github.com/dan1hc/ft3/actions/workflows/main.yml/badge.svg?branch=main&event=push)](https://github.com/dan1hc/ft3/actions)
 [![coverage](https://img.shields.io/badge/dynamic/toml?url=https://raw.githubusercontent.com/dan1hc/ft3/main/pyproject.toml&query=tool.coverage.report.fail_under&label=coverage&suffix=%25&color=brightgreen)](https://github.com/dan1hc/ft3/actions)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
-[![PyPI](https://img.shields.io/pypi/v/ft3?color=blue)](https://pypi.org/project/ft3)
+[![PyPI](https://img.shields.io/badge/dynamic/toml?url=https://raw.githubusercontent.com/dan1hc/ft3/main/pyproject.toml&query=project.version&label=pypi&prefix=v&color=blue)](https://pypi.org/project/ft3)
 [![License](https://img.shields.io/pypi/l/ft3?color=blue)](https://www.gnu.org/licenses/lgpl-3.0)
 
 # Overview
