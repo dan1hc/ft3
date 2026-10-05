@@ -1,14 +1,13 @@
 name: main
 
 permissions:
-  id-token: write
+  contents: read
 
 on:
   pull_request:
     branches:
       - main
     paths:
-      - '!**/*'
       - '**/*.py'
       - '!**/ft3/__init__.py'
   push:
@@ -16,14 +15,15 @@ on:
       - main
 
 env:
-  PY_VERSIONS: "[\"3.11\", \"3.12\", \"3.13\", \"3.14\"]"
+  PY_VERSIONS: '["3.11", "3.12", "3.13", "3.14"]'
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: install-npm-deps
+        if: github.event_name == 'pull_request'
         run: npm i @actions/core@1 @actions/github@6
       - id: validate-commit-message
         uses: ./.github/actions/validate-commit-message
@@ -43,31 +43,22 @@ jobs:
     needs: [validate, setup]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python Latest
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - name: setup python
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ fromJson(env.PY_VERSIONS)[0] }}
-      - uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          cache: pip
+          cache-dependency-path: pyproject.toml
       - name: install deps
         run: |
           python -m pip install ".[develop]"
       - name: ruff lint
         run: |
-          python -m ruff check . \
-            --config pyproject.toml \
-            --diff \
-            --show-files \
-            --exit-non-zero-on-fix
+          python -m ruff check . --config pyproject.toml
       - name: ruff format
         run: |
-          python -m ruff format . \
-            --config pyproject.toml
+          python -m ruff format . --config pyproject.toml --check
   test:
     needs: [validate, setup, standardize]
     runs-on: ${{ matrix.os }}
@@ -76,13 +67,15 @@ jobs:
         python-version: ${{ fromJson(needs.setup.outputs.python-versions) }}
         os: [macos-latest, ubuntu-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: setup python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
       - name: setup dependencies
         run: |
           python -m pip install ".[develop]"
@@ -106,14 +99,17 @@ jobs:
       id-token: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ github.event_name == 'push' && github.ref_name || github.head_ref }}
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+      - name: release only the tested commit
+        run: |
+          git reset --hard ${{ github.event.pull_request.head.sha || github.sha }}
       - name: semantic release
         id: release
-        uses: python-semantic-release/python-semantic-release@master
+        uses: python-semantic-release/python-semantic-release@v10.7.0
         with:
           changelog: ${{ github.event_name == 'push' }}
           github_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
@@ -127,7 +123,7 @@ jobs:
       - name: publish github release
         id: github-release
         if: steps.release.outputs.released == 'true'
-        uses: python-semantic-release/upload-to-gh-release@main
+        uses: python-semantic-release/publish-action@v10.7.0
         with:
           github_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           tag: ${{ steps.release.outputs.tag }}

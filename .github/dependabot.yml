@@ -3,7 +3,11 @@ updates:
   - package-ecosystem: pip
     directory: "/"
     schedule:
-      interval: daily
+      interval: weekly
+    groups:
+      develop:
+        patterns:
+          - "*"
     commit-message:
       prefix: build
       include: scope
@@ -13,9 +17,13 @@ updates:
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: daily
+      interval: weekly
+    groups:
+      actions:
+        patterns:
+          - "*"
     commit-message:
-      prefix: build
+      prefix: ci
       include: scope
     labels:
       - dependencies

@@ -135,7 +135,7 @@ ignore = [
     ]
 
 [tool.semantic_release]
-commit_parser = "angular"
+commit_parser = "conventional"
 commit_author = "github-actions <action@github.com>"
 commit_message = "docs: __v{version}__ [skip ci]"
 build_command = "python -m pip install --upgrade build && python -m build"
@@ -156,7 +156,11 @@ match = "(^(?!main)(.)*$)"
 prerelease = true
 prerelease_token = "rc"
 
+[tool.semantic_release.changelog]
+mode = "init"
+
 [tool.semantic_release.commit_parser_options]
+parse_squash_commits = true
 allowed_tags = [
     "build",
     "chore",

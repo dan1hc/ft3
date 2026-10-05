@@ -5,8 +5,8 @@ on:
     branches:
       - main
     paths-ignore:
-      - './.github/**/*'
-      - './src/ft3/__init__.py'
+      - '.github/**'
+      - 'src/ft3/__init__.py'
       - '.gitignore'
       - '.pre-commit-config.yaml'
       - '.readthedocs.yaml'
@@ -21,8 +21,8 @@ on:
     branches:
       - main
     paths-ignore:
-      - './.github/**/*'
-      - './src/ft3/__init__.py'
+      - '.github/**'
+      - 'src/ft3/__init__.py'
       - '.gitignore'
       - '.pre-commit-config.yaml'
       - '.readthedocs.yaml'
@@ -42,7 +42,7 @@ jobs:
     runs-on: 'ubuntu-latest'
     timeout-minutes: 360
     permissions:
-      id-token: write
+      contents: read
       security-events: write
     strategy:
       fail-fast: false
@@ -51,12 +51,12 @@ jobs:
           - 'python'
     steps:
     - name: checkout repository
-      uses: actions/checkout@v4
-    - name: initialize codeqL
-      uses: github/codeql-action/init@v3
+      uses: actions/checkout@v7
+    - name: initialize codeql
+      uses: github/codeql-action/init@v4
       with:
         languages: ${{ matrix.language }}
     - name: perform analysis
-      uses: github/codeql-action/analyze@v3
+      uses: github/codeql-action/analyze@v4
       with:
         category: "/language:${{matrix.language}}"
