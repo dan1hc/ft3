@@ -1,7 +1,7 @@
 ## Overview
 -----------
 
-**Summary:** A simple python API that can be copy / pasted / replaced.
+**Summary:** Reference handlers for every operation ft3 derives from an Object.
 
 ## Usage Guidelines
 -------------------

@@ -45,6 +45,17 @@ class Constants(cfg.Constants):
 
     """
 
+	REDACT_ALLOW = tuple(
+		key.strip()
+		for key in lib.os.getenv('LOG_REDACT_ALLOW', '').split(',')
+		if key.strip()
+	)
+	"""
+    Key names (comma-separated in `LOG_REDACT_ALLOW`) whose values are \
+    never redacted by key, for keys that only look sensitive.
+
+    """
+
 	M_LINE_TOKEN = '[[MULTI_LINE_STRING_AS_ARRAY]]'
 	"""
     Token pre-pended to a wrapped, multi-line string to indicate that \

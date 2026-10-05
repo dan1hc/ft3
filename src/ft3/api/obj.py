@@ -1,6 +1,8 @@
 """Api objects module."""
 
 __all__ = (
+	'check_parser',
+	'openapi_parser',
 	'Api',
 	'Component',
 	'Content',
@@ -699,6 +701,7 @@ api_parser.add_argument(
 api_parser.add_argument(
 	'--port',
 	'-p',
+	type=int,
 	default=Constants.DEFAULT_PORT,
 	help='the port to serve on',
 	dest='port',
@@ -741,4 +744,63 @@ api_parser.add_argument(
 	default=True,
 	help='generate Swagger/OpenAPI docs during API startup',
 	dest='lazy_docs',
+)
+
+tooling_parser = lib.argparse.ArgumentParser(add_help=False)
+tooling_parser.add_argument(
+	'package',
+	help='the name or path to the package to inspect',
+)
+tooling_parser.add_argument(
+	'--version',
+	'-v',
+	default=Constants.DEFAULT_VERSION,
+	help='the version of the api',
+	dest='version',
+)
+tooling_parser.add_argument(
+	'--api-path',
+	default=Constants.API_PATH,
+	help='the base path from which the API is served',
+	dest='api_path',
+)
+tooling_parser.add_argument(
+	'--no-heartbeat',
+	action='store_false',
+	help='set to disinclude /healthz endpoint',
+	dest='include_heartbeat',
+)
+tooling_parser.add_argument(
+	'--include-version-prefix',
+	action='store_true',
+	help='set to include a version prefix (ex. /v1/healthz)',
+	dest='include_version_prefix',
+)
+
+check_parser = cli.obj.parsers.add_parser(  # type: ignore[has-type]
+	'check',
+	parents=[tooling_parser],
+	formatter_class=lib.argparse.ArgumentDefaultsHelpFormatter,
+	help='validate a package without serving it; exits 1 on errors',
+)
+check_parser.add_argument(
+	'--format',
+	choices=('json', 'text'),
+	default='json',
+	help='report format',
+	dest='output_format',
+)
+
+openapi_parser = cli.obj.parsers.add_parser(  # type: ignore[has-type]
+	'openapi',
+	parents=[tooling_parser],
+	formatter_class=lib.argparse.ArgumentDefaultsHelpFormatter,
+	help='write the OpenAPI document (a build-time artifact)',
+)
+openapi_parser.add_argument(
+	'--output',
+	'-o',
+	default='openapi.json',
+	help='file to write, or - for stdout',
+	dest='output',
 )

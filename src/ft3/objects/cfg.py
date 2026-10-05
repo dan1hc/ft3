@@ -12,6 +12,7 @@ class Constants(core.cfg.Constants):
 		'__heritage__',
 		'__dataclass_fields__',
 		'__operations__',
+		'__strict__',
 		'enumerations',
 		'fields',
 		'hash_fields',
@@ -38,6 +39,8 @@ class Constants(core.cfg.Constants):
 		'unique_items',
 		'read_only',
 		'write_only',
+		'camel_case_keys',
+		'drop_null_items',
 	)
 	FIELDS_MODULE = __name__.replace('cfg', 'fields.obj')
 	OBJECTS_MODULE = __name__.replace('cfg', 'objs.obj')
@@ -66,6 +69,7 @@ class Constants(core.cfg.Constants):
 		'__instancecheck__',
 		'__subclasscheck__',
 		'_object_',
+		'_add_operation',
 		'class_as_dict',
 		'copy',
 		'enumerations',

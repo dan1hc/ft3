@@ -16,7 +16,7 @@ on:
       - main
 
 env:
-  PY_VERSIONS: "[\"3.10\", \"3.11\", \"3.12\", \"3.13\"]"
+  PY_VERSIONS: "[\"3.11\", \"3.12\", \"3.13\", \"3.14\"]"
 
 jobs:
   validate:
@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - id: install-npm-deps
-        run: npm i @actions/core @actions/github
+        run: npm i @actions/core@1 @actions/github@6
       - id: validate-commit-message
         uses: ./.github/actions/validate-commit-message
         if: github.event_name == 'pull_request'

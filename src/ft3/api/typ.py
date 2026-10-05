@@ -79,7 +79,12 @@ HttpErrorCode: lib.t.TypeAlias = (
 HttpStatusCode: lib.t.TypeAlias = (
 	lib.t.Literal[200]
 	| lib.t.Literal[201]
+	| lib.t.Literal[202]
 	| lib.t.Literal[204]
 	| lib.t.Literal[301]
+	| lib.t.Literal[302]
+	| lib.t.Literal[304]
+	| lib.t.Literal[307]
+	| lib.t.Literal[308]
 	| HttpErrorCode
 )

@@ -432,7 +432,7 @@ class TestUtils(unittest.TestCase):
 
 		if sys.version_info < (3, 13):
 			self.assertEqual(
-				codecs.enm.ParseErrorRef.invalid_keys_decode,
+				{},
 				codecs.utl.parse(
 					codecs.lib.json.dumps(SimpleTypedObj(not_a_key='test')),
 					SimpleTypedObj,

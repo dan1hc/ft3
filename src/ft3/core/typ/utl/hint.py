@@ -20,16 +20,13 @@ if lib.t.TYPE_CHECKING:  # pragma: no cover
 class Constants(cfg.Constants):
 	"""Constant values specific to this file."""
 
-	CACHED_ANNOTATIONS: 'dict[str, typ.AnyDict]' = {}
+	CACHED_ANNOTATIONS: 'dict[type, typ.AnyDict]' = {}
 	"""Local cache for typed object annotations."""
 
 	MAX_RECURSIONS = 4
 
 
-eval_type: lib.t.Callable[
-	['typ.AnyOrForwardRef', lib.t.Any, lib.t.Any, lib.t.Optional[frozenset]],
-	lib.t.Any,
-] = lib.t._eval_type  # type: ignore[attr-defined]
+eval_type: lib.t.Callable[..., lib.t.Any] = lib.t._eval_type  # type: ignore[attr-defined]
 """
 Evaluate all `ForwardRef` in the given `type`.
 
@@ -61,7 +58,10 @@ def parse_ref_to_typ(
 	"""Attempt to cast `ForwardRef` to `type`."""
 
 	try:
-		tp = eval_type(ref, globalns, localns, frozenset())
+		if lib.sys.version_info >= (3, 12):  # pragma: no cover
+			tp = eval_type(ref, globalns, localns, ())
+		else:  # pragma: no cover
+			tp = eval_type(ref, globalns, localns)
 	except NameError:
 		return ref
 	else:
@@ -132,7 +132,7 @@ def resolve_type(
 
 
 def _collect_annotations(
-	__name: str, __annotations: 'typ.AnyDict', __bases: tuple[type, ...]
+	__tp: type, __annotations: 'typ.AnyDict', __bases: tuple[type, ...]
 ) -> 'typ.AnyDict':
 	annotations: 'typ.AnyDict' = {}
 	for _base in reversed(__bases):
@@ -147,7 +147,7 @@ def _collect_annotations(
 	annotations.pop(Constants.FIELDS, None)
 	annotations.pop(Constants.ENUMERATIONS, None)
 	annotations.pop(Constants.HASH_FIELDS, None)
-	Constants.CACHED_ANNOTATIONS[__name] = annotations
+	Constants.CACHED_ANNOTATIONS[__tp] = annotations
 	return annotations
 
 
@@ -165,11 +165,11 @@ def collect_annotations(
 
 	obj_tp = typed_obj if isinstance(typed_obj, type) else type(typed_obj)
 
-	if obj_tp.__name__ in Constants.CACHED_ANNOTATIONS:
-		return Constants.CACHED_ANNOTATIONS[obj_tp.__name__]
+	if obj_tp in Constants.CACHED_ANNOTATIONS:
+		return Constants.CACHED_ANNOTATIONS[obj_tp]
 
 	return _collect_annotations(
-		obj_tp.__name__,
+		obj_tp,
 		getattr(obj_tp, Constants.__ANNOTATIONS__, {}),
 		obj_tp.__bases__,
 	)
@@ -249,13 +249,17 @@ def finalize_type(tp_or_ref_or_str: lib.t.Any) -> lib.t.Any:
 						modules[name] = module
 
 		namespace = {**modules}
+		final: lib.t.Any = tp_or_ref_or_str
 		for ref_tp in ref_tps:
-			parse_ref_to_typ(ref_tp, namespace, {})
-			for name, module in modules.items():
-				tp = parse_ref_to_typ(ref_tp, namespace, module.__dict__)
-				if not isinstance(tp, lib.t.ForwardRef):
-					break
+			tp = parse_ref_to_typ(ref_tp, namespace, {})
+			if isinstance(tp, lib.t.ForwardRef):
+				for name, module in modules.items():
+					tp = parse_ref_to_typ(ref_tp, namespace, module.__dict__)
+					if not isinstance(tp, lib.t.ForwardRef):
+						break
+			if ref_tp is ref_tps[-1] and not isinstance(tp, lib.t.ForwardRef):
+				final = tp
 
-		return ref_tps[-1].__forward_value__ or tp_or_ref_or_str
+		return final
 	else:
 		return tp_or_ref_or_str
