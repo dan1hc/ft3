@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v2.0.1 (2026-10-07)
+
+### Bug Fixes
+
+- Document by-id responses and never echo computed response headers
+  ([`5c16215`](https://github.com/dan1hc/ft3/commit/5c162156512c71760b59c894cf821fe1dbae013d))
+
+
 ## v2.0.0 (2026-10-05)
 
 ### Bug Fixes
