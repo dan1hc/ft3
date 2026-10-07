@@ -222,10 +222,13 @@ def handle_request(request: obj.Request, api: obj.Api) -> obj.Response:
 		status_code = error.error_code
 		response_body = error.as_response
 
+	# The length on the wire: bytes, not characters.
+	wire: bytes | str
 	if isinstance(response_body, (bytes, str)):
-		content_length = len(response_body)
+		wire = response_body
 	else:
-		content_length = len(lib.json.dumps(response_body, default=str))
+		wire = lib.json.dumps(response_body, default=str)
+	content_length = len(wire if isinstance(wire, bytes) else wire.encode())
 
 	headers = {
 		header.value: enm.HeaderValue[header.name].value
@@ -241,8 +244,16 @@ def handle_request(request: obj.Request, api: obj.Api) -> obj.Response:
 			lib.datetime.timezone.utc
 		).isoformat()
 
+	# Echo other documented headers from the request, never the ones
+	# computed for this response: a request's Content-Length once
+	# truncated every response body.
+	own = {
+		enm.Header.contentLength.value,
+		enm.Header.contentType.value,
+		enm.Header.date.value,
+	}
 	for name, header in response_headers.items():
-		if name in request.headers:
+		if name in request.headers and name not in own:
 			headers[name] = request.headers[name]
 		elif name not in headers:
 			headers[name] = header.description or ''

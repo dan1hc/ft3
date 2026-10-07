@@ -179,11 +179,21 @@ def parameters_from_object(
 
 
 def response_type_from_object(
-	cls: type[Object], method: typ.ApiMethod
+	cls: type[Object],
+	method: typ.ApiMethod,
+	operation_key: lib.t.Optional[str] = None,
 ) -> typ.ApiResponseType:
-	"""Calculate response type from an `Object`."""
+	"""
+	Calculate response type from an `Object`.
 
-	callback = cls.__operations__.get(method)  # type: ignore[call-overload]
+	---
+
+	Handlers are keyed by `operation_key` (`pet_get` for a GET by id,
+	`get` for a list), which defaults to the bare `method`.
+
+	"""
+
+	callback = cls.__operations__.get(operation_key or method)  # type: ignore[call-overload]
 	if callback is None:  # pragma: no cover
 		return Constants.EMPTY
 
@@ -220,6 +230,7 @@ def operation_from_object(
 	parent_path_parameters: lib.t.Optional[list[obj.Parameter]] = None,
 	include_default_response_headers: bool = True,
 	include_docs: bool = True,
+	operation_key: lib.t.Optional[str] = None,
 ) -> lib.t.Optional[obj.Operation]:
 	"""Generate RESTful API `Operation` from an `Object`."""
 
@@ -250,7 +261,7 @@ def operation_from_object(
 	if request_headers := REQUEST_HEADERS.get(cls.__name__):
 		parameters.extend(request_headers[method])
 
-	response_type = response_type_from_object(cls, method)
+	response_type = response_type_from_object(cls, method, operation_key)
 
 	if include_docs:
 		match response_type:
@@ -545,6 +556,7 @@ def paths_from_object(
 				parent_path_parameters,
 				include_default_response_headers,
 				include_docs,
+				method_,
 			)
 			if operation is not None:
 				operations_by_uri.setdefault(operation.path_uri, {})
